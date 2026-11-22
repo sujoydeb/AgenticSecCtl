@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.1 (plan draft; nothing is built, all estimates are unvalidated) |
+| Version | 0.2 (plan draft; nothing is built, all estimates are unvalidated; v0.2 incorporates IG-1 and IG-2 of `docs/implementationgaps.md`) |
 | Date | 2026-11-22 |
 | Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/parameter-register.md` v0.1, `docs/governance.md` v0.3 |
 | Purpose | Turn the Phase 1 scope of the roadmap into an ordered, testable work breakdown that engineers can start from: modules, interfaces, work packages, schedule, test strategy, definition of done. Later phases are sequenced at lower confidence. |
@@ -35,7 +35,7 @@ Each invariant is a design rule from `CLAUDE.md` and the architecture. A package
 
 | Item | Needed before | Working default used in this plan | If the decision differs |
 |---|---|---|---|
-| ADR-4 tenancy (shared multi-tenant with row-level security, tenant ID everywhere) | Schema freeze (end of week 2 of Phase 1) | Shared multi-tenant; tenant ID on every table; policies on every table | WP-1.5 schema and WP-1.6 API change; dedicated-database option adds deployment work, not new tables |
+| ADR-4 tenancy (shared multi-tenant with row-level security, tenant ID everywhere) | Schema freeze (end of week 2 of Phase 1; ADR-4 must be decided by the end of week 1) | Shared multi-tenant; tenant ID on every table; policies on every table | WP-1.5 schema and WP-1.6 API change; dedicated-database option adds deployment work, not new tables |
 | ADR-3 approval channel (dashboard only) | UI freeze | Dashboard approval queue bound to the argument hash | Adapters are Phase 2 or later; no Phase 1 change |
 | ADR-6 policy language (Rego on OPA) | Start of WP-1.8 | Rego | Cedar would replace WP-1.8 and the PDP client in WP-1.9 |
 | Spike S5 scanner baselines (week -6 to -5) | Start of WP-1.7 design | Own deterministic rules plus corpus; external scanners only as comparison | Scanner scope may shrink if an external engine proves sufficient |
@@ -122,15 +122,16 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 - **Covers:** tenancy foundations (ADR-4), FR-DATA-1, immutability support for FR-DRIFT-5, CTL-22 groundwork.
 - **Tasks:** migrations for tenancy and access, inventory, authorization, findings, audit and governance tables as in `docs/data-model.md` Section 3; `tool_versions` without update or delete permission and with a trigger or rule that rejects changes; row-level security policies on every table; database roles (application, audit writer, read-only, migration owner); classification levels table.
 - **Tests first:** a cross-tenant read and write attempt fails for each table; an update of `tool_versions` fails for every application role; migration up and down on an empty database.
+- **Scheduling:** starts in week 1 on its own lane so the tables can be frozen at the end of week 2; roles, row-level security tests, constraint tests and indexes finish in weeks 3 to 4. Changes to frozen tables need the security architect's approval.
 - **Done when:** schema is frozen (ADR-4 decided), tests above pass, indexes for the main queries exist.
-- **Estimate:** 2 to 3. **Depends on:** ADR-4. **Risk:** schema churn after freeze; keep tenant ID everywhere so the dedicated-database option stays open.
+- **Estimate:** 2 to 3. **Depends on:** ADR-4 and `docs/data-model.md` only (not on WP-1.2). **Risk:** schema churn after freeze; keep tenant ID everywhere so the dedicated-database option stays open.
 
 ### WP-1.6 Registry API, approvals and separation of duties
 - **Covers:** FR-INV-1..3, FR-ID-1..2, FR-DRIFT-1, FR-DRIFT-5, FR-SCAN-4, FR-DATA-2, SoD-1..3, CTL-01, CTL-23; TC-C1, TC-E4.
 - **Tasks:** endpoints for agents, servers, tools, versions, approvals and findings per the OpenAPI outline; namespace rule `namespace__tool` and duplicate-name flagging; approval request with the canonical definition and hash stored on approval; re-approval creates a new immutable version; Critical findings block approval except through the two-approver override; server-side separation-of-duties checks; classification default Confidential on registry items; audit events written through an outbox in the same transaction; registration calls the SSRF guard before storing a URL.
 - **Tests first:** self-approval is refused; Critical override needs two distinct approvers; duplicate tool names across servers are flagged; tenant isolation through the API.
 - **Done when:** the approval lifecycle works end to end against the database with audit events produced.
-- **Estimate:** 3 to 4. **Depends on:** WP-1.2, WP-1.3, WP-1.4, WP-1.5, WP-1.10 (identity).
+- **Estimate:** 3 to 4. **Depends on:** WP-1.2, WP-1.3, WP-1.4, WP-1.5 (frozen tables), WP-1.10 (identity).
 
 ### WP-1.7 Importer, scanner v1 and corpus baseline
 - **Covers:** FR-SCAN-1..3, FR-SCAN-6, CTL-02; TC-A1..A5, TC-Z2; AC-1, AC-8.
@@ -207,11 +208,10 @@ The roadmap's team assumption (`docs/roadmap.md` Section 8: two backend engineer
 ```mermaid
 flowchart LR
   P0["Phase 0 exit and ADR-3, 4, 6"] --> WP11["WP-1.1 baseline"]
-  WP11 --> WP12["WP-1.2 common core"]
+  P0 --> WP12["WP-1.2 common core"]
   WP12 --> WP13["WP-1.3 SSRF guard"]
   WP12 --> WP14["WP-1.4 audit chain"]
   P0 --> WP15["WP-1.5 schema and RLS"]
-  WP12 --> WP15
   WP13 --> WP16["WP-1.6 registry and approvals"]
   WP14 --> WP16
   WP15 --> WP16
@@ -239,15 +239,15 @@ Lanes: A platform (backend), B security engines (security engineer), C gateway a
 
 | Weeks | Lane A | Lane B | Lane C | Lane D | Milestone |
 |---|---|---|---|---|---|
-| 1 to 2 | WP-1.1, then WP-1.2 canonical and config | WP-1.2 redaction and errors, SSRF design | WP-1.10 Keycloak realm, token validation | WP-1.12 first fixtures, Compose | Skeleton, CI or local checks, hashing, schema freeze (ADR-4) |
-| 3 to 4 | WP-1.5 schema, WP-1.4 chain | WP-1.3 SSRF guard, start WP-1.7 importer | WP-1.8 policies | WP-1.12 fixtures | Registry skeleton, SSRF guard, audit library |
+| 1 to 2 | WP-1.5 schema design and migrations (starts in week 1; tables frozen at the end of week 2) | WP-1.2 canonical JSON, redaction, errors; SSRF design | WP-1.10 Keycloak realm, token validation; then WP-1.2 configuration and telemetry | WP-1.1 baseline and Compose; WP-1.12 first fixtures | Skeleton, CI or local checks, hashing, schema frozen (ADR-4 decided before week 1 ends) |
+| 3 to 4 | WP-1.5 roles, row-level security tests and constraint tests (no table changes without the security architect), then WP-1.4 chain | WP-1.3 SSRF guard, start WP-1.7 importer | WP-1.8 policies | WP-1.12 fixtures | Registry skeleton, SSRF guard, audit library |
 | 5 to 6 | WP-1.6 registry and approvals | WP-1.7 scanner rules and scoring | WP-1.9 gateway core | WP-1.11 dashboard start | Registry, approvals, scanner on corpus |
 | 7 to 8 | WP-1.6 finish, WP-1.4 verification endpoint and CLI | WP-1.7 baseline, fuzzing | WP-1.9 pin check, quarantine, fail-closed | WP-1.11 approval queue and diff | Drift quarantine, gateway list filtering, OPA decisions, dashboard |
 | 9 to 10 | WP-1.13 | WP-1.13 | WP-1.13 | WP-1.12 finish, WP-1.13 | Acceptance run, hardening, documentation |
 
 This plan moves the SSRF guard and the audit library earlier than the roadmap's milestone list (weeks 3 to 4 instead of week 8), because registration, import and approvals depend on them; only the verification endpoint and the dashboard finish in weeks 7 to 8. The roadmap milestone text should be aligned when this plan is approved.
 
-Critical path: schema freeze, then registry and approvals, then gateway pin check, then end-to-end acceptance. Buffer: none is built in; add 15 to 20 percent when committing dates.
+WP-1.2 starts from the first project files and does not wait for CI. Critical path: schema freeze (end of week 2), then registry and approvals, then gateway pin check, then end-to-end acceptance. Buffer: none is built in; add 15 to 20 percent when committing dates.
 
 Spikes S5, S3 and S2 run before or alongside weeks 1 to 4 (`docs/roadmap.md` Section 4.1). S1, S4 and S6 do not block Phase 1.
 
@@ -337,7 +337,7 @@ Entry conditions are decisions or measurements that do not exist yet. Durations 
 
 ## 11. Traceability: Phase 1 requirements to work packages
 
-All 41 requirements tagged Phase 1 (including those tagged P1/P2) in `Plan/functional-spec.md` appear below exactly once, with one owning package. The table is generated from the specification by a script so it can be regenerated when requirements change; `scripts/check_docs.py` checks that every Phase 1 requirement is present.
+All 42 requirements tagged Phase 1 (including those tagged P1/P2) in `Plan/functional-spec.md` appear below exactly once, with one owning package. The table is generated from the specification by a script so it can be regenerated when requirements change; `scripts/check_docs.py` checks that every Phase 1 requirement is present.
 
 | Requirement | Summary | Owner WP | Also touched |
 |---|---|---|---|
@@ -377,6 +377,7 @@ All 41 requirements tagged Phase 1 (including those tagged P1/P2) in `Plan/funct
 | FR-DRIFT-3 | A quarantined tool shall be removed from `tools/list` results and `tools/call`... | WP-1.9 |  |
 | FR-INV-4 | Servers and agents not registered shall be denied by the gateway. | WP-1.9 | WP-1.8 |
 | FR-RT-1 | `tools/list` responses shall be filtered to approved, non-quarantined tools th... | WP-1.9 |  |
+| FR-MCP-4 | Tool discovery: filtered and hash-checked (FR-RT-1, FR-DRIFT-2). | WP-1.9 | WP-1.2 |
 | FR-UI-7 | Access via enterprise OIDC with MFA and the RBAC in Section 2; UI shall meet W... | WP-1.10 |  |
 | FR-DRIFT-4 | The UI shall show a field-level diff between approved and current definitions. | WP-1.11 |  |
 | FR-UI-1 | Counts: agents, servers, tools; approved/unapproved; quarantined; critical/hig... | WP-1.11 |  |
@@ -394,3 +395,10 @@ Controls with Phase 1 content map to packages as follows: CTL-01 to WP-1.6; CTL-
 - The roadmap milestone text for weeks 4 and 8 differs from Section 6.3; align the roadmap once this plan is approved.
 - Phase 5 has no requirement set (roadmap finding F3); Section 9 cannot plan it further.
 - Retagging of FR-SUP-1 and the Phase 1 acceptance of TC-Z6 are handled in the roadmap findings and the test catalogue, not here.
+
+## 13. Change history
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-11-22 | IG-1: FR-MCP-4 added to the traceability table (42 requirements). IG-2: WP-1.5 starts in week 1 so the schema freeze at the end of week 2 is achievable; dependency and lane text corrected |
+| 0.1 | 2026-11-22 | First version |

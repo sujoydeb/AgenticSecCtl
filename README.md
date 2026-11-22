@@ -28,6 +28,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
 | `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/`, `.github/dependabot.yml` | `docs-check.yml` is the only active workflow (document consistency and generated-file freshness; untested on GitHub); Dependabot for action updates | NFR-9 |
+| `docs/implementationgaps.md` | Review of the implementation plan: 17 gaps with severity, evidence and recommendation | implementation plan |
 | `Plan/implementation-plan.md` | Build-level implementation plan: Phase 1 work packages, schedule, tests, definition of done; phases 2-5 outlined | roadmap Section 6 |
 | `docs/roadmap.md` | Implementation roadmap: phases 0-5 with deliverables, dependencies, effort, acceptance, risks, decision gates, cross-document findings (estimates unvalidated) | PRD 8 |
 | `docs/architecture-assessment.md`, `docs/data-model.md`, `docs/api-specification.md`, `docs/api/openapi.yaml` | Architecture assessment, data model and API specification (drafts closing review gaps A1 to A3) | architecture 7, spec 4.21 |

@@ -424,10 +424,16 @@ if plan_text:
     p1_reqs = set()
     for _ln in spec.split("\n"):
         _c = [x.strip() for x in _ln.strip().strip("|").split("|")]
-        if _c and re.fullmatch(r"FR-[A-Z]+-\d+", _c[0]) and len(_c) >= 5 and _c[3].startswith("P1"):
-            p1_reqs.add(_c[0])
+        if _c and re.fullmatch(r"FR-[A-Z]+-\d+", _c[0]):
+            # the phase cell is found by pattern, because table layouts differ between spec sections
+            _ph = [x for x in _c[1:] if re.fullmatch(r"P[1-5](?:/P[1-5])*", x)]
+            if _ph and "P1" in _ph[0].split("/"):
+                p1_reqs.add(_c[0])
     _sec = plan_text.split("## 11. Traceability")[-1].split("\n## 12.")[0]
     _in_table = re.findall(r"^\| (FR-[A-Z]+-\d+) \|", _sec, re.M)
+    _stated = re.search(r"All (\d+) requirements tagged Phase 1", plan_text)
+    if not _stated or int(_stated.group(1)) != len(p1_reqs):
+        err(f"Plan/implementation-plan.md: stated Phase 1 requirement count {_stated.group(1) if _stated else 'missing'} differs from actual {len(p1_reqs)}")
     for r in sorted(p1_reqs - set(_in_table)):
         err(f"Plan/implementation-plan.md: Phase 1 requirement {r} missing from the traceability table")
     for r in sorted(set(_in_table) - p1_reqs):

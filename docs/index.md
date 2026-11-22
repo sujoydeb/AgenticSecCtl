@@ -47,6 +47,7 @@
 | `docs/privacy-assessment.md` | Platform data inventory and privacy risks | Privacy, legal, security |
 | `docs/reviewgap.md` | Review gap register with closure status | Reviewers, sponsors |
 | `docs/roadmap.md` | Phases 0 to 5: deliverables, effort, acceptance, risks, spikes, gates | Sponsors, delivery |
+| `docs/implementationgaps.md` | Gaps and errors found in the implementation plan (17 gaps, none closed) | Delivery lead, architects |
 | `Plan/implementation-plan.md` | Build-level plan: Phase 1 work packages, schedule, test strategy, definition of done; later phases outlined | Engineers, delivery lead |
 | `docs/runbooks/operational-runbook.md` | Operating procedures, failure responses, break-glass, disaster recovery | Operators, on-call |
 | `docs/tech-evaluation.md` | Reuse-versus-build candidates and verification log | Architects, security |
