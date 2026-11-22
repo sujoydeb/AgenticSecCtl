@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.1 (closes gaps D4 and G6 in `docs/reviewgap.md`) |
+| Version | 0.2 (closes gaps D4 and G6 in `docs/reviewgap.md`; v0.2 adds PAR-O-26..28 for IG-17) |
 | Depends on | `Plan/functional-spec.md` v0.7, `controls/catalogue.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/runbooks/operational-runbook.md` v0.3, `docs/governance.md` v0.3 |
 | Purpose | One list of every tunable value: those already fixed (with a machine check that every document still states the same value) and those still open (with an owner and a decision gate). A value that is "to be set" anywhere in the documentation must have a row in Section 2. |
 | Status | Proposals only; no owner has accepted any row. Owner roles use the glossary in `docs/governance.md`. |
@@ -56,6 +56,9 @@ Decision gates: **P0** Phase 0 sign-off; **B1** before Phase 1 starts; **P1**, *
 | PAR-O-23 | Incident response targets by severity; escalation rotas | `docs/runbooks/operational-runbook.md` Section 3, `docs/playbooks/incident-response-playbooks.md` Section 3 | Incident commander | P2 | Values in documents are proposals |
 | PAR-O-24 | Runbook placeholders: commands, metric names, alert names, thresholds | `docs/runbooks/operational-runbook.md` | Platform operator | P1 and P2 | Replace each TBD when built |
 | PAR-O-25 | Reference environment and workload for load tests | `docs/testing/performance-test-plan.md` | Test lead | B1 | Proposal exists in the plan |
+| PAR-O-26 | Test coverage thresholds (high on `common` security primitives and policy tables, lower elsewhere) | `Plan/implementation-plan.md` Section 7 | Test lead | P1 | Set once the first packages have measured coverage; a guard against untested code, not evidence of quality |
+| PAR-O-27 | Database migration tool (plain SQL migrations or a library) | `Plan/implementation-plan.md` Section 4.3, WP-1.5 | Backend engineer | B1 | Needed before WP-1.5 starts; must support tested rollback for development |
+| PAR-O-28 | Database access layer and driver | `Plan/implementation-plan.md` Section 4.3, WP-1.5, WP-1.6 | Backend engineer | B1 | Must allow the tenant to be set per transaction, never per session (IG-9) |
 
 ## 3. Rules
 

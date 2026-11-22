@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (plan draft; nothing is built, all estimates are unvalidated; v0.2 incorporates IG-1 and IG-2 of `docs/implementationgaps.md`) |
+| Version | 0.3 (plan draft; nothing is built, all estimates are unvalidated; v0.3 incorporates the Low gaps IG-10, IG-12, IG-13, IG-16 and IG-17 of `docs/implementationgaps.md`, on top of IG-1 and IG-2 in v0.2) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/parameter-register.md` v0.1, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/parameter-register.md` v0.2, `docs/governance.md` v0.3 |
 | Purpose | Turn the Phase 1 scope of the roadmap into an ordered, testable work breakdown that engineers can start from: modules, interfaces, work packages, schedule, test strategy, definition of done. Later phases are sequenced at lower confidence. |
 | Status | **Plan only.** No code has been written. Library names and versions are unverified **[VERIFY]**. Open decisions (ADR-1..7) are not decided here: the plan builds on the proposed defaults in the design documents and says what changes if a decision differs. Effort and duration figures are proposals for the re-baseline checkpoints in the roadmap, not commitments. |
 
@@ -36,7 +36,7 @@ Each invariant is a design rule from `CLAUDE.md` and the architecture. A package
 | Item | Needed before | Working default used in this plan | If the decision differs |
 |---|---|---|---|
 | ADR-4 tenancy (shared multi-tenant with row-level security, tenant ID everywhere) | Schema freeze (end of week 2 of Phase 1; ADR-4 must be decided by the end of week 1) | Shared multi-tenant; tenant ID on every table; policies on every table | WP-1.5 schema and WP-1.6 API change; dedicated-database option adds deployment work, not new tables |
-| ADR-3 approval channel (dashboard only) | UI freeze | Dashboard approval queue bound to the argument hash | Adapters are Phase 2 or later; no Phase 1 change |
+| ADR-3 approval channel (dashboard only) | UI freeze | Dashboard approval queue for tool definitions and agent registrations (call-time approvals bound to the argument hash are outside Phase 1) | Adapters are Phase 2 or later; no Phase 1 change |
 | ADR-6 policy language (Rego on OPA) | Start of WP-1.8 | Rego | Cedar would replace WP-1.8 and the PDP client in WP-1.9 |
 | Spike S5 scanner baselines (week -6 to -5) | Start of WP-1.7 design | Own deterministic rules plus corpus; external scanners only as comparison | Scanner scope may shrink if an external engine proves sufficient |
 | Spike S3 policy latency | WP-1.8 caching design | Sidecar OPA, decision cache keyed by policy hash and input digest | Cache design changes in WP-1.9 |
@@ -77,10 +77,10 @@ Python 3.12 or later, one package per service as in the scaffold (`services/<nam
 |---|---|---|
 | HTTP framework and models | FastAPI, Pydantic | From the approved stack |
 | MCP protocol | Official MCP Python SDK | Check support for revision 2026-07-28 before relying on it for the gateway |
-| Database | PostgreSQL with row-level security; a migration tool and a driver | Tool choice open (plain SQL migrations or a library) |
+| Database | PostgreSQL with row-level security; a migration tool and a driver | Open decisions recorded as PAR-O-27 (migration tool) and PAR-O-28 (database access layer) in `docs/parameter-register.md`; both decided before WP-1.5 starts. Constraint: the access layer must let the tenant be set per transaction (see IG-9 in `docs/implementationgaps.md`) |
 | Policy | OPA and `opa test` | Licence and version to confirm |
 | HTTP client for importer and health checks | `httpx` or similar | Must allow connecting to a pinned address while keeping the host name for TLS |
-| Tests | `pytest`, a property-testing library, a fuzzing harness | Property tests for canonicalisation and the chain |
+| Tests | `pytest`, a property-testing library, a fuzzing harness | Property tests for canonicalisation and the chain. Coverage thresholds are open (PAR-O-26); Section 7 gives the proposal |
 | Frontend | React, TypeScript, a bundler, a browser test runner | |
 | Identity for development | Keycloak | Development only |
 | Static checks | Linter, type checker, SAST, secret scanning, dependency scanning | Gates G1.1..G1.10 in `docs/ci-cd-pipeline.md` |
@@ -92,7 +92,7 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.1 Repository and engineering baseline
 - **Purpose:** a working build, test and CI skeleton so every later package lands with checks.
 - **Covers:** CTL-27, NFR-9 (secure development), CI gates for the code that exists (G1.1..G1.10).
-- **Tasks:** per-package project files with dependencies and tooling configuration; shared lint, type and test configuration; Compose file for PostgreSQL, OPA, Keycloak (development) and the fixture network; import-boundary check (gateway versus api and scanner); pre-commit; start `.github/workflows` product workflow only after the action pins in `docs/ci-cd-pipeline.md` Section 12 are re-verified and a remote exists (otherwise run the same commands locally); README per package.
+- **Tasks:** per-package project files with dependencies and tooling configuration; shared lint, type and test configuration; Compose file for PostgreSQL, OPA, Keycloak (development) and the fixture network; import-boundary check (gateway versus api and scanner); pre-commit; start `.github/workflows` product workflow only after the action pins in `docs/ci-cd-pipeline.md` Section 12 are re-verified and a remote exists (otherwise run the same commands locally); README per package; developer onboarding guide (clone, start Compose, run the checks, add a test case with its TC identifier).
 - **Tests first:** the import-boundary check fails on a deliberate bad import; secret-scan check fails on a dummy token string.
 - **Done when:** one command runs lint, types and tests for all packages locally; CI template gates that apply run clean; a developer can start the Compose stack.
 - **Estimate:** 1.5 to 2. **Depends on:** Phase 0 exit. **Risk:** CI cannot be exercised without a remote (see `docs/repository-setup.md`).
@@ -121,6 +121,7 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.5 Database schema, migrations, roles and row-level security
 - **Covers:** tenancy foundations (ADR-4), FR-DATA-1, immutability support for FR-DRIFT-5, CTL-22 groundwork.
 - **Tasks:** migrations for tenancy and access, inventory, authorization, findings, audit and governance tables as in `docs/data-model.md` Section 3; `tool_versions` without update or delete permission and with a trigger or rule that rejects changes; row-level security policies on every table; database roles (application, audit writer, read-only, migration owner); classification levels table.
+- **Documentation:** keep `docs/data-model.md` in step with the migrations; record the migration and access-layer decisions (Section 4.3).
 - **Tests first:** a cross-tenant read and write attempt fails for each table; an update of `tool_versions` fails for every application role; migration up and down on an empty database.
 - **Scheduling:** starts in week 1 on its own lane so the tables can be frozen at the end of week 2; roles, row-level security tests, constraint tests and indexes finish in weeks 3 to 4. Changes to frozen tables need the security architect's approval.
 - **Done when:** schema is frozen (ADR-4 decided), tests above pass, indexes for the main queries exist.
@@ -129,6 +130,7 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.6 Registry API, approvals and separation of duties
 - **Covers:** FR-INV-1..3, FR-ID-1..2, FR-DRIFT-1, FR-DRIFT-5, FR-SCAN-4, FR-DATA-2, SoD-1..3, CTL-01, CTL-23; TC-C1, TC-E4.
 - **Tasks:** endpoints for agents, servers, tools, versions, approvals and findings per the OpenAPI outline; namespace rule `namespace__tool` and duplicate-name flagging; approval request with the canonical definition and hash stored on approval; re-approval creates a new immutable version; Critical findings block approval except through the two-approver override; server-side separation-of-duties checks; classification default Confidential on registry items; audit events written through an outbox in the same transaction; registration calls the SSRF guard before storing a URL.
+- **Documentation:** API reference generated from the OpenAPI outline and checked against the implemented endpoints (error codes and role table included).
 - **Tests first:** self-approval is refused; Critical override needs two distinct approvers; duplicate tool names across servers are flagged; tenant isolation through the API.
 - **Done when:** the approval lifecycle works end to end against the database with audit events produced.
 - **Estimate:** 3 to 4. **Depends on:** WP-1.2, WP-1.3, WP-1.4, WP-1.5 (frozen tables), WP-1.10 (identity).
@@ -150,6 +152,7 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.9 Thin gateway: list filtering, pin check, decisions
 - **Covers:** FR-RT-1, FR-DRIFT-2..3, FR-INV-4, FR-AUTHN-1, FR-AUTHZ-8, FR-MCP-4, CTL-03, CTL-05 (Phase 1 part); TC-B1..B3, TC-F1, TC-F2, TC-G2, TC-Z5; AC-2, AC-7.
 - **Tasks:** MCP endpoint that validates the Origin header and token (signature, issuer, expiry, audience); registry client with a cache (60 s) that denies when the cache expires and the registry is unreachable; recompute the definition hash on every `tools/list` and on list-changed notifications and compare with the approved hash; quarantine on mismatch and remove the tool from list results and block calls; call the PDP with the contract fields and enforce the answer; fail closed everywhere; audit events for decisions; no response inspection yet.
+- **Documentation:** gateway operator notes: configuration, fail-closed behaviours and what each denial reason means, as input to the Phase 1 runbook items.
 - **Tests first:** changed description, widened schema and flipped annotation each quarantine by the next list; a call made after quarantine fails; an unregistered agent is denied; forged token and wrong audience are denied; stopping OPA denies.
 - **Done when:** AC-2, AC-3 and AC-7 pass in the end-to-end harness (WP-1.12).
 - **Estimate:** 3 to 4. **Depends on:** WP-1.2, WP-1.6, WP-1.8, WP-1.10. **Risk:** scope creep into inspection; the roadmap excludes it from Phase 1.
@@ -171,13 +174,14 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.12 End-to-end harness and fixtures
 - **Covers:** all Phase 1 test cases; findings F6 of the roadmap.
 - **Tasks:** Compose environment on an isolated network; fixture MCP servers per `docs/testing/fixtures-and-corpora.md` (benign server, poisoned descriptions, rug-pull server that changes after approval, hostile importer target, rebinding DNS server, redirecting server); test driver that exercises agent, gateway, API and dashboard; reports mapping each run to TC identifiers; the seed corpus loader.
+- **Seed fleet (proposal, for TC-Z7 and AC-6):** a versioned seed under `tests/fixtures/seed/`, loaded by one command and idempotent, with an expected-counters file stored beside it so counters can be compared with database queries. Two tenants (the second only for isolation checks). In the main tenant: 12 agents, 8 servers and about 60 tools covering every state (approved, pending, quarantined, rejected, deprecated); at least 3 pending approvals, one of them a drift diff on an approved tool; findings at every severity including at least one Critical; one agent with no owner (negative case). Users: viewer, engineer, server owner, approver and auditor, plus a second approver for the override path; one approval requested by a user who also holds the approver role (the self-approval case). Counts are proposals and are fixed when the seed is written.
 - **Tests first:** the harness itself is tested by a failing fixture that must make a case fail.
 - **Done when:** all 26 Phase 1 cases can be run with one command and the report names each case and result.
 - **Estimate:** 3 to 4. Starts in week 1 with the first fixture and grows with each package.
 
 ### WP-1.13 Hardening, acceptance run and runbook exercise
 - **Covers:** AC-1..AC-9, roadmap acceptance criteria and gate checklist.
-- **Tasks:** run all 26 Phase 1 cases and record results and exceptions; measure scanner precision and recall and report them; run the dependency, secret and SAST checks and resolve or waive findings; exercise the Phase 1 runbook items once (fail-closed behaviour, database restore with chain verification); gather evidence for the gate review; re-baseline the estimate for Phase 2.
+- **Tasks:** run all 26 Phase 1 cases and record results and exceptions; measure scanner precision and recall and report them; run the dependency, secret and SAST checks and resolve or waive findings; exercise the Phase 1 runbook items once (fail-closed behaviour, database restore with chain verification) and update `docs/runbooks/operational-runbook.md`: replace each `[TBD]` for Phase 1 items with the real command, metric or alert name, and add the procedures the exercise showed to be missing (parameter PAR-O-24); gather evidence for the gate review; re-baseline the estimate for Phase 2.
 - **Estimate:** 2 to 3.
 
 ## 6. Effort, team and schedule
@@ -207,24 +211,27 @@ The roadmap's team assumption (`docs/roadmap.md` Section 8: two backend engineer
 
 ```mermaid
 flowchart LR
-  P0["Phase 0 exit and ADR-3, 4, 6"] --> WP11["WP-1.1 baseline"]
+  P0["Phase 0 exit and ADR-4, 6"] --> WP11["WP-1.1 baseline"]
+  ADR3["ADR-3 approval channel"] --> WP111["WP-1.11 dashboard"]
+  ADR6["ADR-6 policy language"] --> WP18["WP-1.8 policies"]
   P0 --> WP12["WP-1.2 common core"]
   WP12 --> WP13["WP-1.3 SSRF guard"]
   WP12 --> WP14["WP-1.4 audit chain"]
   P0 --> WP15["WP-1.5 schema and RLS"]
   WP13 --> WP16["WP-1.6 registry and approvals"]
+  WP15 --> WP14
   WP14 --> WP16
   WP15 --> WP16
   WP110["WP-1.10 identity"] --> WP16
   WP12 --> WP110
   WP13 --> WP17["WP-1.7 importer and scanner"]
   S5["Spike S5"] --> WP17
-  WP12 --> WP18["WP-1.8 policies"]
+  WP12 --> WP18
   S3["Spike S3"] --> WP18
   WP16 --> WP19["WP-1.9 gateway"]
   WP18 --> WP19
   WP110 --> WP19
-  WP16 --> WP111["WP-1.11 dashboard"]
+  WP16 --> WP111
   WP110 --> WP111
   WP11 --> WP112["WP-1.12 harness"]
   WP17 --> WP113["WP-1.13 acceptance"]
@@ -232,6 +239,8 @@ flowchart LR
   WP111 --> WP113
   WP112 --> WP113
 ```
+
+Edges follow the `Depends on` line of each package. Spike S5 gates the scanner design (WP-1.7) and spike S3 the policy caching design (WP-1.8); spikes S1, S2, S4 and S6 gate Phase 2 and later work and have no Phase 1 edge. ADR-3 gates only the dashboard (UI freeze) and ADR-6 only WP-1.8. WP-1.4 needs WP-1.5 for the database-backed run, while its chain and verifier logic can start from WP-1.2 alone.
 
 ### 6.3 Weekly plan (weeks from Phase 1 start; four lanes)
 
@@ -384,7 +393,26 @@ All 42 requirements tagged Phase 1 (including those tagged P1/P2) in `Plan/funct
 | FR-UI-2 | Drill-down per agent, server, tool: owner, environment, criticality, risk, ver... | WP-1.11 |  |
 | FR-UI-3 | Approval queue with diff, evidence and SoD enforcement. | WP-1.11 | WP-1.6 |
 
-Controls with Phase 1 content map to packages as follows: CTL-01 to WP-1.6; CTL-02 to WP-1.7; CTL-03 to WP-1.6 and WP-1.9; CTL-04 and CTL-05 to WP-1.9 and WP-1.10; CTL-06 to WP-1.8; CTL-08 to WP-1.3; CTL-13 to WP-1.4; CTL-14 to WP-1.2; CTL-16 to WP-1.8; CTL-18 to WP-1.9; CTL-23 to WP-1.6 and WP-1.10; CTL-24 to WP-1.9 and WP-1.13; CTL-27 to WP-1.1; CTL-28 to WP-1.11; CTL-29 to WP-1.5 and WP-1.6.
+Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py` checks that every control whose phase in `controls/catalogue.yaml` includes P1 has a row, that each row names an existing package, and that the phase column matches the catalogue.
+
+| Control | Title | Catalogue phase | Package(s) |
+|---|---|---|---|
+| CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P1 | WP-1.6 |
+| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P1 | WP-1.7 |
+| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P1/P2 | WP-1.6, WP-1.9 |
+| CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P1/P2 | WP-1.9, WP-1.10 |
+| CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P1/P2 | WP-1.9, WP-1.10 |
+| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P1/P2/P3 | WP-1.8 |
+| CTL-08 | SSRF protection and egress allowlisting | P1/P2 | WP-1.3 |
+| CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | P1/P2 | WP-1.4 |
+| CTL-14 | Security monitoring and alerting; platform observability | P1/P2/P4 | WP-1.2 |
+| CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P1/P3 | WP-1.8 |
+| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P1/P2 | WP-1.9 |
+| CTL-23 | Separation of duties, privileged and break-glass access | P1/P2 | WP-1.6, WP-1.10 |
+| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P1/P5 | WP-1.9, WP-1.13 |
+| CTL-27 | Secure development and change management for the platform | P1 onward | WP-1.1 |
+| CTL-28 | Fleet dashboard, approval workflow and notifications | P1/P2/P3 | WP-1.11 |
+| CTL-29 | Data classification and labelling | P1/P2 | WP-1.5, WP-1.6 |
 
 ## 12. Open items and what would change this plan
 
@@ -400,5 +428,6 @@ Controls with Phase 1 content map to packages as follows: CTL-01 to WP-1.6; CTL-
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-11-22 | IG-10: ADR-3 row reworded (Phase 1 approves tool definitions and agent registrations). IG-12: control-to-package table, checked by `scripts/check_docs.py`. IG-13: documentation tasks added to WP-1.1, WP-1.5, WP-1.6, WP-1.9 and a runbook update task to WP-1.13. IG-16: dependency graph edges added (WP-1.5 to WP-1.4, ADR-3, ADR-6) and spike links explained. IG-17: seed fleet proposal in WP-1.12; migration tool, access layer and coverage thresholds recorded as PAR-O-26..28 |
 | 0.2 | 2026-11-22 | IG-1: FR-MCP-4 added to the traceability table (42 requirements). IG-2: WP-1.5 starts in week 1 so the schema freeze at the end of week 2 is achievable; dependency and lane text corrected |
 | 0.1 | 2026-11-22 | First version |

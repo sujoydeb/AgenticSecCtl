@@ -16,8 +16,8 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/testing/cases.md` | 100 security test cases (specifications, none executed) | v0.5 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.2 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
-| `docs/implementationgaps.md` | Gap register for the implementation plan (IG-1..17; none closed yet) | v0.2 |
-| `Plan/implementation-plan.md` | Build-level implementation plan (Phase 1 work packages WP-1.1..13, schedule, tests, definition of done; phases 2-5 outlined; generated traceability table of P1 requirements) | v0.2 |
+| `docs/implementationgaps.md` | Gap register for the implementation plan (IG-1..17; IG-1, IG-2 and the five Low gaps closed pending review) | v0.3 |
+| `Plan/implementation-plan.md` | Build-level implementation plan (Phase 1 work packages WP-1.1..13, schedule, tests, definition of done; phases 2-5 outlined; generated traceability table of P1 requirements) | v0.3 |
 | `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.4 |
 | `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.3 |
 | `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.1 |
@@ -29,7 +29,7 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/authn-authz-design.md` | Flows, policy structure and decision contract, illustrative unexecuted Rego | v0.1 |
 | `docs/cross-cutting-design.md` | Logging, error handling and configuration rules | v0.1 |
 | `docs/ux-outline.md` | Dashboard information architecture and flows (no visual design) | v0.1 |
-| `docs/parameter-register.md` | Fixed parameters (machine-checked) and open "to be set" parameters with owners and gates | v0.1 |
+| `docs/parameter-register.md` | Fixed parameters (machine-checked) and open "to be set" parameters with owners and gates | v0.2 |
 | `docs/privacy-assessment.md` | Platform data inventory and privacy risks; legal questions marked [LEGAL] | v0.2 |
 | `docs/cloud-adapter-verification.md` | AWS and Azure adapter facts from documentation chunks; Google Cloud from search summaries only | v0.2 |
 | `docs/repository-setup.md` | Untested outline for remote repository and branch protection; nothing executed | v0.1 |

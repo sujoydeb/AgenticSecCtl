@@ -445,6 +445,25 @@ if plan_text:
     for r in sorted(_p1_tcs - _tc_rows):
         err(f"Plan/implementation-plan.md: Phase 1 test case {r} missing from the test table")
 
+    # IG-12: control-to-package table covers every control with Phase 1 content
+    _cat = catalogue_lib.load(str(ROOT / "controls" / "catalogue.yaml"))
+    _ctls = {x["id"]: x for x in (_cat["controls"] if isinstance(_cat, dict) else _cat)}
+    _wps = set(re.findall(r"^### (WP-1\.\d+) ", plan_text, re.M))
+    _ctl_rows = {}
+    for _m in re.finditer(r"^\| (CTL-\d+) \| [^|]* \| ([^|]*) \| ([^|]*) \|$", plan_text, re.M):
+        _ctl_rows[_m.group(1)] = (_m.group(2).strip(), re.findall(r"WP-1\.\d+", _m.group(3)))
+    for cid, x in _ctls.items():
+        if re.search(r"\bP1\b", x["phase"]) and cid not in _ctl_rows:
+            err(f"Plan/implementation-plan.md: control {cid} has Phase 1 content but no package in the control table")
+    for cid, (ph, pk) in _ctl_rows.items():
+        if cid not in _ctls:
+            err(f"Plan/implementation-plan.md: control table names unknown control {cid}")
+            continue
+        if ph != _ctls[cid]["phase"]:
+            err(f"Plan/implementation-plan.md: control table phase for {cid} is '{ph}', catalogue says '{_ctls[cid]['phase']}'")
+        if not pk or any(w not in _wps for w in pk):
+            err(f"Plan/implementation-plan.md: control {cid} maps to a missing or unknown work package")
+
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
 _tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}

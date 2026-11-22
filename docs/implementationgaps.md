@@ -2,12 +2,12 @@
 
 | | |
 |---|---|
-| Version | 0.2 (review of `Plan/implementation-plan.md` v0.1; IG-1 and IG-2 incorporated in plan v0.2, pending review) |
+| Version | 0.3 (review of `Plan/implementation-plan.md` v0.1; IG-1 and IG-2 incorporated in plan v0.2 and the Low gaps IG-10, IG-12, IG-13, IG-16, IG-17 in plan v0.3, all pending review) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/implementation-plan.md` v0.2, `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `docs/parameter-register.md` v0.1 |
+| Depends on | `Plan/implementation-plan.md` v0.3, `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `docs/parameter-register.md` v0.2 |
 | Scope | Gaps, errors and inconsistencies found when reading the implementation plan against the specification, architecture, test catalogue, roadmap and the checker script. This register is separate from `docs/reviewgap.md`, which covers the design documents. |
 | Method | Scripted re-computation of the Phase 1 requirement and test-case sets with a parser that finds the phase by pattern (not by column position), comparison of the plan's schedule and dependency text with itself, and reading of each work package against the design documents. Nothing was built or executed. |
-| Status | Findings. IG-1 and IG-2 are incorporated in plan v0.2 and the checker; the other 15 are open. Closure wording as in `docs/reviewgap.md` Section 9: "closed, pending review" means changed but not yet reviewed by someone other than the author. Severity: **High** (the plan is wrong or cannot be executed as written), **Medium** (a build-time question an engineer will hit early), **Low** (completeness). |
+| Status | Findings. IG-1 and IG-2 are incorporated in plan v0.2 and the checker, and the five Low gaps in plan v0.3 (Section 6); the other 10 are open. Closure wording as in `docs/reviewgap.md` Section 9: "closed, pending review" means changed but not yet reviewed by someone other than the author. Severity: **High** (the plan is wrong or cannot be executed as written), **Medium** (a build-time question an engineer will hit early), **Low** (completeness). |
 
 ## 1. Summary
 
@@ -59,5 +59,18 @@ Owner roles use the glossary in `docs/governance.md`. "Close by" names the gate 
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-11-22 | Low gaps incorporated in implementation plan v0.3 (Section 6) |
 | 0.2 | 2026-11-22 | IG-1 and IG-2 incorporated in implementation plan v0.2 and the checker |
 | 0.1 | 2026-11-22 | First version: 17 gaps found when reviewing implementation plan v0.1 |
+
+## 6. Closure update for the Low gaps (plan v0.3)
+
+All five are "closed, pending review": changed by the author, not yet reviewed by someone else.
+
+| Gap | Status | What changed | Where | Remaining |
+|---|---|---|---|---|
+| IG-10 | Closed, pending review | ADR-3 row says the Phase 1 approval covers tool definitions and agent registrations; call-time approvals are outside Phase 1 | Plan Section 3 | None |
+| IG-12 | Closed, pending review | Control-to-package paragraph replaced by a table; `check_docs.py` fails if a control with P1 in its phase has no row, a row names an unknown control or package, or the phase differs from the catalogue (negative case tried by deleting a row) | Plan Section 11, `scripts/check_docs.py` | The table is maintained by hand, not generated; the check verifies it |
+| IG-13 | Closed, pending review | Documentation tasks added to WP-1.1 (onboarding), WP-1.5 (data model, decisions), WP-1.6 (API reference), WP-1.9 (operator notes); WP-1.13 now updates the runbook and replaces Phase 1 `[TBD]` items | Plan WP-1.1, 1.5, 1.6, 1.9, 1.13 | No effort added to the estimates; re-check at the re-baseline |
+| IG-16 | Closed, pending review | Edges added: WP-1.5 to WP-1.4, ADR-3 to WP-1.11, ADR-6 to WP-1.8; text states which spikes gate which package and that S1, S2, S4 and S6 have no Phase 1 edge | Plan Section 6.2 | Diagram not rendered after the change (the checker validates structure only) |
+| IG-17 | Closed, pending review | Seed fleet proposal in WP-1.12; coverage thresholds, migration tool and access layer recorded as PAR-O-26..28 | Plan WP-1.12 and Section 4.3; `docs/parameter-register.md` v0.2 | Tool and threshold values still undecided; seed counts are proposals |
