@@ -22,7 +22,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `compliance/` | Framework mapping matrix (mandatory / guidance / voluntary) | FR-COMP-2 |
 | `tests/unit`, `integration`, `e2e`, `fuzz`, `adversarial` | Test suites; IDs follow `TC-*` in the threat model | threat model 7 |
 | `tests/fixtures/evil_mcp/`, `benign_mcp/` | Hostile and benign MCP servers, run only on an isolated network | threat model 7 |
-| `docs/testing/` | Full test case catalogue (to be written) | threat model 7 |
+| `docs/testing/` | Test case catalogue (`cases.md`, 64 cases, not yet executed) | threat model 7 |
 | `docs/runbooks/`, `docs/playbooks/` | Operational runbook, incident response playbooks | FR-IR-4 |
 | `.github/workflows/` | CI security gates | NFR-9 |
 | `scripts/` | Developer and CI helper scripts | — |

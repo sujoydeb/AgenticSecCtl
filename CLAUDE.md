@@ -34,7 +34,7 @@ There are no build, lint or test commands yet. When code is added, update this f
 - **Keep the HTML in sync:** `functional-spec.html` is a hand-maintained copy of the markdown spec, not generated. Changes to `functional-spec.md` must be mirrored there. It defines colors as CSS tokens with light/dark variants; preserve that.
 - Diagrams are Mermaid fenced blocks in markdown.
 - `functional-spec.md` Section 3 still says the architecture document is "to be written"; it now exists.
-- The threat model defers full test cases to `testing/cases.md`, which does not exist yet.
+- The threat model defers full test cases to `testing/cases.md`; the catalogue now exists at `docs/testing/cases.md` (64 cases, IDs match threat model Section 7). It is a specification only; no case has been executed. A known gap: AC-9 (log redaction) has no test case yet (see its Section 20). Adding or renumbering a `TC-*` ID means updating the threat-model index and that coverage table.
 
 ## Planned architecture (big picture)
 
