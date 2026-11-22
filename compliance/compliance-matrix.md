@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft; **not reviewed by legal or compliance**) |
-| Depends on | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `docs/tech-evaluation.md` v0.1 |
-| Satisfies | FR-COMP-1..3 (control catalogue, mandatory/guidance/voluntary labelling, per-finding record). FR-COMP-5 (legal review before release) is **not yet satisfied**. |
+| Version | 0.2 (draft; **not reviewed by legal or compliance**) |
+| Depends on | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `docs/tech-evaluation.md` v0.1, `controls/catalogue.md` v0.1 |
+| Satisfies | FR-COMP-2..3 (mandatory/guidance/voluntary labelling, per-finding record). The control catalogue of FR-COMP-1 is in `controls/catalogue.md`. FR-COMP-5 (legal review before release) is **not yet satisfied**. |
 | Review status | Review date: none. Reviewer: none. Release as an authoritative mapping is blocked until reviewed. |
 
 ## 1. Read this first
@@ -40,39 +40,39 @@
 | F-ATLAS | MITRE ATLAS | **Knowledge base** | Any | Current matrix and technique IDs | No |
 | F-ATTCK | MITRE ATT&CK | **Knowledge base** | Any | Enterprise matrix version | No |
 
-## 3. Control catalogue
+## 3. Controls
 
-Controls are platform capabilities. Types: **P** prevent, **D** detect, **R** respond, **V** recover. "Owner" is the role accountable for the control operating effectively, not a named person (to be assigned). Evidence lists what an auditor would ask for; the platform produces it per FR-COMP-4 once built.
+Control definitions (objective, how each control works, prevent/detect/respond/recover contributions, parameters, failure behaviour, false positives and negatives, bypass scenarios, residual risk, requirements, tests, evidence and metrics) are in `controls/catalogue.md`, generated from `controls/catalogue.yaml`. That catalogue is the single definition; this table only lists the IDs used by the mappings below. Types: **P** prevent, **D** detect, **R** respond, **V** recover. Owners are roles, not people.
 
-| ID | Control | Type | Component | Requirements | Tests | Evidence required | Owner (role) | Phase |
-|---|---|---|---|---|---|---|---|---|
-| CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | Registry/API | FR-INV-1..4, FR-ID-1/2 | TC-C1, TC-C3, TC-F1 | Inventory export; registration approvals; unregistered-asset reports | Security engineering | P1 |
-| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | Scanner, Registry | FR-SCAN-1..4, 6, 9 | TC-A1..A5, TC-E4, TC-Z2 | Scan reports with rule-set version; approval and override records | Security engineering | P1 |
-| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P, D, R | Gateway, Registry | FR-DRIFT-1..7 | TC-B1..B4, TC-Z3 | Version history; hash records; drift events; quarantine records | Security engineering | P1/P2 |
-| CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | Identity/broker | FR-ID-1..3, 7 | TC-F1, TC-F2, TC-G1 | Client registry; rotation and revocation logs | Identity and access team | P1/P2 |
-| CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | Gateway, broker | FR-AUTHN-1..6 | TC-F2, TC-G1..G5, TC-C2 | Token validation configuration; deny logs; redaction test results | Identity and access team | P1/P2 |
-| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | PDP, Gateway | FR-AUTHZ-1..3, 6..8 | TC-E1, TC-E2, TC-C3, TC-Z5 | Policy bundles with hashes; decision logs; permission reviews | Security engineering | P1/P2/P3 |
-| CTL-07 | Just-in-time access and human approval for high-impact actions bound to argument hash | P | PDP, API | FR-AUTHZ-4/5, FR-AUTO-3 | TC-E3, TC-D4, TC-K3 | Grant and approval records with approver identity | Business owner and approver pool | P2 |
-| CTL-08 | SSRF protection and egress allowlisting | P, D | Egress proxy, Scanner | FR-SSRF-1..5, FR-RT-7 | TC-H1..H4, TC-I4, TC-X2 | Guard configuration; blocked-connection logs; network policy exports | Platform security | P1/P2 |
-| CTL-09 | Response inspection for injection, untrusted labelling, taint rule | P, D | Gateway, Inspection | FR-RT-4, 5, 9, 11 | TC-D1..D5 | Detector configuration; shadow-mode results; signals log | Security engineering | P2 |
-| CTL-10 | Data loss prevention on requests and responses; tenant isolation | P, D | Gateway, DLP | FR-RT-6, 8, FR-AUD-3 | TC-I1..I3, TC-G5 | DLP policies; match logs; isolation test results | Data protection / security engineering | P2 |
-| CTL-11 | Argument guards, schema validation, execution sandboxing | P | Gateway, platform | FR-RT-2, 3, FR-EXEC-1/2 | TC-O1..O3, TC-Z1 | Guard rules; sandbox profiles; test results | Platform security | P2/P4 |
-| CTL-12 | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | Gateway, API | FR-AUTO-1..5, FR-ID-5, FR-RT-10 | TC-K1..K3, TC-M1, TC-Z4 | Limit configuration; suspension and resume records | Security engineering | P2 |
-| CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | Audit service | FR-AUD-1..7 | TC-Z6, TC-X5 | Chain verification reports; anchor records; sample decision replays | Security operations / audit liaison | P1/P2 |
-| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | FR-BEH-1/2, FR-OBS-1/2 | TC-K1, TC-P4 | Alert rules; on-call records; SLO reports | Security operations | P2/P4 |
-| CTL-15 | Incident detection, containment, evidence preservation, reporting | R, V | Incident manager | FR-IR-1..5 | Playbook exercises (see playbooks Section 7.3), TC-X8 | Incident records; evidence index; post-incident reviews | Incident commander / security operations | P2/P3/P4 |
-| CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P | PDP, CI | FR-POL-1..4 | TC-X6 | Change records; bundle signatures; review approvals | Security engineering | P1/P3 |
-| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | FR-SCAN-5, FR-SUP-1..3, FR-MOD-3, NFR-9 | TC-L1..L3 | SBOMs; scan reports; signature verification logs; intake records | Platform security | P3/P4 |
-| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Spec Section 4.12 | TC-P1..P4 | Protocol configuration; compatibility matrix; deny logs | Security engineering | P2 |
-| CTL-19 | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | Memory tools, Inspection | FR-MEM-1..4 | TC-J1, TC-J2 | Write attribution logs; rollback records | Security engineering | P4 |
-| CTL-20 | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | Gateway, PDP | FR-ID-4..6 | TC-M1, TC-M2 | Delegation logs; policy tests | Security engineering | P4 |
-| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | FR-MOD-1..3 | TC-N1, TC-N2 | Model registry; quota and alert logs | AI governance / model owner | P3/P4 |
-| CTL-22 | Multi-tenancy, data residency and retention | P | Platform | FR-ADM-2, 4, 5, FR-RT-8 | TC-I3 | Tenant configuration; retention reports; residency settings | Data protection / platform ops | P2/P5 |
-| CTL-23 | Separation of duties, privileged and break-glass access | P, D | API, IdP | SoD-1..3, FR-ADM-6, FR-UI-7 | TC-E4, TC-X6, TC-X8 | Role bindings; access reviews; break-glass use records | Security administration | P1/P2 |
-| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | Platform | FR-AUTHZ-8, FR-AUD-7, NFR-3/4 | TC-Z5, TC-Z6; DR exercises (runbook Section 11) | HA design; backup and restore test records; DR exercise reports | Platform operations | P1/P5 |
-| CTL-25 | Compliance evidence generation and framework mapping governance | D | Compliance engine | FR-COMP-1..5 | Evidence pack review | Signed evidence packs; mapping review records | Compliance liaison | P3 |
-| CTL-26 | Discovery and coverage reporting (known gaps) | D | Discovery | FR-INV-5..7 | TC-X2 | Discovery results; coverage-gap reports | Security engineering | P2/P3 |
-| CTL-27 | Secure development and change management for the platform | P | CI/CD, process | NFR-9; runbook Section 6 | TC-L3 | CI gate results; change approvals; pen-test reports | Engineering management / platform security | P1 onward |
+| ID | Control | Type | Component | Owner (role) | Phase |
+|---|---|---|---|---|---|
+| CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | Registry/API | Security engineering | P1 |
+| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | Scanner, Registry | Security engineering | P1 |
+| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P, D, R | Gateway, Registry | Security engineering | P1/P2 |
+| CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | Identity/broker | Identity and access team | P1/P2 |
+| CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | Gateway, broker | Identity and access team | P1/P2 |
+| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | PDP, Gateway | Security engineering | P1/P2/P3 |
+| CTL-07 | Just-in-time access and human approval for high-impact actions bound to argument hash | P | PDP, API | Business owner and approver pool | P2 |
+| CTL-08 | SSRF protection and egress allowlisting | P, D | Egress proxy, Scanner | Platform security | P1/P2 |
+| CTL-09 | Response inspection for injection, untrusted labelling, taint rule | P, D | Gateway, Inspection | Security engineering | P2 |
+| CTL-10 | Data loss prevention on requests and responses; tenant isolation | P, D | Gateway, DLP | Data protection / security engineering | P2 |
+| CTL-11 | Argument guards, schema validation, execution sandboxing | P | Gateway, platform | Platform security | P2/P4 |
+| CTL-12 | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | Gateway, API | Security engineering | P2 |
+| CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | Audit service | Security operations / audit liaison | P1/P2 |
+| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | Security operations | P2/P4 |
+| CTL-15 | Incident detection, containment, evidence preservation, reporting | R, V | Incident manager | Incident commander / security operations | P2/P3/P4 |
+| CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P | PDP, CI | Security engineering | P1/P3 |
+| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | Platform security | P3/P4 |
+| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Security engineering | P2 |
+| CTL-19 | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | Memory tools, Inspection | Security engineering | P4 |
+| CTL-20 | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | Gateway, PDP | Security engineering | P4 |
+| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | AI governance / model owner | P3/P4 |
+| CTL-22 | Multi-tenancy, data residency and retention | P | Platform | Data protection / platform ops | P2/P5 |
+| CTL-23 | Separation of duties, privileged and break-glass access | P, D | API, IdP | Security administration | P1/P2 |
+| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | Platform | Platform operations | P1/P5 |
+| CTL-25 | Compliance evidence generation and framework mapping governance | D | Compliance engine | Compliance liaison | P3 |
+| CTL-26 | Discovery and coverage reporting (known gaps) | D | Discovery | Security engineering | P2/P3 |
+| CTL-27 | Secure development and change management for the platform | P | CI/CD, process | Engineering management / platform security | P1 onward |
 
 ## 4. Control-to-framework mapping
 
@@ -249,10 +249,11 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 - **Phase dependence:** many controls are P2 or later; a mapping row does not mean the control exists today.
 - **Matrix quality checks required before release:** legal and compliance review (FR-COMP-5); sampling of mappings by a second reviewer; confirm each "supports" statement is defensible; remove or soften any cell that cannot be justified.
 - **Maintenance:** re-review when frameworks revise, when requirement IDs change, and when controls change phase. Update `Depends on` versions and run `scripts/check_docs.py`.
-- **Machine-readable form:** a YAML/CSV export of Sections 3–5 is planned for `controls/` (FR-COMP-1/4) once the mapping is reviewed. Until then this document is the single source.
+- **Machine-readable form:** control definitions are in `controls/catalogue.yaml`. A YAML/CSV export of the framework mappings (Sections 4–5) is still planned (FR-COMP-4) once the mapping is reviewed; until then this document is the single source for mappings.
 
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
 | 0.1 | 2026-11-22 | First draft; unverified references; not reviewed |
+| 0.2 | 2026-11-22 | Control definitions moved to `controls/catalogue.yaml`; Section 3 reduced to the ID list |

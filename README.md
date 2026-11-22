@@ -18,8 +18,8 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `db/migrations/` | Postgres schema migrations | architecture 7 |
 | `deploy/compose/` | Docker Compose for dev and CI end-to-end tests | architecture 8 |
 | `deploy/helm/`, `deploy/k8s/`, `deploy/admission/` | Helm charts, NetworkPolicies, admission policies | architecture 8 |
-| `controls/` | Control catalogue (versioned) | FR-COMP-1 |
-| `compliance/` | Compliance mapping matrix (`compliance-matrix.md`: 27 controls, framework mappings, findings register; unverified, not legally reviewed) | FR-COMP-1..3 |
+| `controls/` | Control catalogue: `catalogue.yaml` (source) and `catalogue.md` (generated); 27 controls, CTL-01..27 | FR-COMP-1 |
+| `compliance/` | Compliance mapping matrix (`compliance-matrix.md`: framework mappings and findings register; unverified, not legally reviewed) | FR-COMP-2..3 |
 | `tests/unit`, `integration`, `e2e`, `fuzz`, `adversarial` | Test suites; IDs follow `TC-*` in the threat model | threat model 7 |
 | `tests/fixtures/evil_mcp/`, `benign_mcp/` | Hostile and benign MCP servers, run only on an isolated network | threat model 7 |
 | `docs/testing/` | Test case catalogue (`cases.md`, 65 cases, not yet executed) | threat model 7 |
@@ -28,7 +28,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
 | `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/` | CI security gates | NFR-9 |
-| `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`) | — |
+| `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`), `build_catalogue_md.py` and `catalogue_lib.py` (generate `controls/catalogue.md`) | — |
 
 Each service is its own Python package (`src/` layout, Python >= 3.12) with a minimal `pyproject.toml` and no dependencies declared yet. Dependencies and tooling (linters, test runner) are added when the first code lands.
 

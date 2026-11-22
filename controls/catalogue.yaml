@@ -1,0 +1,1484 @@
+# Control catalogue source. Strict YAML subset: see scripts/catalogue_lib.py.
+# Generated view: controls/catalogue.md (python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md)
+version: "0.1"
+status_note: "Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set."
+depends_on_docs: "Plan/functional-spec.md v0.3, Plan/architecture.md v0.2, Plan/threat-model.md v0.2, docs/testing/cases.md v0.2, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.2"
+satisfies: "FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here."
+intro: "A control is a platform capability that reduces a named threat. Each entry says how the control works step by step, what it contributes to prevention, detection, response and recovery, how it fails, where it produces false positives and false negatives, how it can be bypassed, and what risk remains. Owners are roles, not people. Status is specified for every control."
+enforcement_classes:
+  - "deterministic: the decision is made by fixed rules or checks that give the same result for the same input; this is the only class allowed to enforce a high-impact decision alone."
+  - "human: a person decides, with deterministic gates around the decision (who may decide, what exactly is being approved, expiry, audit)."
+  - "advisory: produces signals or reports; never the sole control for a high-impact decision."
+  - "hybrid: a deterministic part enforces and an advisory or human part adds judgement; the deterministic part alone must keep the system safe."
+excluded:
+  - "Business-process controls outside the platform (risk classification of AI systems, data protection impact assessments, regulatory reporting decisions, model validation); see compliance/compliance-matrix.md Section 6."
+  - "Controls inside MCP servers and agent frameworks that the platform cannot observe; the platform reports these gaps through CTL-26."
+  - "Physical and HR controls."
+controls:
+  - id: "CTL-01"
+    name: "Inventory and registration of agents, servers and tools with owner, environment, criticality"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "Registry/API"
+    objective: "Ensure every agent, server and tool that can act is known, owned and classified, and that unknown ones are denied."
+    how_it_works:
+      - "An owner registers an agent (owner, environment, criticality, model reference) or a server (URL, namespace, transport, owner, expected egress destinations)."
+      - "The server URL passes the SSRF guard (CTL-08) before any connection is made."
+      - "A person other than the requester approves agent registration (SoD-1, FR-ID-2)."
+      - "Servers and tools receive unique IDs; tools are addressed as namespace__tool; identical tool names on different servers raise a duplicate-name finding and are never routed implicitly."
+      - "The gateway consults the registry cache; an unregistered agent or server is denied."
+    prevent:
+      - "Calls from unregistered agents or to unregistered servers are denied."
+      - "Ambiguous tool names cannot be routed."
+    detect:
+      - "Duplicate-name findings at registration; assets without an owner appear in reports."
+    respond:
+      - "Mark an asset retired or quarantined; revoke its identity (CTL-04)."
+    recover:
+      - "Re-registration with a new approval after remediation."
+    parameters:
+      - "Namespace separator: double underscore (architecture and spec FR-INV-2)."
+      - "Registry cache TTL at the gateway: at most 60 s."
+    failure_behavior: "Registry unreachable and cache expired: deny."
+    false_positives:
+      - "A legitimate new development server is blocked until registered."
+      - "Generic tool names shared by design raise duplicate-name findings."
+    false_negatives:
+      - "Assets that never pass through the gateway are not seen unless discovery (CTL-26) finds them."
+    bypass_scenarios:
+      - "Local stdio servers, IDE-embedded agents and direct SaaS connectors that skip the gateway."
+      - "Agent frameworks that drop namespaces on the client side."
+    residual_risk: "Unmanaged endpoints remain outside enforcement and are reported only (threat X2). Accepted until owners sign off."
+    requirements:
+      - "FR-INV-1..4"
+      - "FR-ID-1..2"
+    threats:
+      - "C"
+      - "F"
+      - "X2"
+    tests:
+      - "TC-C1"
+      - "TC-C3"
+      - "TC-F1"
+    evidence:
+      - "Inventory export with owners and criticality."
+      - "Registration approvals showing requester and approver."
+      - "Unregistered-asset and duplicate-name reports."
+    metrics:
+      - "Assets without an owner (target 0)."
+      - "Denials for unregistered agent or server per day."
+      - "Share of observed tool calls that go through registered agent-server pairs."
+    depends_on:
+      - "CTL-08"
+      - "CTL-23"
+    owner_role: "Security engineering"
+    phase: "P1"
+    status: "specified"
+    verify: ""
+  - id: "CTL-02"
+    name: "Tool scanning with reproducible scoring; approval with separation of duties and dual-control override"
+    type: "P, D"
+    enforcement: "hybrid"
+    component: "Scanner, Registry"
+    objective: "Stop poisoned or unsafe tool definitions from being approved, with evidence and a reproducible score."
+    how_it_works:
+      - "A hardened importer fetches tools/list from the registered server with timeouts, size and depth caps, no redirects by default, in an unprivileged isolated worker."
+      - "Definitions are normalised (Unicode NFC, invisible and bidirectional characters flagged, common encodings decoded for analysis only)."
+      - "Deterministic rules produce findings with rule ID, severity, location, evidence excerpt and confidence."
+      - "Score = min(100, sum of rule weight x confidence); weights Critical 40, High 20, Medium 8, Low 2; the rule-set version is stored with the scan."
+      - "An optional classifier can only raise severity; it never lowers a deterministic finding and never approves."
+      - "A reviewer who is not the owner approves; a Critical finding needs two distinct approvers and a justification with expiry."
+      - "On a rule-set update approved tools are re-scanned; a Critical finding quarantines the tool and notifies, lower severities create review items."
+    prevent:
+      - "Tools with Critical findings cannot be approved by one person."
+    detect:
+      - "Hidden or override instructions, credential requests, URLs and IPs, encoded blobs, tool-chaining instructions, schema anomalies."
+    respond:
+      - "Reject the tool or quarantine it (CTL-03); notify owner and approvers."
+    recover:
+      - "Owner fixes the definition; a new version is scanned and approved."
+    parameters:
+      - "Severity weights: Critical 40, High 20, Medium 8, Low 2."
+      - "Override: two distinct approvers (SoD-2)."
+      - "Importer limits (timeout, size, depth): to be set."
+    failure_behavior: "Scanner unavailable: scans queue and nothing new can be approved; live calls on already approved tools are unaffected."
+    false_positives:
+      - "Legitimate descriptions that contain words like ignore or documentation URLs."
+      - "Benign encoded strings in examples."
+    false_negatives:
+      - "Paraphrased, multilingual or split-across-fields instructions that rules do not match."
+      - "A tool that is benign at review and changes later (see CTL-03)."
+    bypass_scenarios:
+      - "Instruction text phrased to avoid the rule set."
+      - "Collusion between two approvers."
+    residual_risk: "Novel phrasing evades deterministic rules and the classifier is advisory, so the control reduces but does not remove tool poisoning (threat A). Detector quality budgets are in spec Section 10."
+    requirements:
+      - "FR-SCAN-1..4"
+      - "FR-SCAN-6"
+      - "FR-SCAN-9"
+      - "SoD-1"
+      - "SoD-2"
+    threats:
+      - "A"
+      - "X1"
+      - "X6"
+    tests:
+      - "TC-A1..A5"
+      - "TC-E4"
+      - "TC-Z2"
+    evidence:
+      - "Scan reports with rule-set version, findings and evidence."
+      - "Approval and override records with approver identities."
+      - "Precision and recall results on the labelled corpus."
+    metrics:
+      - "Recall and precision on the benchmark corpus (targets: 95 percent and 90 percent)."
+      - "Overrides per month and their age."
+      - "Time from registration to decision."
+    depends_on:
+      - "CTL-08"
+      - "CTL-23"
+    owner_role: "Security engineering"
+    phase: "P1"
+    status: "specified"
+    verify: "External MCP scanners as advisory signals or corpus sources are unverified (docs/tech-evaluation.md)."
+  - id: "CTL-03"
+    name: "Definition pinning (canonical hash) and drift quarantine"
+    type: "P, D, R"
+    enforcement: "deterministic"
+    component: "Gateway, Registry"
+    objective: "Make sure agents only use the exact tool definition that was approved, and block it the moment it changes."
+    how_it_works:
+      - "On approval, store the canonical JSON (RFC 8785, Unicode NFC) of server ID, name, description, input schema, output schema and annotations, and its SHA-256; approved versions are immutable (database trigger)."
+      - "The gateway recomputes the hash on every tools/list, on list_changed notifications, on a scheduled poll and at call time against a definition cached for at most 60 s."
+      - "On mismatch the tool is set to quarantined, removed from lists, calls are denied, a finding is raised and approvers are notified with a field-level diff."
+      - "Re-approval creates a new immutable version; history is kept."
+    prevent:
+      - "Calls to a changed definition are denied before the server is contacted."
+    detect:
+      - "Hash mismatch events with old and new hash and the changed field."
+      - "Response shape and size deviations from a baseline (Phase 4)."
+    respond:
+      - "Automatic quarantine; notification; diff view for review."
+    recover:
+      - "Re-scan and approve a new version, or reject."
+    parameters:
+      - "Definition cache TTL for call-time check: 60 s default."
+      - "Quarantine propagation to gateway caches: within 5 s."
+    failure_behavior: "Registry unreachable: the gateway keeps denying hash mismatches from its local approved copy; after the cache expires all calls are denied."
+    false_positives:
+      - "Benign server releases that change descriptions or schemas quarantine many tools at once (quarantine storm)."
+    false_negatives:
+      - "Behaviour that changes while the definition stays identical, including per-user or time-conditional behaviour."
+    bypass_scenarios:
+      - "Exploiting the cache window (bounded by the call-time check)."
+      - "Malicious behaviour approved from the start."
+    residual_risk: "Hashing detects change, not malice; unchanged definitions can still behave badly (threat B, X7). Compensating controls are CTL-09 and behaviour baselines."
+    requirements:
+      - "FR-DRIFT-1..7"
+    threats:
+      - "A"
+      - "B"
+      - "X7"
+    tests:
+      - "TC-B1..B4"
+      - "TC-Z3"
+    evidence:
+      - "Version history with hashes."
+      - "Drift events with diffs and quarantine records."
+      - "Race-test results."
+    metrics:
+      - "Time from change to quarantine."
+      - "Calls to quarantined tools that succeeded (target 0)."
+      - "Quarantines per week and share resolved as benign."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Security engineering"
+    phase: "P1/P2"
+    status: "specified"
+    verify: ""
+  - id: "CTL-04"
+    name: "Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure)"
+    type: "P, R"
+    enforcement: "deterministic"
+    component: "Identity/broker"
+    objective: "Give every agent its own revocable identity so misuse is attributable and containable."
+    how_it_works:
+      - "Each agent gets a unique identity and OAuth client; shared credentials are not allowed."
+      - "Registration needs an owner and an approver who is not the requester."
+      - "Credentials are short-lived and rotated; the revocation list is distributed to gateways."
+      - "On a suspected compromise the broker and IdP revoke tokens and clients; gateways deny revoked identities."
+      - "If the revocation list or service cannot be consulted, the gateway denies."
+    prevent:
+      - "Unregistered or revoked identities cannot call tools."
+    detect:
+      - "New client registrations and credential use from unexpected places are alerted."
+    respond:
+      - "Immediate revocation and suspension of the agent."
+    recover:
+      - "New credentials issued under separation of duties."
+    parameters:
+      - "Access token lifetime: 10 minutes or less by default (FR-AUTHN-2)."
+      - "Rotation interval: to be set."
+    failure_behavior: "Revocation lookup unavailable: deny (FR-ID-7)."
+    false_positives:
+      - "Deny after a transient revocation-service failure interrupts valid agents."
+    false_negatives:
+      - "A compromised but legitimately registered agent is not detected by identity alone."
+    bypass_scenarios:
+      - "Stolen token used inside its lifetime when sender binding is unavailable."
+    residual_risk: "Compromise of a legitimate agent identity remains possible and is limited by least privilege and monitoring (threat F)."
+    requirements:
+      - "FR-ID-1..3"
+      - "FR-ID-7"
+    threats:
+      - "F"
+      - "G"
+    tests:
+      - "TC-F1"
+      - "TC-F2"
+      - "TC-G1"
+    evidence:
+      - "Client registry with owners."
+      - "Rotation and revocation logs."
+    metrics:
+      - "Time to revoke after decision."
+      - "Credentials older than the rotation interval."
+    depends_on:
+      - "CTL-23"
+    owner_role: "Identity and access team"
+    phase: "P1/P2"
+    status: "specified"
+    verify: "Support for DPoP, mTLS binding and token exchange depends on the chosen IdP and is unverified."
+  - id: "CTL-05"
+    name: "Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "Gateway, broker"
+    objective: "Stop stolen, replayed or mis-targeted credentials and confused-deputy use from working."
+    how_it_works:
+      - "On every request the gateway validates signature, issuer, expiry, audience (its own resource identifier) and scope."
+      - "Where the IdP supports it, tokens are bound to the sender (DPoP or mTLS) and replay from another client fails."
+      - "The gateway never forwards client tokens to servers; it obtains audience-bound upstream credentials by token exchange or from the secrets broker."
+      - "Session IDs are unguessable, expire and are bound to the authenticated client; reuse by another client is rejected."
+      - "The server certificate or JWKS is checked against the pin in the registry before data is sent."
+      - "Logs, traces, errors and the UI redact tokens and secrets."
+    prevent:
+      - "Tokens for another audience, expired or forged tokens, and session reuse by a different client."
+    detect:
+      - "Authentication failures by category, sender mismatch and session-client mismatch alerts."
+    respond:
+      - "Revoke client, suspend session (CTL-04, CTL-12)."
+    recover:
+      - "Rotate credentials; re-establish sessions."
+    parameters:
+      - "Access token lifetime: 10 minutes or less by default."
+    failure_behavior: "IdP key set unreachable: cached keys are used until they expire, then all calls are denied."
+    false_positives:
+      - "Valid clients rejected after clock skew or key rotation."
+    false_negatives:
+      - "Fallback mode without sender binding allows replay until revocation or expiry."
+    bypass_scenarios:
+      - "Long-lived tokens configured by owners."
+      - "Secrets that reach logs through formats the redactor does not recognise."
+    residual_risk: "In fallback mode a stolen token is usable inside its lifetime (threat G); the test record states the mode used."
+    requirements:
+      - "FR-AUTHN-1..6"
+    threats:
+      - "C"
+      - "F"
+      - "G"
+    tests:
+      - "TC-C2"
+      - "TC-F2"
+      - "TC-G1..G5"
+    evidence:
+      - "Token validation configuration."
+      - "Authentication failure logs without secret values."
+      - "Redaction test results and the sender-binding mode in use."
+    metrics:
+      - "Authentication failures by category."
+      - "Share of tokens sender-constrained."
+      - "Secret-in-log findings (target 0)."
+    depends_on:
+      - "CTL-04"
+    owner_role: "Identity and access team"
+    phase: "P1/P2"
+    status: "specified"
+    verify: "MCP authorization requirements, DPoP/mTLS support and token exchange are unverified against the current MCP specification and IdP documentation."
+  - id: "CTL-06"
+    name: "Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "PDP, Gateway"
+    objective: "Limit each agent to the specific tools, action classes and resources it needs, and notice when that drifts."
+    how_it_works:
+      - "The gateway sends the PDP agent, tool, action class (read, write, execute, delete), resource, an arguments digest and context such as taint and grants."
+      - "OPA evaluates signed policy and registry data and returns allow or deny plus obligations; the default is deny."
+      - "Tool annotations are never used as inputs; the action class comes from the registry, set at approval."
+      - "An agent-to-server allowlist is enforced."
+      - "Reports list permissions unused for 30 days, permissions broader than observed use, and changes made outside an approved change."
+    prevent:
+      - "Calls outside granted tool, action class or resource are denied."
+    detect:
+      - "Unused and excessive permissions; unapproved permission changes."
+    respond:
+      - "Remove the grant or allow rule; suspend the agent if abused."
+    recover:
+      - "Re-grant under review with a TTL where appropriate."
+    parameters:
+      - "Unused-permission window: 30 days default."
+      - "Decision cache TTL: short, keyed on policy hash and input digest; value to be set."
+    failure_behavior: "PDP or policy bundle unavailable or stale: deny. A tenant may allowlist specific read-only low-risk tools for fail-open, always flagged in the audit log."
+    false_positives:
+      - "Legitimate rare tasks denied because the grant was too narrow."
+    false_negatives:
+      - "A wrong action-class mapping, such as a read tool that actually writes, lets a call through."
+    bypass_scenarios:
+      - "Wildcard resource patterns written by owners."
+      - "Argument-level abuse inside a permitted tool."
+    residual_risk: "Quality of the tool-to-action-class mapping depends on approvers (threat E); periodic recertification is required."
+    requirements:
+      - "FR-AUTHZ-1..3"
+      - "FR-AUTHZ-6..8"
+    threats:
+      - "C"
+      - "E"
+    tests:
+      - "TC-E1"
+      - "TC-E2"
+      - "TC-C3"
+      - "TC-Z5"
+    evidence:
+      - "Policy bundles with hashes."
+      - "Decision logs with policy hash and input digest."
+      - "Permission review records."
+    metrics:
+      - "Deny rate by reason."
+      - "Permissions unused over 30 days."
+      - "Fail-open decisions (target near 0)."
+    depends_on:
+      - "CTL-13"
+      - "CTL-16"
+    owner_role: "Security engineering"
+    phase: "P1/P2/P3"
+    status: "specified"
+    verify: "OPA performance with realistic policy data is unmeasured (spike S3)."
+  - id: "CTL-07"
+    name: "Just-in-time access and human approval for high-impact actions bound to argument hash"
+    type: "P"
+    enforcement: "human"
+    component: "PDP, API"
+    objective: "Make sure risky actions happen only with a specific, current human decision."
+    how_it_works:
+      - "A requester asks for access with tool, action, resource, TTL and reason; an approver who is not the requester approves; the grant expires automatically."
+      - "Policy marks high-impact actions: any delete; write or execute on resources tagged critical; sending confidential data outside; financial transactions; actions after untrusted content followed a sensitive read."
+      - "For a high-impact call the PDP returns an approval obligation; the gateway holds the call and creates a task showing the exact arguments."
+      - "Approval is bound to the hash of those arguments; a changed argument needs a new approval; timeout means deny."
+    prevent:
+      - "High-impact actions without a matching approval are denied."
+    detect:
+      - "Approval request volume and approval of unusual requests."
+    respond:
+      - "Revoke the grant; suspend the agent."
+    recover:
+      - "Reverse the action through the owning system."
+    parameters:
+      - "JIT TTL: mandatory, value per request."
+      - "Approval timeout: to be set."
+    failure_behavior: "Approval service unavailable or timeout: deny."
+    false_positives:
+      - "Approvals required for actions the business considers routine."
+    false_negatives:
+      - "Harmful actions not classified as high-impact are not gated."
+    bypass_scenarios:
+      - "Approver fatigue and rubber-stamping."
+      - "Many small actions under a threshold."
+    residual_risk: "Depends on the quality of the high-impact definition and approver attention (threats D, K, E)."
+    requirements:
+      - "FR-AUTHZ-4..5"
+      - "FR-AUTO-3"
+    threats:
+      - "D"
+      - "E"
+      - "K"
+    tests:
+      - "TC-E3"
+      - "TC-D4"
+      - "TC-K3"
+    evidence:
+      - "Grant and approval records with approver and arguments hash."
+      - "Timeout and denial records."
+    metrics:
+      - "Approval latency."
+      - "Approval rate and share approved in under 10 seconds (rubber-stamp indicator)."
+      - "Expired grants."
+    depends_on:
+      - "CTL-06"
+      - "CTL-13"
+      - "CTL-23"
+    owner_role: "Business owner and approver pool"
+    phase: "P2"
+    status: "specified"
+    verify: ""
+  - id: "CTL-08"
+    name: "SSRF protection and egress allowlisting"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "Egress proxy, Scanner"
+    objective: "Stop the platform and MCP servers from being used to reach metadata services, internal systems or arbitrary hosts."
+    how_it_works:
+      - "Every outbound connection by the platform (registration, import, discovery, health check, proxying) goes through the guard."
+      - "The guard normalises the host (decimal, octal, hex, IPv6 forms, userinfo tricks), resolves DNS and validates every returned address against the blocklist: loopback, link-local including 169.254.169.254, RFC 1918, unique-local, multicast, unspecified, IPv4-mapped IPv6, metadata hostnames."
+      - "It connects to the validated IP (resolve then pin); redirects are off by default and, if enabled, each hop is re-validated, at most 3."
+      - "Server pods can reach only the destinations in their registry allowlist, enforced by network policy or egress proxy outside the gateway process."
+      - "Exceptions are explicit per-server entries with owner approval and expiry."
+    prevent:
+      - "Connections to blocked ranges and unlisted destinations."
+    detect:
+      - "Blocked-connection events; bursts of probing."
+    respond:
+      - "Quarantine the registering server; isolate a pod that reached internal addresses; rotate credentials that could have been exposed."
+    recover:
+      - "Remove the exception, fix the allowlist, re-approve the server."
+    parameters:
+      - "Maximum redirect hops when enabled: 3."
+      - "Exception expiry: to be set."
+    failure_behavior: "Guard cannot resolve or validate: connection refused."
+    false_positives:
+      - "Legitimate internal servers blocked until an exception is approved."
+    false_negatives:
+      - "Server-side SSRF inside third-party server code is limited only by network egress policy."
+    bypass_scenarios:
+      - "Parser differences between the guard and the HTTP client library."
+      - "Over-broad allowlist exceptions."
+    residual_risk: "Misconfigured exceptions and server-internal request forgery remain (threat H); cloud metadata hardening per cloud is needed."
+    requirements:
+      - "FR-SSRF-1..5"
+      - "FR-RT-7"
+    threats:
+      - "H"
+      - "I"
+    tests:
+      - "TC-H1..H4"
+      - "TC-I4"
+      - "TC-X2"
+    evidence:
+      - "Guard configuration and blocklist."
+      - "Blocked-connection logs."
+      - "Network policy exports and exception approvals."
+    metrics:
+      - "Blocked connections per day."
+      - "Active exceptions and their age."
+      - "Direct connections that bypassed the gateway (target 0)."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Platform security"
+    phase: "P1/P2"
+    status: "specified"
+    verify: "Cloud-specific metadata hardening (IMDSv2 enforcement, pod-level blocking) is unverified per cloud."
+  - id: "CTL-09"
+    name: "Response inspection for injection, untrusted labelling, taint rule"
+    type: "P, D"
+    enforcement: "hybrid"
+    component: "Gateway, Inspection"
+    objective: "Prevent instructions hidden in tool responses or retrieved content from causing unapproved actions or data egress."
+    how_it_works:
+      - "All tool output is labelled untrusted and delivered in a structure separate from system and developer instructions; a response can never change system-level instructions."
+      - "Tier 1 deterministic parsing of text, HTML, JSON and markdown looks for hidden elements, comments, markdown image or link exfiltration patterns, and instructions to run other tools."
+      - "Tier 2 and 3 classifiers add advisory signals with confidence."
+      - "Policy maps signals to an action: allow with label, redact, block, or quarantine the tool."
+      - "Taint rule: after an untrusted read of sensitive data, write, execute and external-send tools are blocked in that session until approved."
+    prevent:
+      - "Tainted sessions cannot send data out or act without approval."
+      - "Neutralised markup removes common exfiltration channels."
+    detect:
+      - "Injection signals with element locations."
+    respond:
+      - "Block the response, suspend the session, quarantine the carrier tool."
+    recover:
+      - "Remove or sanitise the content at source; resume the agent."
+    parameters:
+      - "Tier 1 inline budget: under 5 ms for typical payloads."
+      - "Inline classifier: p95 at most 150 ms or run asynchronously (NFR-2)."
+      - "False-block rate in shadow mode: at most 0.5 percent of benign calls (spec Section 10)."
+    failure_behavior: "Tier 1 failure on a high-impact path: deny. Advisory tiers unavailable: continue with Tier 1 and taint rules."
+    false_positives:
+      - "Benign text with imperative language flagged or redacted."
+    false_negatives:
+      - "Paraphrased, multilingual, image-embedded or split payloads."
+    bypass_scenarios:
+      - "Visible-text injections that read like normal content."
+      - "Sensitive data not tagged, so taint is not set."
+    residual_risk: "Detection is probabilistic, so safety rests on CTL-07, CTL-08 and the taint rule (threat D, I). Residual risk is medium to high and cannot be removed."
+    requirements:
+      - "FR-RT-4..5"
+      - "FR-RT-9"
+      - "FR-RT-11"
+    threats:
+      - "A"
+      - "D"
+      - "I"
+    tests:
+      - "TC-D1..D5"
+    evidence:
+      - "Detector configuration and versions."
+      - "Shadow-mode results before enforcement."
+      - "Signal logs and red-team results."
+    metrics:
+      - "Signals per 1,000 calls."
+      - "Recall on the injection test set."
+      - "False-block rate."
+    depends_on:
+      - "CTL-07"
+      - "CTL-08"
+      - "CTL-13"
+    owner_role: "Security engineering"
+    phase: "P2"
+    status: "specified"
+    verify: "Candidate classifiers and their licences are unverified (docs/tech-evaluation.md)."
+  - id: "CTL-10"
+    name: "Data loss prevention on requests and responses; tenant isolation"
+    type: "P, D"
+    enforcement: "hybrid"
+    component: "Gateway, DLP"
+    objective: "Keep personal, financial, secret and tenant-private data from leaving through tool traffic or reaching the wrong tenant."
+    how_it_works:
+      - "Requests and responses are scanned for PII, Luhn-validated card numbers and other financial identifiers, secrets and keys, source-code markers and tenant data tags."
+      - "Per-tenant policy maps matches to redact, block or alert, depending on agent clearance."
+      - "Every request, cache entry, log and evidence record carries a tenant ID; database row-level security enforces separation even if application filters fail."
+      - "Audit stores digests and redacted excerpts; raw evidence goes to an encrypted vault."
+    prevent:
+      - "Redaction or blocking of matched data; cross-tenant reads fail."
+    detect:
+      - "Match events by entity type and count."
+    respond:
+      - "Kill switch for the agent, block server egress, start the exfiltration playbook."
+    recover:
+      - "Rotate exposed credentials; close the channel."
+    parameters:
+      - "Redaction and block actions per tenant policy: to be set."
+      - "Precision target for checksum-based identifiers: at least 99 percent."
+    failure_behavior: "DLP engine failure on a high-impact path: deny. On low-impact paths policy decides, default deny."
+    false_positives:
+      - "Order numbers or test data that look like card numbers; free-text PII over-matching."
+    false_negatives:
+      - "Free-text PII recall is limited; encoded, chunked or steganographic leakage."
+    bypass_scenarios:
+      - "Leakage through legitimate tool parameters in small pieces over time."
+    residual_risk: "Low-and-slow and encoded exfiltration remain possible (threat I); free-text PII needs per-tenant tuning."
+    requirements:
+      - "FR-RT-6"
+      - "FR-RT-8"
+      - "FR-AUD-3"
+    threats:
+      - "I"
+    tests:
+      - "TC-I1..I3"
+      - "TC-G5"
+    evidence:
+      - "DLP policies and tuning records."
+      - "Match logs."
+      - "Cross-tenant negative test results."
+    metrics:
+      - "Matches by entity type."
+      - "Blocked versus redacted versus alerted."
+      - "Cross-tenant access attempts (target 0 successful)."
+    depends_on:
+      - "CTL-08"
+      - "CTL-22"
+    owner_role: "Data protection / security engineering"
+    phase: "P2"
+    status: "specified"
+    verify: "Presidio-style engines and their licences and performance are unverified (docs/tech-evaluation.md)."
+  - id: "CTL-11"
+    name: "Argument guards, schema validation, execution sandboxing"
+    type: "P"
+    enforcement: "deterministic"
+    component: "Gateway, platform"
+    objective: "Stop malicious arguments from turning tool calls into command, SQL or path attacks, and contain code execution."
+    how_it_works:
+      - "Arguments are validated against the approved input schema; unknown fields are rejected."
+      - "Parameters declared as path, command or query are checked for traversal sequences, shell and SQL metacharacters and absolute paths outside approved roots; URL parameters pass the SSRF guard."
+      - "Servers that execute code run non-root with a read-only filesystem, no privileged capabilities, resource limits and a sandboxed runtime."
+      - "File upload tools enforce type, size and malware checks."
+    prevent:
+      - "Calls with illegal arguments are denied before reaching the server."
+      - "Sandbox limits the impact of any execution that gets through."
+    detect:
+      - "Argument-guard events; runtime security alerts from pods."
+    respond:
+      - "Quarantine the tool; isolate the pod and node."
+    recover:
+      - "Patch, tighten schema, rebuild nodes if escape is suspected."
+    parameters:
+      - "Sandbox profile and limits: to be set per server class."
+    failure_behavior: "Guard error: deny."
+    false_positives:
+      - "Legitimate arguments containing special characters rejected."
+    false_negatives:
+      - "Parameters not declared as path, SQL or command but used as such by the server."
+    bypass_scenarios:
+      - "Server-side bugs the gateway cannot see; symlink handling inside the server."
+    residual_risk: "Server-side vulnerabilities are outside platform control (threat O); sandboxing bounds impact."
+    requirements:
+      - "FR-RT-2..3"
+      - "FR-EXEC-1..2"
+    threats:
+      - "O"
+      - "H"
+    tests:
+      - "TC-O1..O3"
+      - "TC-Z1"
+    evidence:
+      - "Guard rules and schema validation logs."
+      - "Sandbox and pod security profiles."
+    metrics:
+      - "Guard denials by type."
+      - "Servers running outside the sandbox profile (target 0 for execution tools)."
+    depends_on:
+      - "CTL-03"
+      - "CTL-08"
+    owner_role: "Platform security"
+    phase: "P2/P4"
+    status: "specified"
+    verify: "Sandboxed runtimes (gVisor, Kata) availability and compatibility per cloud are unverified."
+  - id: "CTL-12"
+    name: "Autonomy limits, budgets, loop detection, kill switch with different-approver resume"
+    type: "P, D, R"
+    enforcement: "deterministic"
+    component: "Gateway, API"
+    objective: "Bound what an agent can do on its own in calls, time, cost and delegation, and allow immediate suspension."
+    how_it_works:
+      - "Per-agent and per-session counters cover tool calls, distinct tools, delegation depth, wall-clock time and cost or tokens."
+      - "Repeating call sequences are detected and the session is suspended."
+      - "Financial or irreversible transactions need approval unless policy allows a bounded amount to an allowlisted counterparty."
+      - "A kill switch suspends an agent or all agents of a tenant within 5 s."
+      - "Resuming needs an approver other than the person who suspended, unless an emergency policy applies; both actions are audited."
+    prevent:
+      - "Calls beyond limits are denied."
+    detect:
+      - "Limit events, loops, approval floods."
+    respond:
+      - "Session suspension; kill switch."
+    recover:
+      - "Resume by a different approver after the cause is fixed."
+    parameters:
+      - "Kill switch effect: within 5 s."
+      - "Delegation depth: 3 by default."
+      - "Loop detection threshold: 50 calls in the test setting; production value to be set."
+      - "Per-session call, time and cost limits: to be set per agent."
+    failure_behavior: "Limit store unavailable: deny new high-impact calls; low-impact policy decides, default deny."
+    false_positives:
+      - "Legitimate long-running jobs suspended."
+    false_negatives:
+      - "Slow loops under thresholds; many agents each under budget."
+    bypass_scenarios:
+      - "Spreading load across agents or tenants."
+    residual_risk: "Distributed or slow abuse stays under per-agent limits (threat K); per-tenant caps and analytics reduce but do not remove it."
+    requirements:
+      - "FR-AUTO-1..5"
+      - "FR-ID-5"
+      - "FR-RT-10"
+    threats:
+      - "K"
+      - "M"
+    tests:
+      - "TC-K1..K3"
+      - "TC-M1"
+      - "TC-Z4"
+    evidence:
+      - "Limit configuration by agent."
+      - "Suspension and resume records with approvers."
+    metrics:
+      - "Limit events per day."
+      - "Time from kill command to effect."
+      - "Suspended agents older than one day."
+    depends_on:
+      - "CTL-13"
+      - "CTL-23"
+    owner_role: "Security engineering"
+    phase: "P2"
+    status: "specified"
+    verify: ""
+  - id: "CTL-13"
+    name: "Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record"
+    type: "D"
+    enforcement: "deterministic"
+    component: "Audit service"
+    objective: "Make every decision and administrative action recorded, ordered, reproducible and hard to alter without detection."
+    how_it_works:
+      - "Each service writes events through an outbox: actor, subject, decision, policy hash, input digest, timestamp."
+      - "The audit service chains them: hash_n = SHA-256(hash_n-1 || canonical event n); application database roles are insert-only."
+      - "Chain heads are anchored on a schedule in object-lock storage or an external timestamping service."
+      - "A verifier recomputes the chain and compares with anchors; modification, deletion or reordering is reported."
+      - "Raw payloads are not stored in the table; digests and redacted excerpts only; control characters in untrusted fields are escaped before export."
+      - "When the gateway buffer is full or the sink is down beyond capacity, high-impact calls are denied."
+    prevent:
+      - "Insert-only roles block ordinary tampering; deny-high-impact stops actions that cannot be recorded."
+    detect:
+      - "Verification failures, sequence gaps, anchor mismatches."
+    respond:
+      - "Audit integrity incident; freeze changes; preserve snapshots."
+    recover:
+      - "Restore from the last verified backup and document the gap; never repair the chain."
+    parameters:
+      - "Anchor interval: to be set."
+      - "Retention: 13 months hot and 7 years cold by default, configurable per tenant."
+      - "Buffer capacity: to be set."
+    failure_behavior: "Audit sink down: buffer locally; when full deny high-impact calls and keep buffering low-impact events until capacity is reached; events are never silently dropped."
+    false_positives:
+      - "Verification failure caused by operator restore mistakes."
+    false_negatives:
+      - "Rewrite of the whole chain before the first anchor."
+    bypass_scenarios:
+      - "Privileged database actor rewriting history between anchors."
+    residual_risk: "The chain is tamper-evident, not tamper-proof; anchoring narrows but does not close the window (threat X6, X8)."
+    requirements:
+      - "FR-AUD-1..7"
+    threats:
+      - "X5"
+      - "X6"
+      - "X8"
+    tests:
+      - "TC-Z6"
+      - "TC-X5"
+    evidence:
+      - "Chain verification reports and the latest anchor."
+      - "Sample decision replays from policy hash and input digest."
+    metrics:
+      - "Oldest event age in the outbox."
+      - "Time since last successful verification and anchor."
+      - "Gaps found (target 0)."
+    depends_on: []
+    owner_role: "Security operations / audit liaison"
+    phase: "P1/P2"
+    status: "specified"
+    verify: "Object-lock support and external timestamping options per cloud are unverified."
+  - id: "CTL-14"
+    name: "Security monitoring and alerting; platform observability"
+    type: "D"
+    enforcement: "advisory"
+    component: "Analytics, observability"
+    objective: "Notice abuse and platform problems early through thresholds, baselines and service metrics."
+    how_it_works:
+      - "Threshold rules run over the audit stream: rate, denied-call ratio, new tools used, off-hours use, new destinations, notification floods."
+      - "From Phase 4, per-agent baselines score anomalies; alerts carry an explanation."
+      - "Services emit OpenTelemetry traces, metrics and structured logs with correlation IDs and redaction."
+      - "Alerts route to on-call by severity."
+    prevent:
+      - "None directly."
+    detect:
+      - "Abuse patterns, SLO breaches, deny-rate shifts."
+    respond:
+      - "Alerts open incidents or trigger runbook steps."
+    recover:
+      - "None directly."
+    parameters:
+      - "Alert thresholds: to be set after baselining."
+      - "Alert budget target: at most 5 reviewed alerts per 100 agents per day."
+    failure_behavior: "Monitoring failure does not change enforcement; it raises its own alert."
+    false_positives:
+      - "Legitimate bursts and new tool rollouts raise alerts."
+    false_negatives:
+      - "Low-and-slow behaviour below thresholds."
+    bypass_scenarios:
+      - "Staying inside baselines."
+    residual_risk: "Alerts are advisory; they do not stop actions."
+    requirements:
+      - "FR-BEH-1..2"
+      - "FR-OBS-1..2"
+    threats:
+      - "K"
+      - "P"
+    tests:
+      - "TC-K1"
+      - "TC-P4"
+    evidence:
+      - "Alert rules and routing."
+      - "On-call and acknowledgement records."
+      - "SLO reports."
+    metrics:
+      - "Alerts per agent per day."
+      - "Mean time to acknowledge."
+      - "Share of alerts leading to action."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Security operations"
+    phase: "P2/P4"
+    status: "specified"
+    verify: "OpenTelemetry GenAI semantic convention maturity is unverified."
+  - id: "CTL-15"
+    name: "Incident detection, containment, evidence preservation, reporting"
+    type: "R, V"
+    enforcement: "human"
+    component: "Incident manager"
+    objective: "Contain compromised tools, agents or platform parts quickly, preserve evidence and recover safely."
+    how_it_works:
+      - "Incidents are opened manually or by rules with severity, affected assets, timeline and owner."
+      - "One action quarantines a tool, server or agent and revokes tokens; the effect applies within 5 s."
+      - "At containment an evidence snapshot is taken: definitions and hashes, decisions, redacted traffic, scan results, registry state."
+      - "Playbooks guide investigation, eradication and recovery; recovery requires reapproval by non-owners."
+      - "A report with timeline, impact, actions and evidence index is exported."
+    prevent:
+      - "Limits spread of an ongoing compromise."
+    detect:
+      - "Classification of alerts into incidents."
+    respond:
+      - "Quarantine, revocation, kill switch, isolation."
+    recover:
+      - "Reapproval, staged restoration, post-incident review."
+    parameters:
+      - "Containment effect: within 5 s."
+      - "Severity response targets: proposals in docs/playbooks."
+    failure_behavior: "Incident service unavailable: containment actions remain available through the API and break-glass path."
+    false_positives:
+      - "Benign events escalated to incidents."
+    false_negatives:
+      - "Incidents not recognised from signals."
+    bypass_scenarios:
+      - "An attacker who also controls the responder accounts or the control plane."
+    residual_risk: "Response quality depends on practice; playbooks are untested until exercised."
+    requirements:
+      - "FR-IR-1..5"
+    threats:
+      - "A"
+      - "B"
+      - "D"
+      - "G"
+      - "I"
+      - "X8"
+    tests:
+      - "TC-X8"
+      - "TC-Z6"
+    evidence:
+      - "Incident records and timelines."
+      - "Evidence index with chain of custody."
+      - "Post-incident reviews and exercise results."
+    metrics:
+      - "Time to contain."
+      - "Time to preserve evidence."
+      - "Open incidents by age."
+    depends_on:
+      - "CTL-04"
+      - "CTL-03"
+      - "CTL-13"
+      - "CTL-23"
+    owner_role: "Incident commander / security operations"
+    phase: "P2/P3/P4"
+    status: "specified"
+    verify: "SOAR integration options are unverified."
+  - id: "CTL-16"
+    name: "Policy lifecycle: source control and review, signed bundles, shadow mode"
+    type: "P"
+    enforcement: "hybrid"
+    component: "PDP, CI"
+    objective: "Ensure policy changes are reviewed, tested, signed and tried in shadow mode before they enforce."
+    how_it_works:
+      - "Policies are written in Rego, kept in source control, unit-tested with opa test in CI and reviewed by a second person."
+      - "Bundles are signed; gateways accept only signed, current bundles."
+      - "New policy runs in shadow mode first: decisions are logged beside the enforced policy and compared; every new allow is reviewed."
+      - "Enforcement is widened gradually; every decision records the bundle hash."
+    prevent:
+      - "Unreviewed or unsigned policy cannot take effect."
+    detect:
+      - "Policy changes outside process (policy.changed event without approval)."
+    respond:
+      - "Revert to the previous signed bundle."
+    recover:
+      - "Fix and re-run shadow comparison."
+    parameters:
+      - "Bundle staleness limit: to be set."
+      - "Shadow period before enforcement: to be set."
+    failure_behavior: "Stale, unsigned or invalid bundle: gateways deny."
+    false_positives:
+      - "Shadow comparison produces noisy differences."
+    false_negatives:
+      - "Review misses a harmful rule that tests do not cover."
+    bypass_scenarios:
+      - "Collusion between author and reviewer."
+    residual_risk: "Policy mistakes and insider abuse remain possible (threat X6, E); reviewed history and the audit trail make them detectable."
+    requirements:
+      - "FR-POL-1..4"
+    threats:
+      - "E"
+      - "X6"
+    tests:
+      - "TC-X6"
+      - "TC-Z5"
+    evidence:
+      - "Change history with approvers."
+      - "Bundle signatures and hashes."
+      - "Shadow-mode comparison reports."
+    metrics:
+      - "Policy changes by approver pair."
+      - "Time in shadow mode."
+      - "Rollbacks."
+    depends_on:
+      - "CTL-13"
+      - "CTL-23"
+    owner_role: "Security engineering"
+    phase: "P1/P3"
+    status: "specified"
+    verify: "OPA bundle signing details and Cedar as an alternative are unverified."
+  - id: "CTL-17"
+    name: "Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "CI, scanner, admission"
+    objective: "Keep malicious or vulnerable packages, images, models and plugins out of the platform and the server fleet."
+    how_it_works:
+      - "CI produces an SBOM for each build and scans dependencies and images for known vulnerabilities and secrets."
+      - "Images are signed and referenced by digest; admission policy admits only signed, pinned images to server namespaces."
+      - "Package names are checked against allowlists and known popular names for typosquatting."
+      - "Third-party servers go through intake: SBOM, owner, licence and vulnerability status, before approval."
+      - "Model artifact provenance is reported when supplied."
+    prevent:
+      - "Unsigned, unpinned or vulnerable artifacts fail the gates."
+    detect:
+      - "New vulnerabilities in deployed SBOMs; unexpected outbound connections."
+    respond:
+      - "Quarantine affected servers; block the digest; rotate credentials."
+    recover:
+      - "Rebuild from signed sources and rescan the fleet."
+    parameters:
+      - "Vulnerability severity that fails a build: to be set."
+    failure_behavior: "Gate failure blocks release and admission; scanners unavailable block release."
+    false_positives:
+      - "Vulnerability findings in unused code paths."
+    false_negatives:
+      - "Zero-days and malicious code that passes scans; tampered model weights without provenance."
+    bypass_scenarios:
+      - "Compromised signing key; build-system compromise."
+    residual_risk: "Unknown vulnerabilities and compromised upstream sources remain (threat L)."
+    requirements:
+      - "FR-SCAN-5"
+      - "FR-SUP-1..3"
+      - "FR-MOD-3"
+      - "NFR-9"
+    threats:
+      - "L"
+    tests:
+      - "TC-L1..L3"
+    evidence:
+      - "SBOMs and scan reports."
+      - "Signature verification and admission logs."
+      - "Third-party intake records."
+    metrics:
+      - "Critical vulnerabilities open beyond SLA."
+      - "Unsigned images found (target 0)."
+      - "Servers lacking an intake record."
+    depends_on:
+      - "CTL-27"
+    owner_role: "Platform security"
+    phase: "P3/P4"
+    status: "specified"
+    verify: "Tooling (Syft, Grype, Trivy, cosign, SLSA) features, licences and offline behaviour are unverified."
+  - id: "CTL-18"
+    name: "MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications"
+    type: "P"
+    enforcement: "deterministic"
+    component: "Gateway"
+    objective: "Close protocol-level abuse paths that do not depend on tool descriptions."
+    how_it_works:
+      - "Initialize accepts only allowlisted protocol versions; offered capabilities are limited to what policy allows; unexpected capabilities are flagged."
+      - "Transport uses TLS 1.2 or higher with Origin and Host validation on HTTP transports; local transports only through the managed wrapper."
+      - "Resource URIs are validated against allowlists and treated as arguments; resource and prompt content is inspected like responses and prompts are hash-pinned."
+      - "Sampling and elicitation are denied by default; if enabled per server, requests are budgeted and inspected and credential-like requests are blocked."
+      - "Roots exposed to a server are limited to approved directories; notifications are rate-limited and list_changed triggers a re-hash."
+    prevent:
+      - "Unsupported versions, unexpected capabilities, sampling and elicitation abuse, root over-exposure."
+    detect:
+      - "Unexpected capability and notification events."
+    respond:
+      - "Disable the capability for the server; quarantine the server."
+    recover:
+      - "Update the compatibility matrix and re-enable after tests."
+    parameters:
+      - "Protocol version allowlist: set from the compatibility matrix."
+      - "Notification rate limit: to be set."
+    failure_behavior: "Unknown or unsupported behaviour: refuse or ignore and log."
+    false_positives:
+      - "New legitimate capabilities blocked until the allowlist is updated."
+    false_negatives:
+      - "New protocol surfaces introduced by spec revisions."
+    bypass_scenarios:
+      - "SDK implementation differences between gateway and client."
+    residual_risk: "The MCP specification evolves; compatibility must be re-tested on each revision (threat P, X3, X4)."
+    requirements:
+      - "FR-AUTHN-5"
+      - "FR-DRIFT-2"
+      - "FR-RT-10"
+    threats:
+      - "P"
+      - "X3"
+      - "X4"
+    tests:
+      - "TC-P1..P4"
+    evidence:
+      - "Protocol configuration and compatibility matrix."
+      - "Deny and flood-handling logs."
+    metrics:
+      - "Sessions by protocol version."
+      - "Unexpected capability events."
+    depends_on:
+      - "CTL-05"
+      - "CTL-03"
+    owner_role: "Security engineering"
+    phase: "P2"
+    status: "specified"
+    verify: "Current MCP specification wording on transports, sampling, elicitation and roots is unverified; see spec Section 4.12."
+  - id: "CTL-19"
+    name: "Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback"
+    type: "P, D, V"
+    enforcement: "hybrid"
+    component: "Memory tools, Inspection"
+    objective: "Keep poisoned content from becoming persistent instructions for agents."
+    how_it_works:
+      - "Writes through managed memory and vector-store tools are attributed to agent, source and session and authorized."
+      - "Entries derived from untrusted content carry a provenance label and are delivered as untrusted data."
+      - "Retrieved content is inspected like tool responses (CTL-09)."
+      - "Memory is partitioned per agent and tenant; cross-agent reads need an explicit grant."
+      - "Entries can be rolled back in bulk by source or time window."
+    prevent:
+      - "Unauthorized writes; cross-agent reads."
+    detect:
+      - "Instruction-like content in stored entries; unusual write patterns."
+    respond:
+      - "Restrict affected agents to read-only; disable the ingestion source."
+    recover:
+      - "Rollback by source or window; rebuild embeddings."
+    parameters:
+      - "Retention and rollback window: to be set."
+    failure_behavior: "Attribution or authorization failure on write: deny the write."
+    false_positives:
+      - "Benign notes containing imperative text flagged."
+    false_negatives:
+      - "Poison that reads as normal content; writes made outside managed tools."
+    bypass_scenarios:
+      - "Direct access to the vector store by agent frameworks."
+    residual_risk: "Not covered until Phase 4 and only for managed tools (threat J)."
+    requirements:
+      - "FR-MEM-1..4"
+    threats:
+      - "J"
+      - "M"
+    tests:
+      - "TC-J1"
+      - "TC-J2"
+    evidence:
+      - "Write attribution logs."
+      - "Rollback records and retrieval signals."
+    metrics:
+      - "Writes by provenance class."
+      - "Flagged entries."
+    depends_on:
+      - "CTL-09"
+      - "CTL-06"
+    owner_role: "Security engineering"
+    phase: "P4"
+    status: "specified"
+    verify: ""
+  - id: "CTL-20"
+    name: "Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits"
+    type: "P"
+    enforcement: "deterministic"
+    component: "Gateway, PDP"
+    objective: "Prevent one agent from gaining power or spreading instructions through delegation."
+    how_it_works:
+      - "Agent-to-agent calls go through the gateway and are authenticated and authorized."
+      - "Each call carries the delegation chain."
+      - "The effective permission of a sub-agent is the intersection with the delegator's permission for that request."
+      - "The gateway blocks cycles and chains deeper than the limit."
+    prevent:
+      - "Privilege amplification, circular delegation, unauthorized agent-to-agent calls."
+    detect:
+      - "Unusual delegation graph shapes; delegation denials."
+    respond:
+      - "Suspend agents in the chain; remove delegation permission."
+    recover:
+      - "Review and re-approve delegation rules."
+    parameters:
+      - "Maximum delegation depth: 3 by default."
+    failure_behavior: "Missing or invalid chain: deny."
+    false_positives:
+      - "Legitimate deep workflows blocked by the depth limit."
+    false_negatives:
+      - "Cycles that pass through systems outside the gateway."
+    bypass_scenarios:
+      - "Direct calls by a high-privilege agent outside the delegation path."
+    residual_risk: "Phase 4 capability; agent-to-agent protocols are still evolving (threat M)."
+    requirements:
+      - "FR-ID-4..6"
+    threats:
+      - "M"
+      - "F"
+    tests:
+      - "TC-M1"
+      - "TC-M2"
+    evidence:
+      - "Delegation logs with chains."
+      - "Policy tests for intersection logic."
+    metrics:
+      - "Delegation denials."
+      - "Chains at maximum depth."
+    depends_on:
+      - "CTL-04"
+      - "CTL-06"
+    owner_role: "Security engineering"
+    phase: "P4"
+    status: "specified"
+    verify: "Agent-to-agent protocol standards and their security models are unverified."
+  - id: "CTL-21"
+    name: "Model registry and endpoint protection: approved model pinning, substitution detection, quotas"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "Registry, Gateway"
+    objective: "Detect or stop use of unapproved models and abuse of model endpoints."
+    how_it_works:
+      - "The registry records the approved model identifier, version and endpoint per agent."
+      - "A mismatch between the registered and the reported model raises an alert and policy may block."
+      - "Endpoints reached through the platform require authentication, rate limits and quotas."
+      - "Systematic high-volume query patterns raise alerts."
+    prevent:
+      - "Quotas and authentication limit extraction and denial of service."
+    detect:
+      - "Model substitution; extraction-like query patterns."
+    respond:
+      - "Suspend or rate-limit the identity; pin the model."
+    recover:
+      - "Review outputs produced by an unapproved model with the business owner."
+    parameters:
+      - "Quota values per identity: to be set."
+    failure_behavior: "Quota or registry unavailable: deny new requests to the model route."
+    false_positives:
+      - "Heavy legitimate users flagged as extraction."
+    false_negatives:
+      - "Distributed extraction across many identities; endpoints that report a false model identity."
+    bypass_scenarios:
+      - "Many identities each under quota."
+    residual_risk: "Model-internal attacks are outside the platform (threat N)."
+    requirements:
+      - "FR-MOD-1..3"
+      - "FR-RT-10"
+    threats:
+      - "N"
+    tests:
+      - "TC-N1"
+      - "TC-N2"
+    evidence:
+      - "Model registry entries."
+      - "Quota and alert logs."
+    metrics:
+      - "Agents without a registered model."
+      - "Substitution alerts."
+    depends_on:
+      - "CTL-01"
+    owner_role: "AI governance / model owner"
+    phase: "P3/P4"
+    status: "specified"
+    verify: ""
+  - id: "CTL-22"
+    name: "Multi-tenancy, data residency and retention"
+    type: "P"
+    enforcement: "deterministic"
+    component: "Platform"
+    objective: "Keep tenants separate, keep data in permitted regions, and retain or delete it as policy and law require."
+    how_it_works:
+      - "Every row, cache entry, event and evidence item carries a tenant ID; Postgres row-level security enforces it."
+      - "Per-tenant policy bundles; per-tenant encryption keys in Phase 5."
+      - "A tenant data plane can be pinned to a region."
+      - "Retention classes control deletion by data class; legal hold overrides deletion."
+    prevent:
+      - "Cross-tenant access; storage outside the pinned region; premature deletion under hold."
+    detect:
+      - "Cross-tenant access attempts; retention job failures."
+    respond:
+      - "Suspend the tenant's access to the implicated component."
+    recover:
+      - "Restore from backup within the same region and tenant."
+    parameters:
+      - "Retention: 13 months hot and 7 years cold by default per spec NFR-6."
+    failure_behavior: "Tenant context missing: deny."
+    false_positives:
+      - "Legitimate shared resources blocked by strict tenant checks."
+    false_negatives:
+      - "Side channels in shared infrastructure."
+    bypass_scenarios:
+      - "Application bug that forgets a tenant filter (limited by row-level security)."
+    residual_risk: "Shared-infrastructure side channels; residency depends on correct deployment (threat I)."
+    requirements:
+      - "FR-ADM-2"
+      - "FR-ADM-4..5"
+      - "FR-RT-8"
+      - "NFR-6"
+      - "NFR-8"
+    threats:
+      - "I"
+    tests:
+      - "TC-I3"
+    evidence:
+      - "Tenant configuration and key inventory."
+      - "Retention job reports and legal-hold lists."
+      - "Isolation test results."
+    metrics:
+      - "Cross-tenant test failures (target 0)."
+      - "Retention job exceptions."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Data protection / platform ops"
+    phase: "P2/P5"
+    status: "specified"
+    verify: ""
+  - id: "CTL-23"
+    name: "Separation of duties, privileged and break-glass access"
+    type: "P, D"
+    enforcement: "deterministic"
+    component: "API, IdP"
+    objective: "Ensure no single person can request and approve their own change, and that privileged access is limited and recorded."
+    how_it_works:
+      - "Roles come from the enterprise IdP with MFA; permissions follow the role matrix."
+      - "The API, not the UI, enforces that requester and approver differ for tool approval, JIT grants, high-impact calls and agent registration."
+      - "Critical-finding overrides need two approvers and expire."
+      - "No role can alter or delete audit events through application interfaces."
+      - "Break-glass accounts are sealed in the secrets manager; each use needs a ticket and a second person; sessions are recorded; credentials are rotated after use; the accounts cannot modify audit records or read raw evidence."
+    prevent:
+      - "Self-approval and single-person overrides; unrecorded privileged access."
+    detect:
+      - "Rejected self-approvals; break-glass use; approval concentration between two people."
+    respond:
+      - "Suspend approval rights of involved accounts; revert policy."
+    recover:
+      - "Re-review decisions; recertify approvers."
+    parameters:
+      - "Override approvers required: 2."
+      - "Access recertification interval: quarterly in the runbook."
+    failure_behavior: "IdP unavailable: no new privileged sessions; break-glass path available under its own controls."
+    false_positives:
+      - "Small teams struggle to find a second approver."
+    false_negatives:
+      - "Collusion between two approvers."
+    bypass_scenarios:
+      - "Shared credentials or accounts outside the IdP."
+    residual_risk: "Collusion and compromised privileged accounts (threat X6, X8)."
+    requirements:
+      - "SoD-1"
+      - "SoD-2"
+      - "SoD-3"
+      - "FR-ADM-6"
+      - "FR-UI-7"
+    threats:
+      - "E"
+      - "X6"
+      - "X8"
+    tests:
+      - "TC-E4"
+      - "TC-X6"
+      - "TC-X8"
+    evidence:
+      - "Role bindings and access reviews."
+      - "Break-glass usage records and post-use reviews."
+    metrics:
+      - "Self-approval attempts."
+      - "Break-glass uses."
+      - "Accounts with privileged roles."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Security administration"
+    phase: "P1/P2"
+    status: "specified"
+    verify: ""
+  - id: "CTL-24"
+    name: "Resilience: fail-closed behaviour, HA, backup, DR testing"
+    type: "P, V"
+    enforcement: "deterministic"
+    component: "Platform"
+    objective: "Keep the platform available without ever trading availability for weaker controls, and recover quickly from loss."
+    how_it_works:
+      - "Fail-closed rules apply for PDP, registry, policy bundle, revocation lookup and audit capacity."
+      - "Gateways run at least 3 replicas across zones; Postgres has a synchronous replica; OPA runs next to each gateway."
+      - "Backups with point-in-time recovery and restore tests, including audit chain verification after restore."
+      - "Disaster-recovery exercises are timed and fail if the restored audit chain does not verify."
+    prevent:
+      - "Single failures do not open access."
+    detect:
+      - "Health, replication lag, bundle age, probe failures."
+    respond:
+      - "Runbook failover and restore procedures."
+    recover:
+      - "Region failover and failback."
+    parameters:
+      - "Availability: 99.95 percent monthly (Phase 5)."
+      - "RPO at most 5 min; RTO at most 30 min (Phase 5)."
+      - "Gateway replicas: at least 3."
+    failure_behavior: "By design: deny when dependencies fail; the cost is business agents stop."
+    false_positives:
+      - "Fail-closed denies valid calls during outages."
+    false_negatives:
+      - "Untested recovery paths."
+    bypass_scenarios:
+      - "Operators loosening fail-closed to restore service (prohibited by the runbook)."
+    residual_risk: "Availability impact on business agents; targets are unmeasured proposals."
+    requirements:
+      - "FR-AUTHZ-8"
+      - "FR-AUD-7"
+      - "NFR-3..4"
+    threats:
+      - "E"
+      - "X8"
+    tests:
+      - "TC-Z5"
+      - "TC-Z6"
+    evidence:
+      - "HA design and configuration."
+      - "Backup, restore and DR exercise reports."
+    metrics:
+      - "Availability and error budget."
+      - "Restore test success."
+      - "Time to restore in exercises."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Platform operations"
+    phase: "P1/P5"
+    status: "specified"
+    verify: ""
+  - id: "CTL-25"
+    name: "Compliance evidence generation and framework mapping governance"
+    type: "D"
+    enforcement: "hybrid"
+    component: "Compliance engine"
+    objective: "Produce evidence for controls and keep framework mappings reviewed and honest about what they claim."
+    how_it_works:
+      - "Controls and mappings are versioned in source control; each mapping is labelled mandatory, guidance or voluntary."
+      - "Evidence packs are generated per control and period from audit and registry data, signed and hash-listed."
+      - "Legal and compliance review mappings before release and on framework changes; the review date is recorded."
+      - "The system states that it supports evidence collection and does not assert compliance."
+    prevent:
+      - "Unreviewed mappings are not released as authoritative."
+    detect:
+      - "Controls without evidence; mappings past review date."
+    respond:
+      - "Open remediation items against controls."
+    recover:
+      - "Regenerate packs after corrections."
+    parameters:
+      - "Mapping review interval: to be set."
+    failure_behavior: "Evidence generation failure does not affect enforcement; it raises an alert."
+    false_positives:
+      - "Mappings that overstate coverage."
+    false_negatives:
+      - "Applicable frameworks missing from the matrix."
+    bypass_scenarios:
+      - "Treating a mapping as proof of compliance."
+    residual_risk: "Mappings are unverified until reviewed; jurisdictions were not specified."
+    requirements:
+      - "FR-COMP-1..5"
+    threats:
+      - "X6"
+    tests:
+      - "TC-Z6"
+    evidence:
+      - "Signed evidence packs."
+      - "Mapping review records."
+    metrics:
+      - "Controls with current evidence."
+      - "Mappings past review date."
+    depends_on:
+      - "CTL-13"
+    owner_role: "Compliance liaison"
+    phase: "P3"
+    status: "specified"
+    verify: "All framework identifiers in the matrix are unverified."
+  - id: "CTL-26"
+    name: "Discovery and coverage reporting (known gaps)"
+    type: "D"
+    enforcement: "advisory"
+    component: "Discovery"
+    objective: "Find agents and servers outside the gateway and report coverage gaps honestly."
+    how_it_works:
+      - "Collectors read the Kubernetes API, MCP client configuration files, egress logs and cloud inventories."
+      - "Findings enter the registry as unregistered assets for triage."
+      - "The dashboard lists coverage gaps such as unmanaged endpoints and direct connectors."
+    prevent:
+      - "None directly; network policy (CTL-08) blocks direct paths."
+    detect:
+      - "Unregistered servers and agents; direct connections."
+    respond:
+      - "Owners register or retire the asset; security blocks it."
+    recover:
+      - "None directly."
+    parameters:
+      - "Collection interval: to be set."
+    failure_behavior: "Collector failure is reported as a coverage gap, never as zero findings."
+    false_positives:
+      - "Test or experimental servers listed."
+    false_negatives:
+      - "Endpoints on personal devices and servers on networks the collectors cannot see."
+    bypass_scenarios:
+      - "Intentional hiding of local stdio servers."
+    residual_risk: "Unmanaged endpoints stay uncontrolled (threat X2); this control only reports them."
+    requirements:
+      - "FR-INV-5..7"
+    threats:
+      - "X2"
+      - "C"
+    tests:
+      - "TC-X2"
+    evidence:
+      - "Discovery results and coverage-gap reports."
+    metrics:
+      - "Unregistered assets by age."
+      - "Coverage gaps open."
+    depends_on:
+      - "CTL-01"
+    owner_role: "Security engineering"
+    phase: "P2/P3"
+    status: "specified"
+    verify: ""
+  - id: "CTL-27"
+    name: "Secure development and change management for the platform"
+    type: "P"
+    enforcement: "hybrid"
+    component: "CI/CD, process"
+    objective: "Stop the platform itself from becoming the weakest point."
+    how_it_works:
+      - "CI runs static analysis, secret scanning, dependency and image scanning, SBOM generation and signing; failures block release."
+      - "Changes are classified as standard, security-relevant or emergency with matching approvals; security-relevant changes roll out via shadow mode and canary."
+      - "Data plane and control plane use separate deployments and credentials; the gateway holds no long-lived upstream secrets."
+      - "A dedicated penetration test covers the gateway and control plane."
+    prevent:
+      - "Vulnerable or unsigned artifacts and unreviewed changes reach production."
+    detect:
+      - "Gate failures; runtime anomalies on platform pods."
+    respond:
+      - "Rollback; isolate and redeploy from signed images."
+    recover:
+      - "Rebuild from clean sources; rotate reachable secrets."
+    parameters:
+      - "Patch deadlines for critical vulnerabilities: to be set."
+    failure_behavior: "Any failed gate blocks the release."
+    false_positives:
+      - "Gate failures on unreachable vulnerable code."
+    false_negatives:
+      - "Unknown vulnerabilities; logic flaws not found by tools."
+    bypass_scenarios:
+      - "Emergency changes that skip review (reviewed afterwards)."
+    residual_risk: "Compromise of the gateway or control plane remains possible (threat X8); impact is limited by short-lived credentials and plane separation."
+    requirements:
+      - "NFR-9"
+    threats:
+      - "X8"
+      - "L"
+    tests:
+      - "TC-L3"
+      - "TC-X8"
+    evidence:
+      - "CI gate results and SBOMs."
+      - "Change approvals and penetration test reports."
+    metrics:
+      - "Emergency changes per quarter."
+      - "Time to patch critical vulnerabilities."
+    depends_on: []
+    owner_role: "Engineering management / platform security"
+    phase: "P1 onward"
+    status: "specified"
+    verify: ""

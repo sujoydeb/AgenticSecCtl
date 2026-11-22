@@ -34,6 +34,7 @@ DOC_FILES = sorted(
     [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "Plan" / "*.md"))]
     + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "docs" / "**" / "*.md"), recursive=True)]
     + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "compliance" / "*.md"))]
+    + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "controls" / "*.md"))]
     + ["CLAUDE.md", "README.md"]
 )
 texts = {f: read(f) for f in DOC_FILES}
@@ -88,6 +89,7 @@ short = {
     "operational-runbook.md": "docs/runbooks/operational-runbook.md",
     "incident-response-playbooks.md": "docs/playbooks/incident-response-playbooks.md",
     "compliance-matrix.md": "compliance/compliance-matrix.md",
+    "catalogue.md": "controls/catalogue.md",
 }
 versions = {}
 for name, path in short.items():
@@ -141,6 +143,65 @@ for f, t in texts.items():
             err(f"{f}: stale phrase /{p}/")
     for mm in re.finditer(r"(?<![/\w])testing/cases\.md", body):
         err(f"{f}: path 'testing/cases.md' without docs/ prefix")
+
+
+# 8. control catalogue (controls/catalogue.yaml is the source; controls/catalogue.md is generated)
+sys.path.insert(0, str(ROOT / "scripts"))
+import catalogue_lib  # noqa: E402
+
+cat_path = ROOT / "controls" / "catalogue.yaml"
+if not cat_path.exists():
+    err("controls/catalogue.yaml missing")
+else:
+    try:
+        cat = catalogue_lib.load(str(cat_path))
+    except catalogue_lib.CatalogueError as exc:
+        err(f"catalogue: {exc}")
+        cat = None
+    if cat:
+        for pr in catalogue_lib.validate_structure(cat):
+            err(f"catalogue: {pr}")
+        ctl_ids = [c["id"] for c in cat["controls"]]
+        other_ids = set(ctl_ids)
+        valid_threats = set("ABCDEFGHIJKLMNOP") | {f"X{i}" for i in range(1, 9)}
+        sod_defined = set(re.findall(r"\b(SoD-\d+)\b", spec))
+        for c in cat["controls"]:
+            cid = c["id"]
+            for r in catalogue_lib.expand_ids(c["requirements"]):
+                if r.startswith(("FR-", "NFR-")) and r not in (fr_defined | nfr_defined):
+                    err(f"catalogue {cid}: requirement {r} not defined in spec")
+                elif r.startswith("SoD-") and r not in sod_defined:
+                    err(f"catalogue {cid}: {r} not defined in spec")
+            for tc in catalogue_lib.expand_ids(c["tests"]):
+                if tc not in set(catalogue):
+                    err(f"catalogue {cid}: test {tc} not in docs/testing/cases.md")
+            for th in c["threats"]:
+                if th not in valid_threats:
+                    err(f"catalogue {cid}: invalid threat {th}")
+            for d in c["depends_on"]:
+                if d not in other_ids:
+                    err(f"catalogue {cid}: depends_on {d} is not a control")
+                if d == cid:
+                    err(f"catalogue {cid}: depends on itself")
+        # IDs must match the compliance matrix Section 3 and be used by its mappings
+        matrix = texts["compliance/compliance-matrix.md"]
+        sec3 = matrix.split("## 3.")[1].split("## 4.")[0]
+        matrix_ids = re.findall(r"^\| (CTL-\d+) \|", sec3, re.M)
+        if sorted(matrix_ids) != sorted(ctl_ids):
+            err(f"matrix Section 3 control IDs differ from catalogue: {sorted(set(matrix_ids) ^ set(ctl_ids))}")
+        for mid in set(re.findall(r"\bCTL-\d+\b", matrix)):
+            if mid not in other_ids:
+                err(f"compliance matrix references unknown control {mid}")
+        # every threat must be covered by at least one control
+        covered = {t for c in cat["controls"] for t in c["threats"]}
+        for th in sorted(valid_threats - covered):
+            err(f"threat {th} is not covered by any control in the catalogue")
+        # generated markdown must be up to date
+        md_path = ROOT / "controls" / "catalogue.md"
+        if not md_path.exists():
+            err("controls/catalogue.md missing (run scripts/build_catalogue_md.py)")
+        elif md_path.read_text(encoding="utf-8") != catalogue_lib.render_markdown(cat):
+            err("controls/catalogue.md is stale (run scripts/build_catalogue_md.py)")
 
 if errors:
     print("FAILED:")
