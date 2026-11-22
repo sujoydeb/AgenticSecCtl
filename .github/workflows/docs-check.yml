@@ -1,5 +1,5 @@
-# Document consistency and generated-file freshness.
-# This is the only active workflow today. It runs repository-owned scripts and needs no secrets.
+# Document consistency, generated-file freshness, and the OPA and PostgreSQL spikes.
+# This is the only active workflow today. It runs repository-owned scripts and container images pinned by digest, and needs no secrets.
 # Policy and waivers: docs/ci-cd-pipeline.md (Sections 7 and 8).
 name: docs-check
 
@@ -31,3 +31,28 @@ jobs:
           python3 -I scripts/build_spec_html.py Plan/functional-spec.md Plan/functional-spec.html
           python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md
           git diff --exit-code -- Plan/functional-spec.html controls/catalogue.md
+
+  # Spikes: the Rego tests and the PostgreSQL row-level security checks (policy/, db/spike/).
+  # Needs Docker, which the GitHub-hosted runner provides. Images are pinned by digest
+  # (read with docker pull on 2026-11-22: openpolicyagent/opa 1.22.4, postgres 17-alpine); update the digests deliberately.
+  spikes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPA_IMAGE: openpolicyagent/opa@sha256:ff50f50332ff9e722ffafe2658c195ced1f9b6d4f3064000c2ecfa8cdf7acccf
+      PG_IMAGE: postgres@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
+    steps:
+      # actions/checkout: same pin as the docs job above
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Rego tests
+        run: docker run --rm -v "$PWD/policy":/w -w /w "$OPA_IMAGE" test rego tests
+      - name: Rego strict check
+        run: docker run --rm -v "$PWD/policy":/w -w /w "$OPA_IMAGE" check --strict rego tests
+      - name: Rego formatting
+        run: |
+          unformatted=$(docker run --rm -v "$PWD/policy":/w -w /w "$OPA_IMAGE" fmt --list rego tests)
+          if [ -n "$unformatted" ]; then echo "Files need 'opa fmt':"; echo "$unformatted"; exit 1; fi
+      - name: PostgreSQL row-level security spike
+        run: db/spike/run.sh

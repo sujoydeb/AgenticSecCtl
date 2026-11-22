@@ -12,6 +12,6 @@ docker run --rm -v "$PWD/policy":/w -w /w openpolicyagent/opa:latest check --str
 docker run --rm -v "$PWD/policy":/w -w /w openpolicyagent/opa:latest fmt --list rego tests
 ```
 
-Last run on 2026-11-22: 15 of 15 tests pass, `check --strict` and `fmt --list` report nothing. The tests mirror TC-F1, TC-E1, TC-C3, TC-B1, TC-E3, TC-D4, TC-D5 and the fail-closed cases (missing field, empty input, unknown tenant). Cases that need the gateway (TC-Z5, TC-M2) are not covered here.
+CI runs the same three commands in the `spikes` job of `.github/workflows/docs-check.yml`, with the OPA image pinned by digest. Last run on 2026-11-22 (locally): 15 of 15 tests pass, `check --strict` and `fmt --list` report nothing. The tests mirror TC-F1, TC-E1, TC-C3, TC-B1, TC-E3, TC-D4, TC-D5 and the fail-closed cases (missing field, empty input, unknown tenant). Cases that need the gateway (TC-Z5, TC-M2) are not covered here.
 
 Data shape: `data.registry.agent_server_allow[tenant][agent][server] = true` and `data.grants[tenant][agent] = [grant, ...]`.

@@ -1,11 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Runs the P0-19 spike in a throwaway PostgreSQL container. Needs Docker.
-# Usage: db/spike/run.sh   (from anywhere)
-set -eu
-set -o pipefail 2>/dev/null || true
+# Usage: db/spike/run.sh   (from anywhere); PG_IMAGE overrides the image. Exits non-zero on any failure.
+set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 name=agenticsecctl-pg-spike
-image=postgres:17-alpine
+image=${PG_IMAGE:-postgres:17-alpine}   # CI passes a digest-pinned image
 docker rm -f "$name" >/dev/null 2>&1 || true
 docker run -d --name "$name" -e POSTGRES_PASSWORD=spike -v "$here":/spike:ro "$image" >/dev/null
 trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
