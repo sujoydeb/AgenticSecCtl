@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.5 (plan draft; nothing is built, all estimates are unvalidated; v0.5 incorporates the High gaps IG-3 and IG-5 of `docs/implementationgaps.md`, on top of the Medium gaps in v0.4, the Low gaps in v0.3 and IG-1 and IG-2 in v0.2; every gap in the register is now incorporated) |
+| Version | 0.6 (plan draft; nothing is built, all estimates are unvalidated; v0.5 incorporates the High gaps IG-3 and IG-5 of `docs/implementationgaps.md`, on top of the Medium gaps in v0.4, the Low gaps in v0.3 and IG-1 and IG-2 in v0.2; every gap in the register is now incorporated) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.2, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.5, `docs/parameter-register.md` v0.3, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.2, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.5, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.5, `docs/parameter-register.md` v0.3, `docs/governance.md` v0.3 |
 | Purpose | Turn the Phase 1 scope of the roadmap into an ordered, testable work breakdown that engineers can start from: modules, interfaces, work packages, schedule, test strategy, definition of done. Later phases are sequenced at lower confidence. |
 | Status | **Plan only.** No code has been written. Library names and versions are unverified **[VERIFY]**. Open decisions (ADR-1..7) are not decided here: the plan builds on the proposed defaults in the design documents and says what changes if a decision differs. Effort and duration figures are proposals for the re-baseline checkpoints in the roadmap, not commitments. |
 
@@ -497,18 +497,18 @@ Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py
 | Control | Title | Catalogue phase | Package(s) |
 |---|---|---|---|
 | CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P1 | WP-1.6 |
-| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P1 | WP-1.7 |
-| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P1/P2 | WP-1.6, WP-1.9 |
+| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P1/P2/P3 | WP-1.7 |
+| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P1/P2/P4 | WP-1.6, WP-1.9 |
 | CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P1/P2 | WP-1.9, WP-1.10 |
 | CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P1/P2 | WP-1.9, WP-1.10 |
-| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P1/P2/P3 | WP-1.8 |
+| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P1/P3 | WP-1.8 |
 | CTL-08 | SSRF protection and egress allowlisting | P1/P2 | WP-1.3 |
 | CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | P1/P2 | WP-1.4 |
 | CTL-14 | Security monitoring and alerting; platform observability | P1/P2/P4 | WP-1.2 |
 | CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P1/P3 | WP-1.8 |
 | CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P1/P2 | WP-1.9 |
 | CTL-23 | Separation of duties, privileged and break-glass access | P1/P2 | WP-1.6, WP-1.10 |
-| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P1/P5 | WP-1.9, WP-1.13 |
+| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P1/P2/P5 | WP-1.9, WP-1.13 |
 | CTL-27 | Secure development and change management for the platform | P1 onward | WP-1.1 |
 | CTL-28 | Fleet dashboard, approval workflow and notifications | P1/P2/P3 | WP-1.11 |
 | CTL-29 | Data classification and labelling | P1/P2 | WP-1.5, WP-1.6 |
@@ -532,6 +532,7 @@ Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-11-22 | Section 11 control phases for CTL-02, CTL-03, CTL-06 and CTL-24 follow the corrected catalogue 0.5 (CTL-12 has no Phase 1 content and no row) |
 | 0.5 | 2026-11-22 | IG-3: Section 4.4 forwarding note (Streamable HTTP only, proxying through the guarded client, no upstream credential, stage table for Phase 1). IG-5: audit path note (chain writer in `api`, authenticated batched submission, bounded buffer, deny when full, idempotent events). Estimates WP-1.4 to 2.5 to 3.5 and WP-1.9 to 3.5 to 5; total 31.5 to 43.5; lane C and A loads updated |
 | 0.4 | 2026-11-22 | Medium gaps: IG-4 (identity-provider fetches through the guard, development exception entry); IG-6 (database job table, scanner identity, isolation and test); IG-7 (Phase 1 effect time bounded by the cache TTL, test that measures it); IG-8 (hashed field list and unknown-field rule, test vectors); IG-9 (per-transaction tenant setting, pooled-connection test); IG-11 (AC, NFR and threat tables, checked); IG-14 (review checkpoints R1 to R4); IG-15 (lane load and capacity, slip order, checked totals) |
 | 0.3 | 2026-11-22 | IG-10: ADR-3 row reworded (Phase 1 approves tool definitions and agent registrations). IG-12: control-to-package table, checked by `scripts/check_docs.py`. IG-13: documentation tasks added to WP-1.1, WP-1.5, WP-1.6, WP-1.9 and a runbook update task to WP-1.13. IG-16: dependency graph edges added (WP-1.5 to WP-1.4, ADR-3, ADR-6) and spike links explained. IG-17: seed fleet proposal in WP-1.12; migration tool, access layer and coverage thresholds recorded as PAR-O-26..28 |

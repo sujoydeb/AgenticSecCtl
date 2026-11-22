@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| Version | 0.4 |
+| Version | 0.5 |
 | Status | Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set. |
 | Depends on | Plan/functional-spec.md v0.6, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3 |
 | Satisfies | FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here. |
@@ -31,17 +31,17 @@ A control is a platform capability that reduces a named threat. Each entry says 
 | ID | Control | Type | Enforcement | Component | Phase | Owner (role) |
 |---|---|---|---|---|---|---|
 | [CTL-01](#ctl-01) | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | deterministic | Registry/API | P1 | Security engineer |
-| [CTL-02](#ctl-02) | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | hybrid | Scanner, Registry | P1 | Security engineer |
-| [CTL-03](#ctl-03) | Definition pinning (canonical hash) and drift quarantine | P, D, R | deterministic | Gateway, Registry | P1/P2 | Security engineer |
+| [CTL-02](#ctl-02) | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | hybrid | Scanner, Registry | P1/P2/P3 | Security engineer |
+| [CTL-03](#ctl-03) | Definition pinning (canonical hash) and drift quarantine | P, D, R | deterministic | Gateway, Registry | P1/P2/P4 | Security engineer |
 | [CTL-04](#ctl-04) | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | deterministic | Identity/broker | P1/P2 | Security engineer |
 | [CTL-05](#ctl-05) | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | deterministic | Gateway, broker | P1/P2 | Security engineer |
-| [CTL-06](#ctl-06) | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | deterministic | PDP, Gateway | P1/P2/P3 | Security engineer |
+| [CTL-06](#ctl-06) | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | deterministic | PDP, Gateway | P1/P3 | Security engineer |
 | [CTL-07](#ctl-07) | Just-in-time access and human approval for high-impact actions bound to argument hash | P | human | PDP, API | P2 | Approver |
 | [CTL-08](#ctl-08) | SSRF protection and egress allowlisting | P, D | deterministic | Egress proxy, Scanner | P1/P2 | Security engineer |
 | [CTL-09](#ctl-09) | Response inspection for injection, untrusted labelling, taint rule | P, D | hybrid | Gateway, Inspection | P2 | Security engineer |
 | [CTL-10](#ctl-10) | Data loss prevention on requests and responses; tenant isolation | P, D | hybrid | Gateway, DLP | P2 | Compliance liaison |
 | [CTL-11](#ctl-11) | Argument guards, schema validation, execution sandboxing | P | deterministic | Gateway, platform | P2/P4 | Security engineer |
-| [CTL-12](#ctl-12) | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | deterministic | Gateway, API | P2 | Security engineer |
+| [CTL-12](#ctl-12) | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | deterministic | Gateway, API | P2/P4 | Security engineer |
 | [CTL-13](#ctl-13) | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | deterministic | Audit service | P1/P2 | Security on-call |
 | [CTL-14](#ctl-14) | Security monitoring and alerting; platform observability | D | advisory | Analytics, observability | P1/P2/P4 | Security on-call |
 | [CTL-15](#ctl-15) | Incident detection, containment, evidence preservation, reporting | R, V | human | Incident manager | P2/P3/P4 | Incident commander |
@@ -53,7 +53,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 | [CTL-21](#ctl-21) | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | deterministic | Registry, Gateway | P2/P3/P4 | Product owner |
 | [CTL-22](#ctl-22) | Multi-tenancy, data residency and retention | P | deterministic | Platform | P2/P5 | Compliance liaison |
 | [CTL-23](#ctl-23) | Separation of duties, privileged and break-glass access | P, D | deterministic | API, IdP | P1/P2 | Security admin |
-| [CTL-24](#ctl-24) | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | deterministic | Platform | P1/P5 | Platform operator |
+| [CTL-24](#ctl-24) | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | deterministic | Platform | P1/P2/P5 | Platform operator |
 | [CTL-25](#ctl-25) | Compliance evidence generation and framework mapping governance | D | hybrid | Compliance engine | P3 | Compliance liaison |
 | [CTL-26](#ctl-26) | Discovery and coverage reporting (known gaps) | D | advisory | Discovery | P2/P3 | Security engineer |
 | [CTL-27](#ctl-27) | Secure development and change management for the platform | P | hybrid | CI/CD, process | P1 onward | Delivery lead |
@@ -143,7 +143,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop poisoned or unsafe tool definitions from being approved, with evidence and a reproducible score.
 
-**Enforcement:** hybrid · **Type:** P, D · **Component:** Scanner, Registry · **Phase:** P1 · **Owner (role):** Security engineer · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Scanner, Registry · **Phase:** P1/P2/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -226,7 +226,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Make sure agents only use the exact tool definition that was approved, and block it the moment it changes.
 
-**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, Registry · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, Registry · **Phase:** P1/P2/P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -450,7 +450,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Limit each agent to the specific tools, action classes and resources it needs, and notice when that drifts.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** PDP, Gateway · **Phase:** P1/P2/P3 · **Owner (role):** Security engineer · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** PDP, Gateway · **Phase:** P1/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -905,7 +905,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Bound what an agent can do on its own in calls, time, cost and delegation, and allow immediate suspension.
 
-**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, API · **Phase:** P2 · **Owner (role):** Security engineer · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, API · **Phase:** P2/P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1780,7 +1780,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep the platform available without ever trading availability for weaker controls, and recover quickly from loss.
 
-**Enforcement:** deterministic · **Type:** P, V · **Component:** Platform · **Phase:** P1/P5 · **Owner (role):** Platform operator · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, V · **Component:** Platform · **Phase:** P1/P2/P5 · **Owner (role):** Platform operator · **Status:** specified
 
 **How it works**
 

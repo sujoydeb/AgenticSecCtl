@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.4 (design draft; nothing is deployed or tested) |
-| Depends on | `Plan/architecture.md` v0.5 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.7 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.5, `controls/catalogue.md` v0.4 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.3 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.5, `docs/testing/cases.md` v0.5 |
+| Depends on | `Plan/architecture.md` v0.5 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.7 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.5, `controls/catalogue.md` v0.5 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.3 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.5, `docs/testing/cases.md` v0.5 |
 | Purpose | Where each component runs, how the network and trust zones are enforced, how data is stored and protected, how the platform stays available and recovers, and how it scales across tenants, regions and clouds. Extends `Plan/architecture.md` Section 8; if the two disagree, resolve the conflict in both. |
 | Unverified | Product, cloud-service and Kubernetes feature statements are from background knowledge and tagged **[VERIFY]**. Sizing, replica counts beyond those in the architecture, and timeouts are placeholders marked "to be set". No figure here has been measured. |
 

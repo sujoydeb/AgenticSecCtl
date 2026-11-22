@@ -1,6 +1,6 @@
 # Control catalogue source. Strict YAML subset: see scripts/catalogue_lib.py.
 # Generated view: controls/catalogue.md (python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md)
-version: "0.4"
+version: "0.5"
 status_note: "Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set."
 depends_on_docs: "Plan/functional-spec.md v0.6, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3"
 satisfies: "FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here."
@@ -146,7 +146,7 @@ controls:
       - "CTL-08"
       - "CTL-23"
     owner_role: "Security engineer"
-    phase: "P1"
+    phase: "P1/P2/P3"
     status: "specified"
     verify: "External MCP scanners as advisory signals or corpus sources are unverified (docs/tech-evaluation.md)."
   - id: "CTL-03"
@@ -202,7 +202,7 @@ controls:
     depends_on:
       - "CTL-13"
     owner_role: "Security engineer"
-    phase: "P1/P2"
+    phase: "P1/P2/P4"
     status: "specified"
     verify: ""
   - id: "CTL-04"
@@ -373,7 +373,7 @@ controls:
       - "CTL-13"
       - "CTL-16"
     owner_role: "Security engineer"
-    phase: "P1/P2/P3"
+    phase: "P1/P3"
     status: "specified"
     verify: "OPA performance with realistic policy data is unmeasured (spike S3)."
   - id: "CTL-07"
@@ -734,7 +734,7 @@ controls:
       - "CTL-13"
       - "CTL-23"
     owner_role: "Security engineer"
-    phase: "P2"
+    phase: "P2/P4"
     status: "specified"
     verify: ""
   - id: "CTL-13"
@@ -1403,7 +1403,7 @@ controls:
     depends_on:
       - "CTL-13"
     owner_role: "Platform operator"
-    phase: "P1/P5"
+    phase: "P1/P2/P5"
     status: "specified"
     verify: ""
   - id: "CTL-25"

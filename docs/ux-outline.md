@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (outline; closes gap A7 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.7 (FR-UI-1..7, FR-AUTHZ-9..11, FR-DATA-*, NFR-10), `docs/api-specification.md` v0.1, `docs/prd.md` v0.4 (personas, Section 7 user stories), `controls/catalogue.md` v0.4 (CTL-28), `docs/testing/cases.md` v0.5 (TC-Z7..Z9, TC-Z21, TC-X14, TC-Z33) |
+| Depends on | `Plan/functional-spec.md` v0.7 (FR-UI-1..7, FR-AUTHZ-9..11, FR-DATA-*, NFR-10), `docs/api-specification.md` v0.1, `docs/prd.md` v0.4 (personas, Section 7 user stories), `controls/catalogue.md` v0.5 (CTL-28), `docs/testing/cases.md` v0.5 (TC-Z7..Z9, TC-Z21, TC-X14, TC-Z33) |
 | Status | Information architecture and flow outline. **No visual design, wireframes or user research.** Screens are described in words; layout, components and copy still need design and usability testing with the personas. |
 
 ## 1. Principles
