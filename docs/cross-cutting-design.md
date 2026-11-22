@@ -32,7 +32,7 @@ Rules: nothing that must be provable goes only into an operational log; no paylo
 
 ## 4. Audit events
 
-Event names come from the vocabulary in `Plan/architecture.md` Section 4.8; new names are added there first. Each event carries: tenant, sequence, time, event type, actor identity, subject type and ID, decision, policy bundle hash, input digest, payload digest, redacted excerpt (bounded size), previous hash and hash. Events are produced through the outbox in the same transaction as the state change they describe.
+Event names come from the vocabulary in `Plan/architecture.md` Section 4.8; new names are added there first. Each event carries: tenant, sequence, time, event type, actor identity, subject type and ID, decision, policy bundle hash, input digest, payload digest, redacted excerpt (bounded size), previous hash and hash. Events are produced through the outbox in the same transaction as the state change they describe. Events produced by the gateway, which has no database, are submitted in batches to an authenticated API endpoint and chained by the API; the gateway buffers them in a bounded queue and denies calls that would be allowed when the queue is full (Phase 1 design note in `Plan/implementation-plan.md` Section 4.4).
 
 ## 5. Error handling
 
