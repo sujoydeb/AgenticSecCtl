@@ -46,7 +46,7 @@ There are no build, lint or test commands for the product yet. When code is adde
 
 ### Document tooling
 
-- `python3 -I scripts/check_docs.py` checks cross-document consistency (requirement/AC/ADR/TC references resolve, TC index equals catalogue, `Depends on` version citations match actual versions, HTML parity, section references, stale phrases). Run it after any document edit; it must exit 0.
+- `python3 -I scripts/check_docs.py` checks cross-document consistency (requirement/AC/ADR/TC references resolve, TC index equals catalogue, each control's phase in `controls/catalogue.yaml` equals the phases of the requirements it lists, `Depends on` version citations match actual versions, HTML parity, section references, stale phrases). Run it after any document edit; it must exit 0.
 - `python3 -I scripts/build_spec_html.py Plan/functional-spec.md Plan/functional-spec.html` regenerates the HTML. Never edit the HTML by hand.
 - `python3 -I scripts/sync_versions.py` rewrites the version citations in `Depends on` and `Companion` rows after you bump a document's version (`--check` only reports).
 - Workflows: `.github/workflows/docs-check.yml` is the only active workflow. `check_docs.py` enforces that active workflows declare `permissions`, pin third-party actions to a full commit SHA (or carry a `# waiver: W-nnn` comment recorded in `docs/ci-cd-pipeline.md` Section 7), and never use `pull_request_target`. The product gates live in `docs/ci-templates/product-security-gates.yml`, which is deliberately not a workflow (action pins are TBD); do not move it under `.github/workflows/` before the pins are verified.

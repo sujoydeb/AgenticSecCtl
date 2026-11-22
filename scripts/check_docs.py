@@ -509,6 +509,30 @@ if _gov and _par:
             if pid not in _row.group(0):
                 err(f"docs/governance.md: P0-20 does not name {pid}, a parameter with gate B1")
 
+# 16. catalogue control phases equal the phases of the requirements the control lists
+#     (FR phase cells found by pattern; NFR rows may carry a "(P5)"-style tag in their text; SoD rules carry none)
+_ph_of = {}
+for _ln in spec.split("\n"):
+    _c = [x.strip() for x in _ln.strip().strip("|").split("|")]
+    if not _c:
+        continue
+    if re.fullmatch(r"FR-[A-Z]+-\d+", _c[0]):
+        _p = [x for x in _c[1:] if re.fullmatch(r"P[1-5](?:/P[1-5])*", x)]
+        if _p:
+            _ph_of[_c[0]] = set(_p[0].split("/"))
+    elif re.fullmatch(r"NFR-\d+", _c[0]):
+        _tags = set(re.findall(r"\((P[1-5])\)", _ln))
+        if _tags:
+            _ph_of[_c[0]] = _tags
+_cat16 = catalogue_lib.load(str(ROOT / "controls" / "catalogue.yaml"))
+for _x in (_cat16["controls"] if isinstance(_cat16, dict) else _cat16):
+    _union = set()
+    for _r in catalogue_lib.expand_ids(_x["requirements"]):
+        _union |= _ph_of.get(_r, set())
+    _stated = set(re.findall(r"P[1-5]", _x["phase"]))
+    if _union and _union != _stated:
+        err(f"controls/catalogue.yaml: {_x['id']} phase {sorted(_stated)} differs from the phases of its requirements {sorted(_union)}")
+
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
 _tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}
