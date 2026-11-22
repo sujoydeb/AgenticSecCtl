@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agenticsecctl-gateway"
+version = "0.0.0"
+description = "MCP security gateway (PEP): interceptor pipeline, tools/list filtering, hash pinning, PDP client"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agenticsecctl_gateway"]

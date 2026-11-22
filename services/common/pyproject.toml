@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agenticsecctl-common"
+version = "0.0.0"
+description = "Shared models, canonical JSON hashing (RFC 8785), audit hash chain, config, OpenTelemetry setup"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agenticsecctl_common"]

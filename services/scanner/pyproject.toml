@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agenticsecctl-scanner"
+version = "0.0.0"
+description = "Tool scanning engine: normalizer, rules, hardened importer, SSRF guard, advisory classifier adapter"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agenticsecctl_scanner"]
