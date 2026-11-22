@@ -11,7 +11,7 @@
 
 | Audience | Read in this order |
 |---|---|
-| Sponsor, product owner | `docs/prd.md`, `docs/roadmap.md`, `Plan/implementation-plan.md`, `docs/reviewgap.md` (Sections 1, 9, 10, 11), `docs/governance.md`, `docs/customer-inputs.md` |
+| Sponsor, product owner | `docs/decision-brief-phase0.md`, `docs/prd.md`, `docs/roadmap.md`, `Plan/implementation-plan.md`, `docs/reviewgap.md` (Sections 1, 9, 10, 11), `docs/governance.md`, `docs/customer-inputs.md` |
 | Security architect, reviewer | `docs/architecture-assessment.md`, `Plan/architecture.md`, `Plan/threat-model.md`, `controls/catalogue.md`, `docs/authn-authz-design.md`, `docs/reviewgap.md` |
 | Backend and frontend engineers | `Plan/functional-spec.md` (Section 4), `Plan/architecture.md`, `docs/data-model.md`, `docs/api-specification.md`, `docs/cross-cutting-design.md`, `docs/mcp-compatibility.md`, `docs/ux-outline.md` |
 | Platform and DevSecOps engineers | `docs/deployment-architecture.md`, `docs/cloud-adapter-verification.md`, `docs/ci-cd-pipeline.md`, `docs/runbooks/operational-runbook.md`, `docs/parameter-register.md` |
@@ -39,7 +39,8 @@
 | `docs/customer-inputs.md` | Blank intake form for customer decisions | Product, customer |
 | `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL) | Backend engineers, DBAs |
 | `docs/deployment-architecture.md` | Environments, topology, network policy, data tier, availability, tenancy, adapters | Platform engineers, security |
-| `docs/governance.md` | Roles, RACI, owners, review log, decision log, risk acceptance (templates) | Sponsor, owners, reviewers |
+| `docs/governance.md` | Roles, RACI, owners, review log, decision log, risk acceptance (templates); Phase 0 exit checklist | Sponsor, owners, reviewers |
+| `docs/decision-brief-phase0.md` | Decision brief for ADR-3, ADR-4 and ADR-6 (options, recommendation, conditions) | Sponsor, security architect, product owner |
 | `docs/mcp-compatibility.md` | MCP revision pin and compatibility matrix | Gateway engineers, security |
 | `docs/parameter-register.md` | Fixed (checked) and open parameters with owners and gates | Everyone changing values |
 | `docs/playbooks/incident-response-playbooks.md` | Incident phases, severity model, 15 scenario playbooks | Incident responders |

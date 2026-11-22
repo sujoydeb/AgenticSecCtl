@@ -36,6 +36,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/index.md` | Documentation index: reading paths by audience and the document map (checked for completeness) | — |
 | `docs/mcp-compatibility.md`, `docs/authn-authz-design.md`, `docs/cross-cutting-design.md`, `docs/ux-outline.md` | MCP revision pin and compatibility matrix; authentication and authorization design with illustrative policy; logging, errors and configuration design; dashboard UX outline | spec 4.12, 4.6 |
 | `docs/parameter-register.md`, `docs/privacy-assessment.md`, `docs/customer-inputs.md`, `docs/cloud-adapter-verification.md` | Fixed and open parameters (checked), platform privacy assessment, customer intake form, AWS adapter verification | NFR-*, deployment 12 |
+| `docs/decision-brief-phase0.md` | Decision brief for ADR-3, ADR-4 and ADR-6 (recommendations only, nothing decided) | Phase 0 exit |
 | `docs/repository-setup.md` | Untested outline for remote repository and branch protection (not executed) | reviewgap G4 |
 | `docs/testing/performance-test-plan.md`, `docs/testing/fixtures-and-corpora.md`, `tests/fixtures/corpus/` | Load-test environment and workload proposal; fixture and corpus specification; seed corpus (42 descriptions, 28 responses) | cases Section 1 |
 | `docs/deployment-architecture.md` | Deployment architecture: environments, topology, network policy matrix, data tier, HA/DR, multi-tenancy, multi-cloud adapters, hardening, acceptance criteria (untested) | architecture 8, 9 |

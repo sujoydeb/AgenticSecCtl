@@ -32,6 +32,7 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/parameter-register.md` | Fixed parameters (machine-checked) and open "to be set" parameters with owners and gates | v0.3 |
 | `docs/privacy-assessment.md` | Platform data inventory and privacy risks; legal questions marked [LEGAL] | v0.2 |
 | `docs/cloud-adapter-verification.md` | AWS and Azure adapter facts from documentation chunks; Google Cloud from search summaries only | v0.2 |
+| `docs/decision-brief-phase0.md` | Decision brief for ADR-3, ADR-4 and ADR-6 with options, recommendations and conditions; nothing decided | v0.1 |
 | `docs/repository-setup.md` | Outline for remote repository and branch protection; steps 1, 2, 9, 10 carried out on 2026-11-22, protection not configured | v0.3 |
 | `docs/customer-inputs.md` | Blank customer intake form | v0.2 |
 | `docs/testing/performance-test-plan.md`, `docs/testing/fixtures-and-corpora.md` | Proposed load-test environment and workload; fixture and corpus specification (seed corpus under `tests/fixtures/corpus/`) | v0.1 |
