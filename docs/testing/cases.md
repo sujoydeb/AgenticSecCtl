@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft; cases are specifications, none have been executed) |
-| Depends on | `Plan/threat-model.md` v0.1 (case IDs, Section 7), `Plan/functional-spec.md` v0.2 (FR/NFR/AC IDs), `Plan/architecture.md` v0.1 |
-| Cases | 64 (threat-model index), all expanded below |
+| Version | 0.2 (draft; cases are specifications, none have been executed) |
+| Depends on | `Plan/threat-model.md` v0.2 (case IDs, Section 7), `Plan/functional-spec.md` v0.3 (FR/NFR/AC IDs), `Plan/architecture.md` v0.2 (audit event vocabulary, Section 4.8) |
+| Cases | 65 (threat-model index), all expanded below |
 | Safety | Every attack runs only in the isolated test environment (Section 1). Payloads are inert test strings that target fixture services; no real credentials, data or external hosts are used. |
 
 ## 1. Test environment and fixtures
@@ -21,7 +21,7 @@
 | FX-CANARY | Canary secrets and PII strings (fake API key `AKIA-TEST-…`, fake card number with valid Luhn, fake SSN pattern) planted in FX-BEN data. |
 | FX-META / FX-INT | Recording fake metadata endpoint / fake internal service. |
 
-**Audit event names used in "Logs" fields** (to be confirmed when the audit schema is built): `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`.
+**Audit event names used in "Logs" fields:** the provisional vocabulary is defined once in `Plan/architecture.md` Section 4.8. Do not redefine it here; if a case needs a new event name, add it there first.
 
 **Case fields.** Each case gives: objective, prerequisites, steps (run in the isolated environment), expected detection, expected prevention, logs generated, pass/fail criteria, residual risk. Header line gives threat, requirements, test type (UT unit, IT integration, E2E, FZ fuzz, RT red-team, PT penetration), phase, and priority (**MVP** = must pass for Phase 1 acceptance, otherwise phase gate).
 
@@ -309,12 +309,12 @@
 ## 8. G — Authentication and authorization attacks
 
 ### TC-G1 Token replay from different client
-*Threat G · FR-AUTHN-2/4 · PT · P2*
+*Threat G · FR-AUTHN-2/4, FR-ID-7 · PT · P2*
 - **Objective:** A stolen access token cannot be used from another sender.
 - **Prerequisites:** DPoP or mTLS binding enabled (if IdP supports, **[VERIFY]**); otherwise run in "short TTL + revocation" mode.
-- **Steps:** Capture token from client A; replay from client B before and after revocation and after TTL.
+- **Steps:** Capture token from client A; replay from client B before and after revocation and after TTL. Then make the revocation list/service unavailable and repeat a call with a valid, unrevoked token (FR-ID-7).
 - **Expected detection:** Sender mismatch alert (bound mode); revoked-token alert.
-- **Expected prevention:** Bound mode: rejected immediately. Fallback mode: works until revocation/TTL, which is documented as the accepted weaker guarantee.
+- **Expected prevention:** Bound mode: rejected immediately. Fallback mode: works until revocation/TTL, which is documented as the accepted weaker guarantee. With the revocation lookup unavailable the call is denied in both modes (FR-ID-7).
 - **Logs:** `authn.fail`.
 - **Pass/fail:** Pass per mode as stated; record mode in result.
 - **Residual risk:** Fallback mode exposure window.
@@ -351,6 +351,17 @@
 - **Logs:** `authn.fail`, `session.suspended`.
 - **Pass/fail:** Pass if B receives no data from A's context.
 - **Residual risk:** None specific.
+
+### TC-G5 Token and secret redaction in logs, traces, errors and UI
+*Threat G · FR-AUTHN-6, FR-OBS-1, AC-9 · UT, IT · P1 · MVP*
+- **Objective:** Show that tokens, API keys and other secrets never appear in logs, traces, audit excerpts, error responses or the dashboard, including under failure.
+- **Prerequisites:** FX-CANARY tokens and keys (valid-looking, recognisable markers) placed in Authorization headers, tool arguments, upstream credentials and tool responses; debug/verbose tracing enabled for the run; FX-SIEM capturing all outputs.
+- **Steps:** 1. Send requests with canary bearer tokens (valid, expired, malformed, wrong audience). 2. Trigger errors: PDP down, upstream timeout, schema failure, panic/exception path. 3. Call tools whose arguments and responses contain canary secrets. 4. Enable debug logging and repeat. 5. Open the dashboard views for those events and export an evidence pack.
+- **Expected detection:** Redaction counters/events; any leak detected by the test harness scan.
+- **Expected prevention:** Secrets replaced by redaction markers or digests in logs, traces, audit excerpts, error bodies (RFC 9457 problem details contain no secrets or stack traces) and UI; debug mode does not disable redaction.
+- **Logs:** `authn.fail`, `dlp.match` (events contain no secret values).
+- **Pass/fail:** Pass if a full-text search for every canary marker across FX-SIEM output, traces, error bodies and rendered UI returns zero hits in all runs, including debug mode.
+- **Residual risk:** Secrets in formats the redactor does not recognise; third-party library logging outside the platform's control.
 
 ---
 
@@ -490,12 +501,12 @@
 - **Residual risk:** Slow loops under thresholds.
 
 ### TC-K2 Budget exhaustion
-*Threat K · FR-AUTO-1, FR-RT-10 · E2E · P2*
+*Threat K · FR-AUTO-1/4/5, FR-RT-10 · E2E · P2*
 - **Objective:** Per-agent/session limits on calls, time and cost are enforced.
 - **Prerequisites:** Limits: 100 calls/session, 10 calls/s/agent.
-- **Steps:** Exceed each limit; test many agents each below the per-agent limit against per-tenant cap.
+- **Steps:** Exceed each limit; test many agents each below the per-agent limit against per-tenant cap. Then suspend an agent with the kill switch and attempt to resume it as the same user and as a different approver (FR-AUTO-5).
 - **Expected detection:** Limit events.
-- **Expected prevention:** Excess calls denied; tenant cap holds.
+- **Expected prevention:** Excess calls denied; tenant cap holds; resume by the suspending user is refused (unless an emergency policy applies), resume by a different approver succeeds and both actions are audited.
 - **Logs:** `limit.exceeded`.
 - **Pass/fail:** Pass if no call beyond the limit succeeds.
 - **Residual risk:** Distributed slow abuse.
@@ -815,7 +826,7 @@
 | D Response injection | D1–D5 | none (Phase 2) |
 | E Permissions | E1–E4 | E1, E4 |
 | F Identity | F1–F2 | F1 |
-| G Auth | G1–G4 | G2 (P1) |
+| G Auth | G1–G5 | G2, G5 (P1) |
 | H SSRF | H1–H4 | H1, H2, H3, H4 |
 | I Exfiltration | I1–I4 | none (Phase 2) |
 | J Memory | J1–J2 | none (Phase 4) |
@@ -827,10 +838,11 @@
 | P Protocol | P1–P4 | none (Phase 2) |
 | X / Z | X2, X5, X6, X8, Z1–Z6 | Z2, Z5, Z6 |
 
-Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6; AC-6 ← E4; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← needs a dedicated log-redaction test (**gap**: no TC currently covers secret/token redaction in logs; add TC-G5 when the threat model is next revised).
+Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6; AC-6 ← E4; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← G5.
 
 ## 21. Open items
 - Several cases assume capabilities marked **[VERIFY]** in the spec (DPoP/mTLS binding, token exchange); record the actual IdP mode in every run (TC-G1).
-- Event names in Section 1 are provisional until the audit schema exists.
+- Event names are provisional until the audit schema exists (definition: `Plan/architecture.md` Section 4.8).
+- Requirements without a dedicated case yet: FR-SCAN-9 (re-scan on rule-set update), FR-AUD-7 (audit buffer full), FR-ADM-6 (break-glass). FR-ID-7 and FR-AUTO-5 are covered by extensions of TC-G1 and TC-K2.
 - Benchmark corpora for detectors (spec Section 10) are not defined yet; cases A1–A5 and D1–D5 need a labelled corpus for precision/recall, beyond single examples.
 - Execution has not happened: all pass/fail criteria are proposals to be refined once fixtures exist.

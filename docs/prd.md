@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review) |
+| Version | 0.2 (draft for review) |
 | Status | Proposal; no stakeholder has signed off |
-| Depends on | `Plan/functional-spec.md` v0.2 (detailed requirements), `Plan/architecture.md` v0.1, `Plan/threat-model.md` v0.1, `docs/testing/cases.md` v0.1, `docs/tech-evaluation.md` v0.1 (mostly unverified) |
+| Depends on | `Plan/functional-spec.md` v0.3 (detailed requirements), `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/tech-evaluation.md` v0.1 (mostly unverified), `docs/runbooks/operational-runbook.md` v0.2 |
 | Owner | To be assigned (product); security architecture owner to be assigned |
 | Scope of this document | *Why* and *for whom*, scope, priorities, release plan and success measures. Requirement-level detail lives in the functional spec and is referenced by ID, not repeated. |
 
@@ -79,9 +79,9 @@ Capabilities are grouped as in the functional spec; "FR" references identify det
 | Response and data protection | Inspect responses for injection, redact sensitive data, block exfiltration | FR-RT-4..11 | P2 |
 | SSRF and egress control | Block internal/metadata access at every connection | FR-SSRF-*, FR-RT-7 | P1/P2 |
 | High-impact approvals and JIT | Time-boxed access and human approval for risky actions | FR-AUTHZ-4/5 | P2 |
-| Audit and evidence | Hash-chained, anchored audit; reproducible decisions | FR-AUD-* | P1/P2 |
+| Audit and evidence | Hash-chained, anchored audit; reproducible decisions; deny high-impact when audit cannot record | FR-AUD-* | P1/P2 |
 | Incident response | Open incidents, quarantine, revoke, preserve evidence, report | FR-IR-* | P2/P3/P4 |
-| Governance and compliance | Control catalogue, framework mapping, evidence packs | FR-COMP-*, FR-POL-3/4 | P3 |
+| Governance and compliance | Control catalogue, framework mapping, evidence packs; sealed break-glass administration (FR-ADM-6, P2) | FR-COMP-*, FR-POL-3/4, FR-ADM-6 | P2/P3 |
 | Advanced protection | Memory/RAG integrity, behaviour analytics, supply chain, inter-agent security | FR-MEM-*, FR-BEH-2, FR-SUP-*, FR-ID-4..6 | P4 |
 | Enterprise production | Multi-cloud, HA/DR, residency, enterprise integrations, red-team certification | FR-ADM-4, NFR-3/4 | P5 |
 
@@ -107,7 +107,7 @@ Effort figures are planning estimates for a team of 2–3 engineers from the des
 
 | Phase | Theme | Deliverables | Depends on | Est. effort | Exit criteria | Key risks |
 |---|---|---|---|---|---|---|
-| 0 | Design | Spec, architecture, threat model, test catalogue, tech evaluation (verified), PRD | — | 3–4 weeks (in progress) | Reviewed by security, architecture, compliance; open ADRs decided or scheduled | Unverified vendor claims; scope creep |
+| 0 | Design | Spec, architecture, threat model, test catalogue, tech evaluation (partially verified; see its verification log), PRD | — | 3–4 weeks (in progress) | Reviewed by security, architecture, compliance; open ADRs decided or scheduled | Unverified vendor claims; scope creep |
 | 1 | MVP | Inventory, scanner v1, hashing and drift, basic deny-by-default authZ, audit chain, dashboard, SSRF guard | 0 | 8–10 weeks | AC-1..AC-9 pass; MVP test cases pass | Rule false positives; discovery gaps; tenancy decision |
 | 2 | Runtime protection | Full gateway, authN hardening, response inspection, DLP, approvals/JIT, limits, monitoring, Redis/Kafka | 1, gateway decision (ADR-1), IdP decision (ADR-2) | 10–12 weeks | NFR-1/2 latency targets; Phase 2 test cases pass | Latency; streaming inspection; IdP capabilities |
 | 3 | Governance | Fleet management, policy lifecycle, compliance mapping, evidence packs, discovery coverage | 2 | ~8 weeks | Auditor-reviewed evidence pack; mappings reviewed by legal/compliance | Mapping accuracy; framework changes |
@@ -171,5 +171,7 @@ Pricing, packaging and commercial go-to-market are not covered; the document ass
 - Requirements: `Plan/functional-spec.md` (FR/NFR/AC IDs).
 - Threats and controls: `Plan/threat-model.md`.
 - Components and sequences: `Plan/architecture.md`.
-- Verification: `docs/testing/cases.md` (TC-* IDs; MVP set in its Section 20).
+- Verification: `docs/testing/cases.md` (65 TC-* cases; MVP set in its Section 20).
+- Operations: `docs/runbooks/operational-runbook.md` (design-stage draft).
+- Audit event vocabulary: `Plan/architecture.md` Section 4.8.
 - Technology choices and unverified claims: `docs/tech-evaluation.md`.

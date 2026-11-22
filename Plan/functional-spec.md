@@ -3,14 +3,28 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft for review) |
-| Supersedes | 0.1 |
+| Version | 0.3 (draft for review) |
+| Supersedes | 0.2 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
-## 0. Change log (v0.1 → v0.2)
+## 0. Change log
 
-Review of v0.1 found the following. Each is fixed in this version.
+### v0.2 → v0.3 (document synchronisation)
+
+Changes made so the spec agrees with the later documents (architecture, threat model, test catalogue, runbook, tech evaluation). Requirements marked *added from runbook* are new and need review by the owners named in Section 12.
+
+| # | Change | Where |
+|---|---|---|
+| 1 | Architecture document now exists; reference added | Section 3 |
+| 2 | Five requirements promoted from the operational runbook (*added from runbook*): FR-ID-7, FR-AUTO-5, FR-SCAN-9, FR-AUD-7, FR-ADM-6 | Sections 4.2, 4.4, 4.8, 4.14, 4.18 |
+| 3 | OWASP MCP Top 10 existence verified (identifiers still pending); licence caveat recorded | Section 4.19 |
+| 4 | Test-case column added to the threat traceability table; closing note replaced | Section 5 |
+| 5 | AC-9 mapped to new test case TC-G5; acceptance criteria mapped to test cases | Section 11 |
+
+### v0.1 → v0.2
+
+Review of v0.1 found the following. Each is fixed in v0.2.
 
 | # | Finding in v0.1 | Resolution in v0.2 |
 |---|---|---|
@@ -84,7 +98,7 @@ Separation-of-duties rules (SoD):
 
 ## 3. Context and assumptions
 
-Trust zones, component responsibilities and the interceptor pipeline are defined in the architecture document (to be written; summary in the design plan). Assumptions:
+Trust zones, component responsibilities and the interceptor pipeline are defined in `architecture.md` (v0.2) and analysed in `threat-model.md` (v0.2). Assumptions:
 - A1: An OIDC identity provider is available (Keycloak for development; production IdP undecided).
 - A2: MCP servers and all content they return are untrusted until registered and pinned; even then, response content stays untrusted.
 - A3: MVP gateway covers Streamable HTTP. Local stdio servers need a wrapper (Phase 2).
@@ -124,6 +138,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 | FR-SCAN-6 | Tool import from a server URL shall run in an isolated worker with connection/read timeouts, a response size cap, JSON depth/count limits, no redirects by default, and SSRF controls (Section 4.10). | M | P1 | A, H | UT, FZ |
 | FR-SCAN-7 | Scans shall re-run on a schedule and on any drift; findings shall be deduplicated and tracked by status (open, accepted with expiry, fixed). | S | P3 | A, B | IT |
 | FR-SCAN-8 | Scan inputs sent to an external LLM service shall require explicit per-tenant opt-in; a self-hosted option shall be supported. | S | P2 | I | DM |
+| FR-SCAN-9 | When a rule set is updated, approved tools shall be re-scanned: a Critical finding on an approved tool shall quarantine it and notify its owner and approvers; lower severities shall create review items without quarantine. *(added from runbook; review required)* | S | P3 | A, B | IT |
 
 ### 4.3 Definition integrity and drift (FR-DRIFT)
 
@@ -147,6 +162,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 | FR-ID-4 | Agent-to-agent calls shall be authenticated and authorized through the gateway; each call shall carry the delegation chain. | S | P4 | F, M | IT, RT |
 | FR-ID-5 | The system shall detect and block circular delegation and enforce a maximum delegation depth (default 3). | S | P4 | K, M | UT, RT |
 | FR-ID-6 | A sub-agent shall never receive more permission than the delegating agent holds for the same request (no privilege amplification). | M | P4 | M | UT, RT |
+| FR-ID-7 | If the revocation list or revocation service cannot be consulted, the gateway shall deny the request rather than skip the check. *(added from runbook; review required)* | M | P2 | F, G | IT |
 
 ### 4.5 Authentication (FR-AUTHN)
 
@@ -198,6 +214,7 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-AUTO-2 | The system shall detect repeating call sequences (loops) and suspend the session. | S | P2 | K | UT |
 | FR-AUTO-3 | Autonomous financial or irreversible transactions shall require approval unless a policy explicitly permits a bounded amount and counterparty. | M | P2 | K | E2E |
 | FR-AUTO-4 | A kill switch shall suspend an agent or all agents of a tenant within 5 s of command. | M | P2 | K | E2E |
+| FR-AUTO-5 | Resuming a suspended agent or tenant shall require an approver other than the person who suspended it (SoD-1), unless an emergency policy states otherwise; both actions shall be audited. *(added from runbook; review required)* | M | P2 | K | E2E |
 
 ### 4.9 Memory, retrieval and model controls (FR-MEM, FR-MOD)
 
@@ -267,6 +284,7 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-AUD-4 | Chain heads shall be periodically anchored outside the database (object-lock storage or external timestamping). Without anchoring, a database administrator could rewrite the whole chain; this requirement is the mitigation. | S | P2 | IT |
 | FR-AUD-5 | Events shall be exported to SIEM using OpenTelemetry/CloudEvents; control characters in untrusted fields shall be escaped to prevent log injection. | S | P2 | UT |
 | FR-AUD-6 | Any decision shall be reproducible from the stored policy hash and input digest. | M | P1 | IT |
+| FR-AUD-7 | When the gateway's local audit buffer is full or the audit sink is unavailable beyond its buffering capacity, the gateway shall deny high-impact calls; events shall never be dropped silently. *(added from runbook; review required)* | M | P2 | E2E |
 
 ### 4.15 Behavior analytics (FR-BEH)
 
@@ -306,6 +324,7 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-ADM-3 | Notification channels (email, webhook; ServiceNow/Slack adapters later) shall be configurable per tenant. | S | P2 | IT |
 | FR-ADM-4 | Data residency: a tenant's data plane shall be pinnable to a region. | S | P5 | DM |
 | FR-ADM-5 | Retention shall be configurable per data class; defaults in Section 9. | M | P2 | IT |
+| FR-ADM-6 | Break-glass administrative accounts shall be sealed, require a ticket and a second person's approval for each use, be session-recorded and rotated after use, and shall be unable to modify audit records or read raw evidence. *(added from runbook; review required)* | S | P2 | DM |
 
 ### 4.19 Compliance (FR-COMP)
 
@@ -331,7 +350,7 @@ Framework status (for the mapping matrix):
 | NIST AI RMF, AI 600-1, CSF | Voluntary frameworks | |
 | ISO/IEC 42001, 23894, 27001 | Voluntary standards (certifiable: 42001, 27001) | |
 | SOC 2 | Voluntary attestation framework | |
-| OWASP MCP / LLM Top 10 | Community guidance | MCP list status [VERIFY] |
+| OWASP MCP / LLM Top 10 | Community guidance | OWASP MCP Top 10 project existence verified (see `docs/tech-evaluation.md` verification log); entry identifiers and current version still to be taken from the official project **[VERIFY]**; reported licence CC BY-NC-SA 4.0, so legal review before reproducing its text |
 | MITRE ATLAS / ATT&CK | Knowledge bases | |
 
 ### 4.20 Observability of the platform (FR-OBS)
@@ -352,34 +371,34 @@ Framework status (for the mapping matrix):
 
 ## 5. Threat traceability
 
-| Threat | Requirements | First phase | Residual gap |
-|---|---|---|---|
-| A Tool poisoning | FR-SCAN-1..4, 6, FR-RT-1 | P1 | Novel phrasing evades rules; LLM advisory only |
-| B Rug pull / drift | FR-DRIFT-1..7 | P1 | Behavior change without definition change (FR-DRIFT-6, P4) |
-| C Shadowing / impersonation | FR-INV-2..4, FR-AUTHN-5, FR-AUTHZ-2 | P1/P2 | Local stdio servers (A3) |
-| D Response injection | FR-RT-4, 5, 9, 11 | P2 | Probabilistic detection; relies on blast-radius controls |
-| E Excessive permissions | FR-AUTHZ-1..8 | P1/P2 | Quality of tool→action mapping depends on approvers |
-| F Agent spoofing | FR-ID-1..4 | P1/P2 | Compromised legitimate agent identity |
-| G Auth attacks | FR-AUTHN-1..6 | P1/P2 | IdP-dependent features [VERIFY] |
-| H SSRF | FR-SSRF-1..5, FR-SCAN-6, FR-RT-3, 7 | P1/P2 | Misconfigured exceptions |
-| I Data exfiltration | FR-RT-6..9, FR-AUD-3 | P2 | Encoded/steganographic leakage; low-and-slow |
-| J Memory poisoning | FR-MEM-1..4 | P4 | Not covered until P4 |
-| K Autonomy abuse | FR-AUTO-1..4, FR-ID-5, FR-RT-9, 10 | P2 | |
-| L Supply chain | FR-SCAN-5, FR-SUP-1..3, FR-MOD-3 | P3/P4 | Not covered until P3/P4 |
-| M Inter-agent | FR-ID-4..6, FR-MEM-3 | P4 | Not covered until P4 |
-| N Model/inference | FR-MOD-1..3, FR-RT-10 | P3/P4 | Model-internal attacks out of scope |
-| O Tool execution | FR-RT-2, 3, FR-EXEC-1..2 | P2/P4 | Server-side bugs outside platform control |
-| P MCP lifecycle | Section 4.12 | P1/P2 | Spec evolves; compatibility matrix |
-| X1 Hidden Unicode/encoding | FR-SCAN-1 | P1 | |
-| X2 Gateway bypass / unmanaged endpoints | FR-INV-5, 7, FR-RT-7 | P2/P3 | Cannot control unmanaged endpoints |
-| X3 Sampling abuse | Section 4.12 | P2 | |
-| X4 Elicitation phishing | Section 4.12 | P2 | |
-| X5 Log injection | FR-AUD-5 | P2 | |
-| X6 Insider approving malicious tool | SoD-1, SoD-2 | P1 | Collusion |
-| X7 Check-to-use gap | FR-DRIFT-7 | P2 | |
-| X8 Gateway as high-value target | FR-AUTHN-3, FR-AUD-4, FR-ADM-2 | P2 | See NFR-9 |
+| Threat | Requirements | First phase | Residual gap | Test cases |
+|---|---|---|---|---|
+| A Tool poisoning | FR-SCAN-1..4, 6, FR-RT-1, FR-SCAN-9 | P1 | Novel phrasing evades rules; LLM advisory only | TC-A1..A5 |
+| B Rug pull / drift | FR-DRIFT-1..7 | P1 | Behavior change without definition change (FR-DRIFT-6, P4) | TC-B1..B4, TC-Z3 |
+| C Shadowing / impersonation | FR-INV-2..4, FR-AUTHN-5, FR-AUTHZ-2 | P1/P2 | Local stdio servers (A3) | TC-C1..C3 |
+| D Response injection | FR-RT-4, 5, 9, 11 | P2 | Probabilistic detection; relies on blast-radius controls | TC-D1..D5 |
+| E Excessive permissions | FR-AUTHZ-1..8 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5 |
+| F Agent spoofing | FR-ID-1..4, FR-ID-7 | P1/P2 | Compromised legitimate agent identity | TC-F1..F2 |
+| G Auth attacks | FR-AUTHN-1..6, FR-ID-7 | P1/P2 | IdP-dependent features [VERIFY] | TC-G1..G5 |
+| H SSRF | FR-SSRF-1..5, FR-SCAN-6, FR-RT-3, 7 | P1/P2 | Misconfigured exceptions | TC-H1..H4 |
+| I Data exfiltration | FR-RT-6..9, FR-AUD-3 | P2 | Encoded/steganographic leakage; low-and-slow | TC-I1..I4 |
+| J Memory poisoning | FR-MEM-1..4 | P4 | Not covered until P4 | TC-J1..J2 |
+| K Autonomy abuse | FR-AUTO-1..4, FR-ID-5, FR-RT-9, 10, FR-AUTO-5 | P2 | | TC-K1..K3 |
+| L Supply chain | FR-SCAN-5, FR-SUP-1..3, FR-MOD-3 | P3/P4 | Not covered until P3/P4 | TC-L1..L3 |
+| M Inter-agent | FR-ID-4..6, FR-MEM-3 | P4 | Not covered until P4 | TC-M1..M2 |
+| N Model/inference | FR-MOD-1..3, FR-RT-10 | P3/P4 | Model-internal attacks out of scope | TC-N1..N2 |
+| O Tool execution | FR-RT-2, 3, FR-EXEC-1..2 | P2/P4 | Server-side bugs outside platform control | TC-O1..O3 |
+| P MCP lifecycle | Section 4.12 | P1/P2 | Spec evolves; compatibility matrix | TC-P1..P4, TC-Z1 |
+| X1 Hidden Unicode/encoding | FR-SCAN-1 | P1 | | TC-A1, TC-A5 |
+| X2 Gateway bypass / unmanaged endpoints | FR-INV-5, 7, FR-RT-7 | P2/P3 | Cannot control unmanaged endpoints | TC-X2 |
+| X3 Sampling abuse | Section 4.12 | P2 | | TC-P2 |
+| X4 Elicitation phishing | Section 4.12 | P2 | | TC-P3 |
+| X5 Log injection | FR-AUD-5 | P2 | | TC-X5 |
+| X6 Insider approving malicious tool | SoD-1, SoD-2, FR-ADM-6 | P1 | Collusion | TC-E4, TC-X6 |
+| X7 Check-to-use gap | FR-DRIFT-7 | P2 | | TC-B4, TC-Z3 |
+| X8 Gateway as high-value target | FR-AUTHN-3, FR-AUD-4, FR-ADM-2, FR-ADM-6, FR-AUD-7 | P2 | See NFR-9 | TC-X8 |
 
-Test case IDs (≥ 30, per the brief) will be added to this table when `docs/testing/cases.md` is written.
+Test cases are defined in `docs/testing/cases.md` (65 cases; threat-model Section 7 is the index). Requirements without a dedicated test case yet: FR-SCAN-9, FR-AUD-7, FR-ADM-6, FR-AUTO-5 (resume step covered by an extension of TC-K2 only). These are tracked as known gaps.
 
 ---
 
@@ -440,7 +459,9 @@ MVP (P1):
 - AC-6 (FR-UI-1..3, 7): Dashboard shows counters, drill-down and approval queue for a seeded fleet; requester cannot approve own request.
 - AC-7 (FR-AUTHZ-8): Stopping OPA causes calls to be denied.
 - AC-8 (FR-SCAN-6): Importer rejects an oversized, deeply nested, slow, and redirecting response from a hostile test server.
-- AC-9 (FR-AUTHN-6): Log redaction test finds no token or secret in logs under error conditions.
+- AC-9 (FR-AUTHN-6): Log redaction test finds no token or secret in logs under error conditions. Test case: TC-G5.
+
+Acceptance-criteria-to-test mapping: AC-1 ← TC-A1..A3; AC-2 ← TC-B1, B2; AC-3 ← TC-E1, C3, F1; AC-4 ← TC-H1..H4; AC-5 ← TC-Z6; AC-6 ← TC-E4; AC-7 ← TC-Z5; AC-8 ← TC-Z2; AC-9 ← TC-G5.
 
 Phase 2+ acceptance criteria are defined per requirement via the Verify column and the test catalogue.
 

@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design-stage draft) |
+| Version | 0.2 (design-stage draft) |
 | Status | **Written before any implementation exists.** Procedures describe intended operations. Commands, endpoints, metric names, alert names and thresholds are placeholders marked `[TBD]` and must be replaced with real ones when the services are built, then validated in a game day (Section 14). |
-| Depends on | `Plan/architecture.md` v0.1 (components, failure behaviour, deployment), `Plan/functional-spec.md` v0.2 (FR/NFR IDs), `Plan/threat-model.md` v0.1, `docs/testing/cases.md` v0.1 |
+| Depends on | `Plan/architecture.md` v0.2 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.3 (FR/NFR IDs), `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2 |
 | Audience | Platform operators, on-call engineers, security engineers, incident responders |
 | Out of scope | Security incident handling steps beyond first containment: see `docs/playbooks/` (not yet written). Application-level agent debugging. |
 
@@ -141,7 +141,7 @@ Dashboards to build: gateway health and latency; decisions and denies; audit and
 ### 7.2 Update scanner rule set
 1. Run the rule-set against the labelled corpus; compare precision/recall to the budget (spec Section 10).
 2. Publish new rule-set version; scans record the version (FR-SCAN-2).
-3. Re-scan existing approved tools in a low-priority queue; findings on already-approved tools create review items, not automatic quarantine, unless severity is Critical (then quarantine and notify owner). `[Confirm behaviour with product]`
+3. Re-scan existing approved tools in a low-priority queue; findings on already-approved tools create review items, not automatic quarantine, unless severity is Critical (then quarantine and notify owner) (FR-SCAN-9).
 
 ### 7.3 Tool approval backlog handling
 1. Prioritise by tool criticality and requester impact.
@@ -167,7 +167,7 @@ Offboarding: disable agent access, revoke tokens, export evidence as requested, 
 4. Open an incident and hand over to Security on-call; continue with `docs/playbooks/`.
 
 ### 7.7 Kill switch (suspend agent or tenant)
-Use for runaway agents or suspected tenant-wide abuse (FR-AUTO-4): suspend the agent or tenant; confirm calls are denied within 5 s; record reason; notify owner. Resume requires approver ≠ the person who suspended, unless emergency policy states otherwise.
+Use for runaway agents or suspected tenant-wide abuse (FR-AUTO-4): suspend the agent or tenant; confirm calls are denied within 5 s; record reason; notify owner. Resume requires approver ≠ the person who suspended (FR-AUTO-5), unless emergency policy states otherwise.
 
 ### 7.8 Retention, legal hold and evidence requests
 1. Retention jobs run on schedule by data class (spec NFR-6); never delete under legal hold.
@@ -213,7 +213,7 @@ Format: symptoms → impact → diagnose → act → verify → follow-up. Secur
 
 ### 8.4 Audit sink down or outbox growing
 - **Symptoms:** outbox depth/age alarms; audit service errors.
-- **Impact:** until the buffer fills, calls continue; when full, **high-impact calls are denied** (architecture 4.1).
+- **Impact:** until the buffer fills, calls continue; when full, **high-impact calls are denied** (FR-AUD-7, architecture 4.1).
 - **Act:** restore audit service or storage; check disk; scale consumers; do not drop events. Verify chain continuity after drain.
 - **Verify:** oldest event age < 30 s; chain verification passes; anchor job catches up.
 
@@ -226,7 +226,7 @@ Format: symptoms → impact → diagnose → act → verify → follow-up. Secur
 ### 8.6 Redis unavailable (Phase 2+)
 - **Symptoms:** session lookup errors, revocation-list refresh failures.
 - **Impact:** session loss forces re-initialisation; revocation checks may degrade.
-- **Act:** fail over or restore Redis; **revocation lookup failure must deny rather than skip** (confirm configuration in staging `[TBD]`). Restart gateways only if they cannot reconnect.
+- **Act:** fail over or restore Redis; **revocation lookup failure must deny rather than skip** (FR-ID-7; confirm configuration in staging `[TBD]`). Restart gateways only if they cannot reconnect.
 - **Verify:** TC-G4 and revocation tests pass in the affected environment.
 
 ### 8.7 Gateway latency breach
@@ -282,7 +282,7 @@ Only for read-only, low-risk tools, per tenant (FR-AUTHZ-8). Requires security a
 
 ### 9.2 Break-glass access
 - Purpose: human administrative access when SSO or the normal approval path is down.
-- Rules: accounts stored in the secrets manager, sealed; each use requires an incident ticket and a second person's approval; session recorded; credentials rotated after use; use generates a high-severity audit event and a post-use review within 1 business day.
+- Rules (FR-ADM-6): accounts stored in the secrets manager, sealed; each use requires an incident ticket and a second person's approval; session recorded; credentials rotated after use; use generates a high-severity audit event and a post-use review within 1 business day.
 - Break-glass **cannot** modify or delete audit records, and does not grant access to raw evidence.
 
 ### 9.3 Upgrading dependencies and the platform

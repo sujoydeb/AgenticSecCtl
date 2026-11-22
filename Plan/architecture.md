@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review) |
-| Depends on | `functional-spec.md` v0.2 (FR/NFR IDs referenced below) |
-| Companion | `threat-model.md` |
+| Version | 0.2 (draft for review) |
+| Depends on | `functional-spec.md` v0.3 (FR/NFR IDs referenced below) |
+| Companion | `threat-model.md` v0.2; `../docs/testing/cases.md` v0.2; `../docs/runbooks/operational-runbook.md` v0.2; `../docs/tech-evaluation.md` v0.1 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
 ## 1. Architectural principles
@@ -99,7 +99,7 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Responsibility:** terminate agent MCP connections, authenticate, run the interceptor pipeline (Section 5), proxy to servers, enforce namespaces and `tools/list` filtering, maintain per-session state.
 - **Interfaces:** in: MCP Streamable HTTP (stdio servers via wrapper in Phase 2). Out: PDP (HTTP/gRPC), broker, registry cache, audit (async outbox), egress proxy.
 - **State:** session store (in-memory with Redis from Phase 2), registry cache (TTL ≤ 60 s, invalidated on change events), decision cache keyed on (policy hash, input digest) with short TTL.
-- **Failure:** PDP/registry unreachable and cache expired ⇒ deny (FR-AUTHZ-8). Audit sink down ⇒ buffer to local durable queue; if queue full ⇒ deny new high-impact calls.
+- **Failure:** PDP/registry unreachable and cache expired ⇒ deny (FR-AUTHZ-8). Audit sink down ⇒ buffer to local durable queue; if queue full ⇒ deny new high-impact calls (FR-AUD-7). Revocation list or service unreachable ⇒ deny (FR-ID-7).
 - **Implements:** FR-RT-*, FR-DRIFT-2/3/7, FR-AUTHN-*, FR-AUTHZ-*, FR-AUTO-*, Section 4.12 of spec.
 - **Choice:** MVP uses a thin FastAPI/ASGI service on the official MCP Python SDK **[VERIFY SDK proxy support]**. Alternative: extend an open-source MCP gateway or Envoy-based AI gateway **[VERIFY]**. Decision gate before Phase 2 (ADR-1).
 
@@ -126,11 +126,11 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Responsibility:** deterministic rules engine (versioned rule sets), hardened importer, advisory classifier adapter, artifact scanning hooks.
 - **Pipeline:** normalize (Unicode NFC, strip/flag invisible and bidi characters, decode common encodings for analysis only) → rule evaluation → optional classifier → score → findings with evidence.
 - **Isolation:** workers run unprivileged, no credentials, egress only through the SSRF guard, CPU/memory/time limits.
-- **Implements:** FR-SCAN-1..8.
+- **Implements:** FR-SCAN-1..9 (FR-SCAN-9: re-scan of approved tools on rule-set update; Critical ⇒ quarantine, otherwise review item).
 - **Reuse:** SBOM and vulnerability scanning via existing tools (Syft/Grype/Trivy/OSV-Scanner) **[VERIFY licences and current features]**; existing MCP scanners are evaluated as rule or corpus sources **[VERIFY]**.
 
 ### 4.6 Identity and token broker
-- **Responsibility:** agent registration, OAuth client lifecycle, upstream credentials for servers, token exchange to mint audience-bound tokens, revocation list distribution.
+- **Responsibility:** agent registration, OAuth client lifecycle, upstream credentials for servers, token exchange to mint audience-bound tokens, revocation list distribution. Lookup failure is treated as deny by the gateway (FR-ID-7).
 - **Interfaces:** OIDC/OAuth 2.x with the enterprise IdP; secrets manager (Vault or cloud KMS/Secrets Manager) **[VERIFY]**.
 - **Constraint:** gateway holds no long-lived upstream secrets in memory; it requests short-lived credentials per call or per session (FR-AUTHN-3, NFR-9).
 - **Dependency risk:** DPoP/mTLS binding and token exchange depend on the chosen IdP **[VERIFY]**. Fallback: short-lived tokens with mTLS between agent and gateway.
@@ -146,10 +146,11 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Responsibility:** receive events from all services via outbox; compute hash chain; store digests and redacted excerpts; send raw evidence to vault; export to SIEM; anchor chain heads.
 - **Chain:** `hash_n = SHA-256(hash_{n-1} || canonical(event_n))`; heads anchored on a schedule to object-lock storage or an external timestamping service (FR-AUD-4). The chain alone is tamper-evident, not tamper-proof; anchoring defends against a privileged DB actor rewriting history.
 - **Implements:** FR-AUD-*, FR-IR-3.
+- **Audit event vocabulary (provisional; single definition, referenced by the test catalogue and runbook):** `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`. Names are confirmed when the audit schema is built; changes must be mirrored in `docs/testing/cases.md` and the runbook.
 
 ### 4.9 Behavior analytics and incident manager
 - MVP/Phase 2: threshold rules over audit stream (FR-BEH-1). Phase 4: per-agent baselines (FR-BEH-2).
-- Incident manager: creation, containment actions (quarantine, revoke, kill switch), evidence preservation, report export (FR-IR-*). Containment propagates via change events to gateway caches within 5 s (FR-IR-2, FR-AUTO-4).
+- Incident manager: creation, containment actions (quarantine, revoke, kill switch), evidence preservation, report export (FR-IR-*). Containment propagates via change events to gateway caches within 5 s (FR-IR-2, FR-AUTO-4). Resuming a suspended agent or tenant needs an approver other than the suspender (FR-AUTO-5).
 
 ### 4.10 Discovery
 - Collectors: Kubernetes API watcher, config-file scanner (MCP client configs), egress log analysis, cloud inventory adapters. Output `DiscoveredAsset` events into the registry as `unregistered` (FR-INV-5). Coverage gaps shown in UI (FR-INV-7).
@@ -392,14 +393,14 @@ Controls:
 
 | Component | Primary requirements |
 |---|---|
-| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-RT-1..11, FR-AUTO-1..4, Section 4.12 |
+| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-RT-1..11, FR-AUTO-1..4, FR-ID-7, FR-AUD-7, Section 4.12 |
 | PDP | FR-AUTHZ-1..5, FR-POL-* |
 | Egress/SSRF | FR-SSRF-1..5, FR-RT-7 |
-| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-*, FR-UI-* |
-| Scanner | FR-SCAN-*, FR-SUP-2 |
-| Broker | FR-AUTHN-2/3/6, FR-ID-3 |
+| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-* (incl. FR-ADM-6 break-glass), FR-AUTO-5, FR-UI-* |
+| Scanner | FR-SCAN-* (incl. FR-SCAN-9), FR-SUP-2 |
+| Broker | FR-AUTHN-2/3/6, FR-ID-3, FR-ID-7 |
 | Inspection | FR-RT-4..6, FR-RT-11, FR-MEM-2 |
-| Audit/evidence | FR-AUD-*, FR-IR-3, FR-COMP-4 |
+| Audit/evidence | FR-AUD-* (incl. FR-AUD-7), FR-IR-3, FR-COMP-4 |
 | Incident/analytics | FR-BEH-*, FR-IR-* |
 | Discovery | FR-INV-5/7 |
 | Compliance | FR-COMP-* |
@@ -424,4 +425,5 @@ Controls:
 - **Detection is probabilistic:** a determined attacker can phrase around Tier 1 rules. Mitigation: blast-radius controls, shadow-mode tuning, red-team regression tests.
 - **Definition hash limits:** same definition can hide changed behavior. Mitigation: response inspection, behavior baselines (Phase 4).
 - **Approver quality:** the tool→action-class mapping depends on human judgment. Mitigation: dual control for critical overrides, periodic recertification, unused-permission reports.
+- **Break-glass access** (FR-ADM-6) is a standing risk: sealed accounts, second-person approval, session recording, rotation after use, no audit or raw-evidence access.
 - **Single approval channel in MVP** concentrates risk in the dashboard session. Mitigation: MFA, step-up authentication for approvals.

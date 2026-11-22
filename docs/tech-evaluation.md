@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (**provisional: mostly unverified, see Section 1**) |
-| Depends on | `Plan/architecture.md` v0.1 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.2 |
+| Depends on | `Plan/architecture.md` v0.2 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.3 (its Section 4.19 OWASP row matches the verification log below) |
 | Purpose | Decide what to reuse vs build, and feed ADR-1, 2, 5, 6, 7 |
 | Rule from the brief | Do not invent product capabilities. Verify current documentation before vendor-specific recommendations. |
 

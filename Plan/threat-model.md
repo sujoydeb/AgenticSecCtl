@@ -2,8 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review) |
-| Depends on | `architecture.md` v0.1, `functional-spec.md` v0.2 |
+| Version | 0.2 (draft for review) |
+| Depends on | `architecture.md` v0.2, `functional-spec.md` v0.3 |
+| Companions | `../docs/testing/cases.md` v0.2 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.2 |
 | Method | STRIDE per boundary crossing, plus agent-specific abuse cases; MITRE ATLAS and OWASP LLM/MCP guidance used as vocabulary **[VERIFY current versions and IDs before mapping in the compliance matrix]** |
 | Scope | (1) the protected estate: agents, MCP servers, tools, data; (2) the platform itself as an attack target |
 
@@ -140,10 +141,10 @@ FR references are to `functional-spec.md` v0.2. Test IDs are defined in Section 
 
 ### G. MCP authentication and authorization attacks (ADV5) — F2, F4, F5
 - **Sub-threats:** token theft/replay, wrong audience/scope, confused deputy (server uses its own power for the caller), session hijack, improper delegation, credential leakage.
-- **P:** audience-bound tokens, no token passthrough, token exchange, short TTL, session binding, log redaction (FR-AUTHN-1..6); PDP checks the *end caller's* rights, not only the server's.
+- **P:** audience-bound tokens, no token passthrough, token exchange, short TTL, session binding, log redaction (FR-AUTHN-1..6), deny when the revocation list cannot be consulted (FR-ID-7); PDP checks the *end caller's* rights, not only the server's.
 - **D:** replay/misuse anomalies, session-client mismatch alerts.
 - **Bypass:** IdP features unavailable; long-lived tokens configured by owners.
-- **Inherent / residual:** Critical / Medium. **Tests:** TC-G1..G4.
+- **Inherent / residual:** Critical / Medium. **Tests:** TC-G1..G5.
 
 ### H. SSRF and internal network abuse (ADV1, ADV5, ADV8) — F8, F5, F7
 - **P:** SSRF guard on every outbound connection, resolve-then-pin, redirect re-validation, encoding normalization, per-server egress allowlist, metadata-endpoint blocklist (FR-SSRF-*, FR-RT-7). Cloud-level controls (IMDSv2 enforcement, block metadata at node/pod level) **[VERIFY per cloud]**.
@@ -165,7 +166,7 @@ FR references are to `functional-spec.md` v0.2. Test IDs are defined in Section 
 - **Inherent / residual (target):** High / Medium. **Tests:** TC-J1..J2.
 
 ### K. Agent autonomy abuse (ADV2, ADV3) — F2, F11
-- **P:** call/time/cost budgets, delegation depth, loop detection, approval for irreversible or financial actions, kill switch (FR-AUTO-*, FR-ID-5).
+- **P:** call/time/cost budgets, delegation depth, loop detection, approval for irreversible or financial actions, kill switch with a different-approver resume rule (FR-AUTO-*, FR-ID-5).
 - **D:** rate and sequence anomalies.
 - **Bypass:** slow loops under thresholds; many agents each under budget.
 - **Inherent / residual:** High / Medium. **Tests:** TC-K1..K3.
@@ -208,9 +209,9 @@ FR references are to `functional-spec.md` v0.2. Test IDs are defined in Section 
 | X3 | Sampling abuse: server makes client LLM do work on the user's budget | Denied by default; budgeted and inspected if enabled | Low | TC-P2 |
 | X4 | Elicitation phishing for credentials | Denied by default; credential-like requests blocked | Low-Med | TC-P3 |
 | X5 | Log injection into SIEM via tool content | Escape control characters (FR-AUD-5) | Low | TC-X5 |
-| X6 | Insider approves malicious tool or edits policy | SoD, dual control, policy in source control with review, shadow mode | Medium (collusion) | TC-X6 |
-| X7 | Check-to-use gap between approval/list and call | Call-time hash check, short cache TTL (FR-DRIFT-7) | Low | TC-B4 |
-| X8 | Compromise of the gateway or control plane | Plane separation, no long-lived secrets, hardened images, pen test | Medium | TC-X8 |
+| X6 | Insider approves malicious tool or edits policy | SoD, dual control, policy in source control with review, shadow mode | Medium (collusion) | TC-E4, TC-X6 |
+| X7 | Check-to-use gap between approval/list and call | Call-time hash check, short cache TTL (FR-DRIFT-7) | Low | TC-B4, TC-Z3 |
+| X8 | Compromise of the gateway or control plane | Plane separation, no long-lived secrets, hardened images, pen test, sealed dual-approved break-glass access (FR-ADM-6), deny high-impact when audit cannot record (FR-AUD-7) | Medium | TC-X8 |
 
 ## 5. STRIDE on the platform itself
 
@@ -297,7 +298,7 @@ flowchart TD
 
 ## 7. Test case index (seed for the ≥30-case catalogue)
 
-Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) will be written in `testing/cases.md`. IDs below are the traceability anchors. Total: 64 (above the 30-case minimum; priority subset to be chosen for the MVP).
+Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) are written in `docs/testing/cases.md`. IDs below are the traceability anchors. Total: 65 (above the 30-case minimum; the MVP subset is in that document's Section 20).
 
 | Threat | IDs |
 |---|---|
@@ -307,7 +308,7 @@ Full cases (objective, prerequisites, steps, expected detection/prevention, logs
 | D | TC-D1 HTML comment injection; TC-D2 JSON field instruction; TC-D3 markdown image exfiltration; TC-D4 request for extra tool execution; TC-D5 sensitive read followed by external send (taint) |
 | E | TC-E1 write with read-only grant; TC-E2 escalation attempt; TC-E3 expired JIT grant; TC-E4 requester approves own request |
 | F | TC-F1 unregistered agent; TC-F2 forged agent token |
-| G | TC-G1 replay from different client; TC-G2 wrong audience; TC-G3 confused deputy; TC-G4 session ID reuse |
+| G | TC-G1 replay from different client; TC-G2 wrong audience; TC-G3 confused deputy; TC-G4 session ID reuse; TC-G5 token/secret redaction in logs, traces, errors and UI |
 | H | TC-H1 metadata IP; TC-H2 redirect to internal; TC-H3 DNS rebinding; TC-H4 IPv6/decimal/octal encodings |
 | I | TC-I1 PII in response; TC-I2 secret in arguments; TC-I3 cross-tenant read; TC-I4 blocked outbound destination |
 | J | TC-J1 poisoned memory write; TC-J2 poisoned RAG document |
