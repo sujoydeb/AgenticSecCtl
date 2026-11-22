@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.2 (partial; advances gap E4 in `docs/reviewgap.md`: AWS extended, Azure and Google Cloud first pass) |
-| Depends on | `docs/deployment-architecture.md` v0.4 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.6 (Section 8), `controls/catalogue.md` v0.6 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.7 |
+| Depends on | `docs/deployment-architecture.md` v0.4 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.6 (Section 8), `controls/catalogue.md` v0.6 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.8 |
 | Scope | AWS (first example adapter, extended in v0.2), Azure (AKS, first pass) and Google Cloud (GKE, first pass, search summaries only). The cloud choice itself is still open (customer input CI-6). |
 | Evidence | AWS and Azure: documentation search result chunks read on 2026-11-22 through the AWS documentation tool and the Microsoft Learn search tool (chunks, not full pages). Google Cloud: web search result summaries only; Google pages were not read directly and one claim rests on a third-party blog. Anything not listed as verified remains **[VERIFY]**. |
 

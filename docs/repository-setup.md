@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.3 (procedure draft; advances gap G4 in `docs/reviewgap.md`; v0.2 recorded which steps were carried out on 2026-11-22; v0.3 records the pull-request run) |
-| Depends on | `docs/ci-cd-pipeline.md` v0.7 (Sections 5, 6, 12), `docs/governance.md` v0.6, `.github/CODEOWNERS.example`, `.github/workflows/docs-check.yml` |
+| Depends on | `docs/ci-cd-pipeline.md` v0.8 (Sections 5, 6, 12), `docs/governance.md` v0.6, `.github/CODEOWNERS.example`, `.github/workflows/docs-check.yml` |
 | Status | **Partly executed on 2026-11-22.** Steps 1, 2, 9 and 10 were carried out, the last two partly or for the document check only (see Section 4); steps 3 to 8 were not. The repository was created under a personal account, not an organisation. The commands that were not run are an untested outline for someone with the right rights to adapt. Setting names and endpoints are **[VERIFY]** against current GitHub documentation before use. |
 
 ## 1. Preconditions
