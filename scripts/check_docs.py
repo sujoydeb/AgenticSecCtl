@@ -33,6 +33,7 @@ def read(p):
 DOC_FILES = sorted(
     [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "Plan" / "*.md"))]
     + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "docs" / "**" / "*.md"), recursive=True)]
+    + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "compliance" / "*.md"))]
     + ["CLAUDE.md", "README.md"]
 )
 texts = {f: read(f) for f in DOC_FILES}
@@ -86,6 +87,7 @@ short = {
     "prd.md": "docs/prd.md",
     "operational-runbook.md": "docs/runbooks/operational-runbook.md",
     "incident-response-playbooks.md": "docs/playbooks/incident-response-playbooks.md",
+    "compliance-matrix.md": "compliance/compliance-matrix.md",
 }
 versions = {}
 for name, path in short.items():
