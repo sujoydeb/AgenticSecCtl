@@ -16,6 +16,13 @@ This evaluation was meant to be grounded in current product documentation. It is
 - Ratings in the tables are qualitative judgments for shortlisting, not benchmark results. No performance figure here was measured.
 - **Do not use this document to make a purchase, licence or architecture-lock decision** until the checklist in Section 8 is completed. Recommendations are limited to what to *spike*, not what to adopt.
 
+### Verification log
+
+| Date | Item | Result | Source |
+|---|---|---|---|
+| 2026-11-22 | OWASP MCP Top 10 exists (checklist item 5) | **Verified.** An OWASP project named "OWASP MCP Top 10" exists and is described as a living document, with the latest version maintained on GitHub. Secondary articles list entries (e.g., token mismanagement and secret exposure; context injection and over-sharing as MCP10). The full list and identifiers were **not** retrieved; take them from the official project before mapping in the compliance matrix. The document is reported as licensed CC BY-NC-SA 4.0 (non-commercial clause: have legal review before reproducing its text in a commercial product). | [OWASP MCP Top 10 project](https://owasp.org/projects/mcp-top-10), [project page](https://owasp.org/www-project-mcp-top-10/); secondary: [Nordic APIs guide](https://nordicapis.com/guide-to-the-owasp-mcp-top-10/), [Cycode](https://cycode.com/blog/owasp-mcp-top-10/) |
+| 2026-11-22 | MCP spec authorization, Cisco scanner, Context Forge, agentgateway, Keycloak DPoP/token exchange (checklist items 1–4) | **Not verified.** Five searches were denied by a permission hook; not retried or bypassed. Rows remain **[VERIFY]**. | — |
+
 ## 2. Method and criteria
 
 Each candidate is assessed on the eight criteria from the brief, using a 3-level scale (High/Medium/Low, or the stated fact) and a confidence mark:
@@ -203,7 +210,7 @@ For every **[VERIFY]** row: capture URL, version/date checked, licence file, and
 2. Candidate MCP gateways: licence, MCP support, extension points, release activity.
 3. Keycloak and customer IdP: DPoP, token exchange, resource indicators.
 4. Existing MCP scanners: existence, licence, rules, data handling.
-5. OWASP MCP guidance: whether a Top 10 exists, its status and identifiers (needed for the compliance matrix).
+5. OWASP MCP guidance: ~~whether a Top 10 exists~~ (verified, see log); still needed: the full list, identifiers and current version from the official project, for the compliance matrix.
 6. Presidio, Prompt Guard 2, NeMo Guardrails: primary LICENSE/model-card terms.
 7. Redis/Valkey and Vault/OpenBao current licences.
 8. Cloud specifics: egress controls, metadata hardening, object-lock, sandboxed runtimes per target cloud.
