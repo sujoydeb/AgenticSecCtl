@@ -3,12 +3,18 @@
 
 | | |
 |---|---|
-| Version | 0.7 (draft for review) |
-| Supersedes | 0.6 |
+| Version | 0.8 (draft for review) |
+| Supersedes | 0.7 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
 ## 0. Change log
+
+### v0.7 → v0.8 (hashed definition fields)
+
+| # | Change | Where |
+|---|---|---|
+| 1 | FR-DRIFT-1 and the glossary entry for a tool definition now list the fields the plan and the MCP compatibility matrix already hash: title and icons are added, any other field returned in the tool object is hashed too (and raises a finding), and list-level metadata (`ttlMs`, `cacheScope`, `resultType`) and `_meta` are excluded. This resolves the conflict between FR-DRIFT-1 (six fields) and `docs/mcp-compatibility.md` Section 3A (eight) noted in implementation gap IG-8 | Section 4.4 (FR-DRIFT-1), glossary |
 
 ### v0.6 → v0.7 (remaining Medium gaps)
 
@@ -109,7 +115,7 @@ Review of v0.1 found the following. Each is fixed in v0.2.
 
 **Glossary**
 - **PEP / PDP**: policy enforcement point (gateway) / policy decision point (OPA).
-- **Tool definition**: name, description, input schema, output schema, annotations of an MCP tool.
+- **Tool definition**: name, title, description, icons, input schema, output schema, annotations and any other field of an MCP tool object, as hashed under FR-DRIFT-1.
 - **Quarantine**: tool/server/agent remains registered but is blocked from use.
 - **Taint**: label marking content from an untrusted origin.
 - **High-impact action**: see FR-AUTHZ-5.
@@ -191,7 +197,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 
 | ID | Requirement | Pri | Ph | Threats | Verify |
 |---|---|---|---|---|---|
-| FR-DRIFT-1 | On approval the system shall store the canonical definition (RFC 8785 JSON canonicalization, Unicode NFC) and SHA-256 over server ID, name, description, input schema, output schema and annotations. Approved versions shall be immutable. | M | P1 | B | UT, IT |
+| FR-DRIFT-1 | On approval the system shall store the canonical definition (RFC 8785 JSON canonicalization, Unicode NFC) and SHA-256 over the server ID and the tool object as returned by the server: name, title, description, icons, input schema, output schema, annotations and any other field present (an unknown field is hashed and raises a finding). List-level metadata (`ttlMs`, `cacheScope`, `resultType`) and `_meta` are not hashed. Approved versions shall be immutable. | M | P1 | B | UT, IT |
 | FR-DRIFT-2 | The gateway shall recompute and compare on every `tools/list`, on `notifications/tools/list_changed`, and on a scheduled poll. A mismatch shall quarantine the tool, raise a finding and notify approvers. | M | P1 | B | E2E |
 | FR-DRIFT-3 | A quarantined tool shall be removed from `tools/list` results and `tools/call` shall be denied. | M | P1 | B | E2E |
 | FR-DRIFT-4 | The UI shall show a field-level diff between approved and current definitions. | M | P1 | B | DM |

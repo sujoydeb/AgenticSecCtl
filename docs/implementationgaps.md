@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.5 (review of `Plan/implementation-plan.md` v0.1; IG-1 and IG-2 incorporated in plan v0.2, the Low gaps in v0.3, the Medium gaps in v0.4 and IG-3 and IG-5 in v0.5, all pending review) |
+| Version | 0.6 (Section 9 records what the Phase 0 runs changed; review of `Plan/implementation-plan.md` v0.1; IG-1 and IG-2 incorporated in plan v0.2, the Low gaps in v0.3, the Medium gaps in v0.4 and IG-3 and IG-5 in v0.5, all pending review) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/implementation-plan.md` v0.6, `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.2, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `docs/parameter-register.md` v0.3 |
+| Depends on | `Plan/implementation-plan.md` v0.7, `Plan/functional-spec.md` v0.8, `Plan/architecture.md` v0.6, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.3, `docs/authn-authz-design.md` v0.2, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `docs/parameter-register.md` v0.3 |
 | Scope | Gaps, errors and inconsistencies found when reading the implementation plan against the specification, architecture, test catalogue, roadmap and the checker script. This register is separate from `docs/reviewgap.md`, which covers the design documents. |
 | Method | Scripted re-computation of the Phase 1 requirement and test-case sets with a parser that finds the phase by pattern (not by column position), comparison of the plan's schedule and dependency text with itself, and reading of each work package against the design documents. Nothing was built or executed. |
 | Status | Findings. IG-1 and IG-2 are incorporated in plan v0.2 and the checker, the five Low gaps in plan v0.3 (Section 6) and the eight Medium gaps in plan v0.4 (Section 7) and IG-3 and IG-5 in plan v0.5 (Section 8). All 17 are incorporated; none is reviewed. Closure wording as in `docs/reviewgap.md` Section 9: "closed, pending review" means changed but not yet reviewed by someone other than the author. Severity: **High** (the plan is wrong or cannot be executed as written), **Medium** (a build-time question an engineer will hit early), **Low** (completeness). |
@@ -59,6 +59,7 @@ Owner roles use the glossary in `docs/governance.md`. "Close by" names the gate 
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-11-22 | Phase 0 runs recorded (Section 9): IG-5 and IG-8 remainders closed, IG-9 test run |
 | 0.5 | 2026-11-22 | IG-3 and IG-5 incorporated in implementation plan v0.5 (Section 8) |
 | 0.4 | 2026-11-22 | Medium gaps incorporated in implementation plan v0.4 (Section 7) |
 | 0.3 | 2026-11-22 | Low gaps incorporated in implementation plan v0.3 (Section 6) |
@@ -102,3 +103,12 @@ Both are "closed, pending review". They are design decisions written as proposal
 | IG-5 | Closed, pending review | Chain writer is an `audit` module in `api` in Phase 1 (difference from architecture Section 4.8 stated); gateway submits batched events to an authenticated endpoint with its own identity and never computes the chain; event IDs make retries idempotent; bounded buffer with space reserved for deny events; a full buffer or unreachable API denies calls that would be allowed; per-tenant writer serialisation. WP-1.4 estimate raised to 2.5 to 3.5; PAR-O-29 added; cross-cutting design updated | Plan Section 4.4, WP-1.4, WP-1.9; `docs/parameter-register.md` v0.3; `docs/cross-cutting-design.md` | Architecture Section 4.8 still shows a separate audit service for Phase 1; a gap-marker event name is not in the vocabulary; the submission endpoint is not in the OpenAPI outline; events in the buffer are lost on a gateway crash (accepted, recorded) |
 
 Effect on the plan: total effort is now 31.5 to 43.5 person-weeks (was 30.5 to 42), lane C is about 3.5 weeks over capacity at the high end and lane A about 2.5 weeks, and the calendar estimate for two engineers is 16 to 22 weeks.
+
+## 9. Update after the Phase 0 runs (2026-11-22)
+
+| Gap | What changed | Evidence |
+|---|---|---|
+| IG-5 | The remainders are closed: `Plan/architecture.md` v0.6 Section 4.8 states the Phase 1 form (chain writer inside the API), and no new event name is needed because the dropped-event count is carried by the existing `audit.buffer_full`. The submission endpoint is still not in `docs/api/openapi.yaml` | Architecture v0.6; plan v0.7 |
+| IG-8 | The conflict is resolved in the specification: FR-DRIFT-1 (spec v0.8) and the control catalogue (v0.6) now list the fields the plan hashes, so the field list is consistent across the plan, the spec, the catalogue and the MCP compatibility matrix. The security engineer still confirms the list (checklist row P0-13) | Spec v0.8; catalogue v0.6 |
+| IG-9 | The pooled-connection test now exists and passes on PostgreSQL 17.12: tenant A, tenant B, then a request that sets nothing, on one connection; plus a demonstration that a session-level setting leaks and `DISCARD ALL` clears it. It runs on a simulated pool (one reused connection), not a real pooler | `db/spike/rls_tests.sql` |
+| IG-4, IG-6, IG-7, IG-11, IG-14, IG-15 | Unchanged by the runs | none |

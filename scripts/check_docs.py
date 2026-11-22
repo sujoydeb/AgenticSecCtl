@@ -533,6 +533,14 @@ for _x in (_cat16["controls"] if isinstance(_cat16, dict) else _cat16):
     if _union and _union != _stated:
         err(f"controls/catalogue.yaml: {_x['id']} phase {sorted(_stated)} differs from the phases of its requirements {sorted(_union)}")
 
+# 17. the executed Rego listing in the authn/authz design equals policy/rego/authz.rego
+_az = texts.get("docs/authn-authz-design.md", "")
+_azf = ROOT / "policy" / "rego" / "authz.rego"
+if _az and _azf.exists():
+    _m = re.search(r"```rego\n(.*?)\n```", _az, re.S)
+    if not _m or _m.group(1).strip() != _azf.read_text(encoding="utf-8").strip():
+        err("docs/authn-authz-design.md: the Rego listing differs from policy/rego/authz.rego")
+
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
 _tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}

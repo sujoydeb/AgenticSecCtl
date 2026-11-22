@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.2 (**provisional: partly verified from search results, see Section 1**) |
-| Depends on | `Plan/architecture.md` v0.5 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.7 (its Section 4.19 OWASP row and Section 12 proposals match the verification log below) |
+| Version | 0.3 (**provisional: partly verified from search results and, for OPA, PostgreSQL and the MCP SDK, from running or reading primary sources; see Section 1**) |
+| Depends on | `Plan/architecture.md` v0.6 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.8 (its Section 4.19 OWASP row and Section 12 proposals match the verification log below) |
 | Purpose | Decide what to reuse vs build, and feed ADR-1, 2, 5, 6, 7 |
 | Rule from the brief | Do not invent product capabilities. Verify current documentation before vendor-specific recommendations. |
 
@@ -37,6 +37,11 @@ Dates are the day the search was made. "Secondary" means a search-result summary
 | 2026-11-22 | MITRE ATLAS identifiers | AML.T0051 (LLM Prompt Injection) and AML.T0010 (AI Supply Chain Compromise) confirmed; sources disagree on the ID for exfiltration via the AI inference API (AML.T0024 or AML.T0025). A 2026.07 data release exists. | Secondary: [Akamai](https://www.akamai.com/blog/ai/2026/jun/mitre-atlas), [ATLAS data file](https://atlas.mitre.org/atlas-data/dist/v6/ATLAS-2026.07.yaml) |
 | 2026-11-22 | Regulatory and standards identifiers | NIST CSF 2.0 category identifiers PR.AA, PR.DS, PR.PS, PR.IR, DE.CM, DE.AE, RS.MA, RS.AN, GV.SC, ID.AM exist. ISO/IEC 27001:2022 Annex A: A.5.15, A.8.12, A.8.15, A.8.28 titles confirmed. DORA: titles of Articles 6, 9, 10, 11, 17, 28 confirmed. EU AI Act: Articles 9, 12, 14, 15 confirmed; Articles 26 and 73 titles only. PCI DSS v4.0.1: 12 requirements; titles of Requirements 1 and 2 confirmed. | Secondary: [NIST CSF 2.0 core](https://www.nist.gov/document/nist-csf-20-core-withdrawn-csf-11-elements), [ISO 27001 controls](https://opensecurityarchitecture.org/frameworks/iso-27001-2022), [DORA article reference](https://eur-lex.europa.eu/eli/reg/2022/2554/art_6/oj), [AI Act articles](https://artificialintelligenceact.eu/article/9/), [PCI DSS v4.0.1](https://www.middlebury.edu/sites/default/files/2025-01/PCI-DSS-v4_0_1.pdf) |
 | 2026-11-22 | Presidio, Llama Prompt Guard 2, NeMo Guardrails licences | Earlier result (unchanged): Presidio MIT, NeMo Guardrails Apache-2.0 per secondary sources; Prompt Guard 2 under Meta's community licence, not a permissive licence. NeMo documentation notes startup telemetry. Primary LICENSE files not read. | Secondary: [NVIDIA NeMo Guardrails docs](https://docs.nvidia.com/nemo/guardrails/about-nemo-guardrails-library/overview), [AIMultiple](https://aimultiple.com/ai-guardrails) |
+| 2026-11-22 | OPA 1.22.4 run locally | **Executed**, not read about: `opa test` 15 of 15, `opa check --strict` and `opa fmt` clean, `opa bench` on `policy/`. Found that Rego orders values of different types (`1 < "x"` is true), which broke the expiry rule in the design sketch. Repository metadata: Apache-2.0, last release v1.22.4 (2026-11-12), not archived | Primary: ran the official container image `openpolicyagent/opa:latest`; licence from GitHub repository metadata (`gh api repos/open-policy-agent/opa`) |
+| 2026-11-22 | PostgreSQL 17.12 row-level security run locally | **Executed**: forced row-level security, per-transaction tenant setting, composite foreign keys and immutability triggers behave as designed (`db/spike/`, 78 checks). Observed that a plain foreign key lets a row reference another tenant's row (referential-integrity checks bypass row-level security) and that a session-level tenant setting leaks into the next request on a reused connection | Primary: ran the official image `postgres:17-alpine` |
+| 2026-11-22 | MCP Python SDK | Licence MIT; latest release v2.3.0 (2026-10-02); its `ROADMAP.md` says v2 implements the 2026-07-28 specification and negotiates back to earlier revisions; its docs describe `server/discover` and the dropped `initialize` handshake. One item still open there: configurable advertised capabilities (issue 2896) | Primary: repository files and metadata read through the GitHub API (`modelcontextprotocol/python-sdk`). Not run |
+| 2026-11-22 | Keycloak, FastAPI, Pydantic, httpx, pytest, Cedar | Licences from repository metadata: Keycloak Apache-2.0 (latest release 26.8.2, 2026-11-05), FastAPI MIT, Pydantic MIT, httpx BSD-3-Clause, pytest MIT, Cedar Apache-2.0. None archived. Not run | Primary: GitHub repository metadata; versions to pin are not chosen |
+| 2026-11-22 | Hypothesis licence | GitHub reports no standard licence (NOASSERTION); the repository `LICENSE.txt` says code is released under the Mozilla Public License 2.0 except where noted. File-level copyleft; acceptable for a test-only dependency, to be confirmed by whoever owns licence policy | Primary: `LICENSE.txt` read through the GitHub API |
 
 ## 2. Method and criteria
 
@@ -104,8 +109,8 @@ The MCP specification revision and its authorization section must be pinned and 
 
 | Candidate | Coverage | Integration | Complexity | Licence | Overhead | Readiness | Limitations / lock-in |
 |---|---|---|---|---|---|---|---|
-| OPA / Rego | General decision engine; bundles, decision logs, `opa test` | HTTP/sidecar/library; mature ecosystem | Medium (Rego learning curve) | CNCF graduated (verified); Apache-2.0 — U | Low per decision when local — U | High — U | Rego skills needed; large data in policy needs care (bundle size, latency) |
-| Cedar **[VERIFY]** | Entity-based authz with formal analysis tooling | Libraries mainly Rust; Python bindings maturity unknown | Medium | Apache-2.0 — U | Low — U | Medium — U | Smaller ecosystem; decision logging/bundles are your job |
+| OPA / Rego | General decision engine; bundles, decision logs, `opa test` | HTTP/sidecar/library; mature ecosystem | Medium (Rego learning curve) | CNCF graduated (verified); Apache-2.0 (verified from repository metadata, 2026-11-22) | Low per decision when local — U | High — U | Rego skills needed; large data in policy needs care (bundle size, latency) |
+| Cedar **[VERIFY]** | Entity-based authz with formal analysis tooling | Libraries mainly Rust; Python bindings maturity unknown | Medium | Apache-2.0 (repository metadata, 2026-11-22) | Low — U | Medium — U | Smaller ecosystem; decision logging/bundles are your job |
 | OpenFGA / SpiceDB (relationship stores) **[VERIFY]** | Large agent–server–tool relationship graphs | Service | Medium-High | U | Network hop | U | Add only if relationships outgrow OPA data |
 
 **Provisional recommendation:** OPA/Rego for MVP (matches the spec's FR-POL-1 and `opa test` in CI); revisit Cedar only if formal analysis becomes a requirement. Measure decision latency with realistic policy data before fixing the caching design.
@@ -221,7 +226,7 @@ The critical capability questions are the same for every IdP: sender-constrained
 ## 8. Verification checklist (to complete before approving this document)
 
 For every **[VERIFY]** row: capture URL, version/date checked, licence file, and a one-line fact. Priority order:
-1. MCP specification: revision 2026-07-28 and its authorization summary are search-verified; still to read: the specification text for transports, sampling, elicitation, roots, and the exact authorization requirements.
+1. MCP specification: revision 2026-07-28 and its authorization summary are search-verified, and the official Python SDK v2 states it implements that revision (primary repository files, 2026-11-22); still to read: the specification text for transports, sampling, elicitation, roots, and the exact authorization requirements.
 2. Candidate MCP gateways: existence and licences are search-verified (agentgateway, ContextForge, Docker MCP Gateway, Envoy AI Gateway); still to do: extension points, release activity and the seven-test spike (S1).
 3. Keycloak and customer IdP: Keycloak DPoP and token exchange are search-verified; still to do: resource indicators and the customer's production IdP (spike S2).
 4. Existing MCP scanners: Cisco and Snyk scanners exist and are Apache-2.0 per third-party sources; still to do: read the LICENSE files, rules and data handling, and run them on the corpus (spike S5).

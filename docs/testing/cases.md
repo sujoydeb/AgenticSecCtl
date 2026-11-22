@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.5 (draft; cases are specifications, none have been executed) |
-| Depends on | `Plan/threat-model.md` v0.5 (case IDs, Section 7), `Plan/functional-spec.md` v0.7 (FR/NFR/AC IDs), `Plan/architecture.md` v0.5 (audit event vocabulary, Section 4.8) |
+| Depends on | `Plan/threat-model.md` v0.5 (case IDs, Section 7), `Plan/functional-spec.md` v0.8 (FR/NFR/AC IDs), `Plan/architecture.md` v0.6 (audit event vocabulary, Section 4.8) |
 | Cases | 100 (threat-model index), all expanded below |
 | Safety | Every attack runs only in the isolated test environment (Section 1). Payloads are inert test strings that target fixture services; no real credentials, data or external hosts are used. |
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.2 (closes gap E3 in `docs/reviewgap.md` for revision 2026-07-28) |
-| Depends on | `Plan/functional-spec.md` v0.7 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.5 (Section 4.1), `controls/catalogue.md` v0.5 (CTL-05, CTL-18), `docs/testing/cases.md` v0.5 (TC-P1..P4, TC-Z27, TC-Z28) |
+| Depends on | `Plan/functional-spec.md` v0.8 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.6 (Section 4.1), `controls/catalogue.md` v0.6 (CTL-05, CTL-18), `docs/testing/cases.md` v0.5 (TC-P1..P4, TC-Z27, TC-Z28) |
 | Reference revision | **2026-07-28** (pinned) |
 | Evidence | The authorization (including client registration, authorization server discovery and security considerations), transport (overview, stdio, Streamable HTTP), sampling, elicitation, roots, tools, resources, prompts, lifecycle and versioning, server discovery pages and the changelog for revision 2026-07-28 were read on 2026-11-22 through a page-fetching assistant (so statements are paraphrases, not verbatim copies). Not read: the stdio shutdown and timeout details beyond what the transport pages state, the subscriptions pattern page, the schema reference, extensions (including tasks), earlier revisions beyond what the changelog states. Re-read the primary text before relying on any row. |
 | Review | Not reviewed by a second person. |

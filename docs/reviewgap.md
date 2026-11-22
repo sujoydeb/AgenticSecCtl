@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.7 (records the pull-request run in Section 13; v0.6 recorded the first GitHub workflow run; adds closure updates for High gaps (Section 9), Medium gaps (Section 10), Low gaps (Section 11) and the remaining Medium gaps (Section 12); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
+| Version | 0.8 (Section 14 records the Phase 0 runs; v0.7 recorded the pull-request run in Section 13; v0.6 recorded the first GitHub workflow run; adds closure updates for High gaps (Section 9), Medium gaps (Section 10), Low gaps (Section 11) and the remaining Medium gaps (Section 12); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
@@ -352,10 +352,20 @@ The repository was pushed to a private GitHub repository on 2026-11-22. Two work
 
 Two practical findings: pushing files under `.github/workflows/` over HTTPS needs the `workflow` token scope (the scope refresh did not take effect, so the push used SSH), and the SSH key created for this has no passphrase.
 
+## 14. Update after the Phase 0 runs (v0.8)
+
+| Gap | Status | What changed | Evidence | Remaining |
+|---|---|---|---|---|
+| A2 | Closed, pending review (advanced) | The tenancy, row-level security and immutability parts of the data model were run on PostgreSQL 17.12; three rules came out of it (composite tenant foreign keys, forced row-level security, triggers as well as privileges) | `db/spike/`; `docs/data-model.md` v0.3 | Other tables, partitioning, indexes, retention and the audit chain are not run |
+| A3 | Closed, pending review (advanced) | `docs/api/openapi.yaml` is schema-valid per `openapi-spec-validator` 0.9.0 (20 paths, 32 operations) | `docs/api-specification.md` v0.2 | Behaviour untested; the internal scanner and audit endpoints are not in the file |
+| A4 | Closed, pending review (advanced) | The authorization policy was run under OPA 1.22.4: 15 of 15 tests, strict check and format clean; a real defect in the sketch (integer compared with a string, so every expiring grant looked expired) was found and fixed | `policy/`; `docs/authn-authz-design.md` v0.2 | Full rule set, remaining Section 7 cases, realistic-size latency |
+| Technology claims (partly) | Partly closed | Licences, releases and the MCP SDK's support for revision 2026-07-28 read from primary repositories for the Phase 1 dependencies | `docs/tech-evaluation.md` v0.3 log | Versions not pinned; Phase 2 tools unchecked |
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.8 | 2026-11-22 | Phase 0 runs recorded (Section 14) |
 | 0.7 | 2026-11-22 | Pull-request run of `docs-check` recorded (Section 13) |
 | 0.6 | 2026-11-22 | First GitHub run of `docs-check` recorded (Section 13) |
 | 0.5 | 2026-11-22 | Closure update for the remaining Medium gaps (Section 12) |

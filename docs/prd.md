@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.4 (draft for review) |
 | Status | Proposal; no stakeholder has signed off |
-| Depends on | `Plan/functional-spec.md` v0.7 (detailed requirements), `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/testing/cases.md` v0.5, `docs/tech-evaluation.md` v0.2 (mostly unverified), `docs/runbooks/operational-runbook.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.8 (detailed requirements), `Plan/architecture.md` v0.6, `Plan/threat-model.md` v0.5, `docs/testing/cases.md` v0.5, `docs/tech-evaluation.md` v0.3 (mostly unverified), `docs/runbooks/operational-runbook.md` v0.3 |
 | Owner | To be assigned (product); security architecture owner to be assigned |
 | Scope of this document | *Why* and *for whom*, scope, priorities, release plan and success measures. Requirement-level detail lives in the functional spec and is referenced by ID, not repeated. |
 

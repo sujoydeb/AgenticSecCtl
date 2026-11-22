@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design draft; closes gap A3 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.7 (Section 4.21 conventions, roles in Section 2, FR rows referenced below), `Plan/architecture.md` v0.5 (Section 4.4 and Section 4.8 audit vocabulary), `docs/data-model.md` v0.2, `controls/catalogue.md` v0.5 |
-| Machine-readable outline | `docs/api/openapi.yaml` (OpenAPI 3.1, **not validated with a tool, not implemented**) |
+| Version | 0.2 (design draft; v0.2 records the OpenAPI validation; closes gap A3 in `docs/reviewgap.md`) |
+| Depends on | `Plan/functional-spec.md` v0.8 (Section 4.21 conventions, roles in Section 2, FR rows referenced below), `Plan/architecture.md` v0.6 (Section 4.4 and Section 4.8 audit vocabulary), `docs/data-model.md` v0.3, `controls/catalogue.md` v0.6 |
+| Machine-readable outline | `docs/api/openapi.yaml` (OpenAPI 3.1; schema-valid per `openapi-spec-validator` 0.9.0 on 2026-11-22: 20 paths, 32 operations; **not implemented**, so the behaviour is untested) |
 | Scope | The management API: registry, approvals, findings, incidents, audit, governance. The gateway's agent-facing MCP interface and the internal gateway-to-registry and event interfaces are not covered. |
 
 ## 1. Conventions (from the specification)

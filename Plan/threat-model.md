@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.5 (draft for review) |
-| Depends on | `architecture.md` v0.5, `functional-spec.md` v0.7 |
+| Depends on | `architecture.md` v0.6, `functional-spec.md` v0.8 |
 | Companions | `../docs/testing/cases.md` v0.5 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.3 |
 | Method | STRIDE per boundary crossing, plus agent-specific abuse cases; MITRE ATLAS and OWASP LLM/MCP guidance used as vocabulary **[VERIFY current versions and IDs before mapping in the compliance matrix]** |
 | Scope | (1) the protected estate: agents, MCP servers, tools, data; (2) the platform itself as an attack target |

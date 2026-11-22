@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design draft; closes gap A4 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.7 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.5 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.2, `docs/api-specification.md` v0.1, `controls/catalogue.md` v0.5 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.5 |
-| Status | Design note with **illustrative, unexecuted Rego**. No policy has been run through OPA; syntax and behaviour are unverified (`opa` is not installed in this environment). Identity-provider behaviour is partly search-verified (Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only, see `docs/tech-evaluation.md`). |
+| Version | 0.2 (design draft; closes gap A4 in `docs/reviewgap.md`; v0.2 runs the Section 6 policy under OPA and fixes the defects found) |
+| Depends on | `Plan/functional-spec.md` v0.8 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.6 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.2, `docs/api-specification.md` v0.2, `controls/catalogue.md` v0.6 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.5 |
+| Status | Design note. The Section 6 policy was run under OPA 1.22.4 on 2026-11-22: 15 of 15 unit tests pass and `opa check --strict` is clean (files in `policy/`); it is still a spike draft, not the product policy, and covers only part of the rules. Identity-provider behaviour is partly search-verified (Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only, see `docs/tech-evaluation.md`). |
 
 ## 1. Scope and principles
 
@@ -111,73 +111,111 @@ Input fields (all supplied by the gateway, never by the agent):
 
 Output: `allow` (boolean), `reasons` (list of codes for audit), `obligations` (`require_approval`, `redact`, `limit`, `label`). Reason codes are stable identifiers, not free text, so denials can be counted and tested.
 
-## 6. Illustrative policy (unexecuted)
+## 6. Policy (executed under OPA, spike draft)
+
+The policy below is the sketch after it was run. It lives in `policy/rego/authz.rego` with tests in `policy/tests/authz_test.rego`; the file is the source and this listing may lag it. Running it found three things:
+
+1. **Expiry bug.** The sketch compared `time.parse_rfc3339_ns(grant.expires_at) < input.now`, an integer against a string. Rego orders values of different types by type, so the comparison was always true and every grant with an expiry looked expired: it failed closed, but just-in-time grants could never work. The fix parses both sides and treats the boundary second as expired (`<=`).
+2. **Missing helper.** `resource_matches` is now defined (`*` matches anything, a trailing `*` matches a prefix, otherwise exact).
+3. **Slow lookup.** The agent-to-server list was scanned linearly. Keyed by tenant, agent and server it evaluates about 20 times faster (Section 6.1).
+
+The listing is the file as run; `check_docs.py` does not compare them, so if they differ the file wins.
+
 
 ```rego
 package agentic.authz
 
 import rego.v1
 
+# Spike S3 draft, from docs/authn-authz-design.md Section 6. Not the product policy.
+
 default allow := false
 
 allow if {
-    input.agent.status == "active"
-    input.server.status == "approved"
-    input.tool.status == "approved"
-    input.tool.hash_ok
-    agent_server_allowed
-    permitted
-    not high_impact_without_approval
-    not tainted_send_blocked
+	input.agent.status == "active"
+	input.server.status == "approved"
+	input.tool.status == "approved"
+	input.tool.hash_ok
+	agent_server_allowed
+	permitted
+	not high_impact_without_approval
+	not tainted_send_blocked
 }
 
-agent_server_allowed if {
-    some rule in data.registry.agent_server_allow[input.tenant]
-    rule.agent == input.agent.id
-    rule.server == input.server.id
-}
+# Data shape: allow[tenant][agent][server] = true. Keyed lookup, not a list scan (measured about 20 times faster).
+agent_server_allowed if data.registry.agent_server_allow[input.tenant][input.agent.id][input.server.id]
 
 permitted if {
-    some grant in data.grants[input.tenant][input.agent.id]
-    grant.tool == input.tool.id
-    input.tool.action_class in grant.action_classes
-    resource_matches(grant.resource_pattern, input.resource)
-    not expired(grant)
+	some grant in data.grants[input.tenant][input.agent.id]
+	grant.tool == input.tool.id
+	input.tool.action_class in grant.action_classes
+	resource_matches(grant.resource_pattern, input.resource)
+	not expired(grant)
 }
 
+# A grant is valid strictly before its expiry: at the boundary second it is expired (fail closed).
+# Both sides are parsed; comparing the parsed integer with the raw input.now string is always true in Rego.
 expired(grant) if {
-    grant.expires_at
-    time.parse_rfc3339_ns(grant.expires_at) < input.now
+	grant.expires_at
+	time.parse_rfc3339_ns(grant.expires_at) <= time.parse_rfc3339_ns(input.now)
+}
+
+# Pattern "*" matches anything; a trailing "*" matches a prefix; otherwise exact.
+resource_matches(pattern, _) if pattern == "*"
+
+resource_matches(pattern, resource) if {
+	pattern != "*"
+	endswith(pattern, "*")
+	startswith(resource, trim_suffix(pattern, "*"))
+}
+
+resource_matches(pattern, resource) if {
+	not endswith(pattern, "*")
+	pattern == resource
 }
 
 high_impact if input.tool.action_class == "delete"
+
 high_impact if {
-    input.tool.classification in {"Confidential", "Restricted"}
-    input.tool.action_class in {"write", "execute"}
+	input.tool.classification in {"Confidential", "Restricted"}
+	input.tool.action_class in {"write", "execute"}
 }
 
 high_impact_without_approval if {
-    high_impact
-    not input.approval.valid
+	high_impact
+	not input.approval.valid
 }
 
 tainted_send_blocked if {
-    input.session.taint == "untrusted_read_of_sensitive"
-    input.tool.action_class in {"write", "execute"}
-    not input.approval.valid
+	input.session.taint == "untrusted_read_of_sensitive"
+	input.tool.action_class in {"write", "execute"}
+	not input.approval.valid
 }
 
 obligations contains "require_approval" if {
-    high_impact
-    not input.approval.valid
+	high_impact
+	not input.approval.valid
 }
 
 reasons contains "no_grant" if not permitted
+
 reasons contains "tool_hash_mismatch" if not input.tool.hash_ok
+
 reasons contains "taint_block" if tainted_send_blocked
 ```
 
-`resource_matches` is a helper that still has to be defined; the rule set is deliberately incomplete (limits, delegation intersection and classification rules are in sibling packages). Treat the code as pseudocode that shows structure, not as tested policy.
+The rule set is deliberately incomplete (limits, delegation intersection and classification rules are in sibling packages). The listing above is the executed file.
+
+### 6.1 Evaluation time (spike S3, indicative)
+
+Measured with `opa bench` on the single query `data.agentic.authz.allow`, in-process, in a container on a laptop, with 100,000 grants (2,000 agents with 50 grants each) and 2,000 allow-list entries. It excludes the network hop to a sidecar, bundle loading and the decision cache, so it is not the gateway's added latency (NFR-1 is p95 25 ms for the whole deterministic path).
+
+| Agent-to-server data | Median | p95 | p99 |
+|---|---|---|---|
+| List scanned linearly (the sketch) | 4.1 ms | 6.1 ms | 12.3 ms |
+| Keyed by tenant, agent and server (adopted) | 0.2 ms | 0.5 ms | 0.7 ms |
+
+The data shape decides the cost. Grants were already looked up by tenant and agent. Neither run says anything about larger data, concurrency or a loaded host; the S3 spike still needs realistic data sizes from a customer and a load profile.
 
 ## 7. Policy tests (design)
 
@@ -214,7 +252,7 @@ The same engine decides management API actions (`agentic.mgmt`). Rules include: 
 
 ## 10. Open items
 
-- Run the sketch through OPA, add the missing helpers and the full test suite (needs `opa` and ADR-6 approval).
+- Extend the executed policy to the full rule set and the remaining Section 7 cases (TC-Z5 and TC-M2 are tested in the gateway or later); measure with realistic data sizes and concurrency for spike S3; confirm the OPA licence (ADR-6 condition).
 - Confirm IdP capability for DPoP or mutual TLS binding, token exchange and resource indicators for the production IdP (spike S2).
 - Define the resource-mapping declarations tools must provide so `input.resource` is derived consistently.
 - Define reason-code catalogue and obligations schema shared with the gateway and audit schema.

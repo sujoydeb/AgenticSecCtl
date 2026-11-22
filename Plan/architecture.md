@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.5 (draft for review) |
-| Depends on | `functional-spec.md` v0.7 (FR/NFR IDs referenced below) |
-| Companion | `threat-model.md` v0.5; `../docs/testing/cases.md` v0.5; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.2 |
+| Version | 0.6 (draft for review; v0.6 aligns Section 4.8 with the Phase 1 audit design and corrects the ADR-3 row) |
+| Depends on | `functional-spec.md` v0.8 (FR/NFR IDs referenced below) |
+| Companion | `threat-model.md` v0.5; `../docs/testing/cases.md` v0.5; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.3 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
 ## 1. Architectural principles
@@ -145,6 +145,7 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Implements:** FR-RT-4..6, FR-RT-11..13, FR-DATA-3.
 
 ### 4.8 Audit and evidence service
+- **Phase 1 form:** the chain writer is a module inside the management API, not a separate service. It accepts batched, authenticated events from the gateway (which has no database) and writes events of the API itself through the outbox; the gateway never computes the chain. The separate service described below arrives in Phase 2 with anchoring (implementation plan Section 4.4, WP-2.5); the event contract and chain format do not change. When the gateway's bounded buffer overflows it records an `audit.buffer_full` event carrying the number of dropped events.
 - **Responsibility:** receive events from all services via outbox; compute hash chain; store digests and redacted excerpts; send raw evidence to vault; export to SIEM; anchor chain heads.
 - **Chain:** `hash_n = SHA-256(hash_{n-1} || canonical(event_n))`; heads anchored on a schedule to object-lock storage or an external timestamping service (FR-AUD-4). The chain alone is tamper-evident, not tamper-proof; anchoring defends against a privileged DB actor rewriting history.
 - **Implements:** FR-AUD-*, FR-IR-3.
@@ -426,7 +427,7 @@ All seven records are **open**. The right-hand column is a proposal awaiting app
 |---|---|---|---|---|
 | ADR-1 | Build the gateway vs extend an open-source MCP gateway | Custom FastAPI / extend existing / Envoy-based | Before Phase 2 | Custom thin gateway for the MVP (list filtering and hash-pinned allow or deny only); choose the Phase 2 base after spike S1. Candidates verified to exist: agentgateway (Apache-2.0, Linux Foundation), IBM ContextForge (Apache-2.0), Docker MCP Gateway (MIT, container-based), Envoy AI Gateway (MCP support since v0.4) |
 | ADR-2 | IdP and sender-constrained token support | Keycloak/Okta/Entra with DPoP or mTLS | Before Phase 2 | Keycloak for development (DPoP supported from 26.4; token exchange V2 only internal-to-internal; DPoP-bound subject tokens differ by version). Production IdP chosen after spike S2 against the customer's candidate; fallback is short-lived tokens with mTLS |
-| ADR-3 | Approval channel | Dashboard only / ServiceNow / Slack | Before Phase 1 UI freeze | Dashboard approval queue in the MVP, bound to argument hash; webhook adapters for ticketing and chat later, with step-up authentication |
+| ADR-3 | Approval channel | Dashboard only / ServiceNow / Slack | Before Phase 1 UI freeze | Dashboard approval queue in the MVP, for tool definitions and agent registrations; call-time approvals bound to the argument hash and step-up authentication are Phase 2 (FR-AUTHZ-5, 9, 10); webhook adapters for ticketing and chat later |
 | ADR-4 | Tenancy model | Single tenant per deployment / shared multi-tenant | Before Phase 1 schema freeze | Shared multi-tenant: tenant ID on every row, PostgreSQL row-level security, per-tenant policy bundles; dedicated database or cluster models stay available later (see `docs/data-model.md`) |
 | ADR-5 | Stdio server handling | Managed wrapper / sidecar / unsupported | Phase 2 | Managed wrapper that runs the stdio server and enforces the gateway pipeline; the MCP revision 2026-07-28 expects stdio servers to take credentials from the environment, so the wrapper brokers short-lived credentials |
 | ADR-6 | Policy language | Rego (default) vs Cedar | Before Phase 1 policies | Rego on OPA (a graduated CNCF project; licence to be confirmed from the repository) |

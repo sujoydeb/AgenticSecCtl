@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (design draft; closes gap A2 in `docs/reviewgap.md`; v0.2 adds `scan_jobs` and the per-transaction tenant rule for IG-6 and IG-9 of `docs/implementationgaps.md`) |
-| Depends on | `Plan/functional-spec.md` v0.7 (Section 7 entities, FR-DRIFT-1, FR-AUD-*, FR-DATA-*, FR-ADM-*), `Plan/architecture.md` v0.5 (Sections 4, 7, 12), `docs/deployment-architecture.md` v0.4 (Section 6), `controls/catalogue.md` v0.5 (CTL-03, CTL-13, CTL-22, CTL-29) |
-| Status | Logical model with illustrative PostgreSQL constraints. **Not validated, not executed**: no SQL has been run and no migration exists. The tenancy assumption is ADR-4 *proposed* (shared multi-tenant with row-level security), pending approval; column and table names may change at schema freeze. |
+| Version | 0.3 (design draft; closes gap A2 in `docs/reviewgap.md`; v0.2 added `scan_jobs` and the per-transaction tenant rule for IG-6 and IG-9; v0.3 records the PostgreSQL run of the core tables and three rules it showed) |
+| Depends on | `Plan/functional-spec.md` v0.8 (Section 7 entities, FR-DRIFT-1, FR-AUD-*, FR-DATA-*, FR-ADM-*), `Plan/architecture.md` v0.6 (Sections 4, 7, 12), `docs/deployment-architecture.md` v0.4 (Section 6), `controls/catalogue.md` v0.6 (CTL-03, CTL-13, CTL-22, CTL-29) |
+| Status | Logical model with illustrative PostgreSQL constraints. **Partly executed**: the tenancy, row-level security and immutability parts for ten core tables were run on PostgreSQL 17.12 on 2026-11-22 (`db/spike/`, 78 checks passed). Everything else (the other tables, partitioning, indexes, retention, the audit chain) has not been run, and no product migration exists. The tenancy assumption is ADR-4 *proposed* (shared multi-tenant with row-level security), pending approval; column and table names may change at schema freeze. |
 
 ## 1. Principles
 
@@ -139,6 +139,12 @@ REVOKE UPDATE, DELETE, TRUNCATE ON audit_events FROM app_role;
 GRANT INSERT, SELECT ON audit_events TO app_role;
 ```
 
+Three rules came out of running the SQL on PostgreSQL (`db/spike/`) and apply to every tenant-owned table:
+
+1. **Foreign keys include the tenant.** A plain foreign key to another table's `id` lets a row reference another tenant's row, because referential-integrity checks bypass row-level security. Every tenant-owned table therefore has `unique (tenant_id, id)` and its foreign keys are composite, `(tenant_id, x_id) references x (tenant_id, id)`. With a plain key the cross-tenant reference was accepted in the test; with the composite key it is refused.
+2. **Row-level security is forced.** `ENABLE ROW LEVEL SECURITY` does not bind the table owner; `FORCE ROW LEVEL SECURITY` does. Policies carry both `USING` and `WITH CHECK` on `tenant_id = current_tenant()`, where `current_tenant()` returns NULL for an unset or empty setting. A malformed value raises an error instead of matching.
+3. **Immutability does not rely on privileges alone.** `REVOKE` and `GRANT` do not stop the table owner, so `tool_versions` and `audit_events` also carry row triggers (update, delete) and statement triggers (truncate) that raise an error for everyone. A superuser can still disable a trigger; the external anchors (`audit_events`, CTL-13) are the answer to that.
+
 A dual-approver rule for overrides is enforced in service logic and checked by a deferred constraint or trigger counting rows in `override_approvers`.
 
 ## 6. Database roles
@@ -177,4 +183,4 @@ Retention classes (audit, evidence, scans, sessions, notifications) follow NFR-6
 - Key hierarchy for per-tenant encryption (Phase 5, FR-ADM-2).
 - Whether session summaries are stored at all, and for how long (privacy assessment, gap H2).
 - Final column names and types, and the audit event schema fields beyond the vocabulary.
-- Validation of every statement above by running it on a real PostgreSQL instance.
+- Validation by running the rest of the SQL (the other tables, partitioning, indexes, the audit hash chain, retention) on PostgreSQL; the core tenancy parts are done.

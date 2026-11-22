@@ -1,5 +1,5 @@
 # DRAFT OpenAPI 3.1 outline for the AgenticSecCtl management API.
-# Not validated with an OpenAPI tool and not implemented. Paths, fields and enums may change at schema freeze.
+# Schema-valid per openapi-spec-validator 0.9.0 (2026-11-22) but not implemented, so behaviour is untested. Paths, fields and enums may change at schema freeze.
 # Human-readable mapping to requirements, roles and audit events: docs/api-specification.md.
 openapi: 3.1.0
 info:

@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Version | 0.5 |
+| Version | 0.6 |
 | Status | Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set. |
-| Depends on | Plan/functional-spec.md v0.6, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3 |
+| Depends on | Plan/functional-spec.md v0.8, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3 |
 | Satisfies | FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here. |
 
 ## How to read this catalogue
@@ -230,7 +230,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **How it works**
 
-1. On approval, store the canonical JSON (RFC 8785, Unicode NFC) of server ID, name, description, input schema, output schema and annotations, and its SHA-256; approved versions are immutable (database trigger).
+1. On approval, store the canonical JSON (RFC 8785, Unicode NFC) of the server ID and the tool object (name, title, description, icons, input schema, output schema, annotations and any other field returned; list-level metadata and `_meta` excluded), and its SHA-256; approved versions are immutable (database trigger).
 2. The gateway recomputes the hash on every tools/list, on list_changed notifications, on a scheduled poll and at call time against a definition cached for at most 60 s.
 3. On mismatch the tool is set to quarantined, removed from lists, calls are denied, a finding is raised and approvers are notified with a field-level diff.
 4. Re-approval creates a new immutable version; history is kept.

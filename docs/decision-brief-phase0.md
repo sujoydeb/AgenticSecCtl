@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (decision brief; recommendations only, **nothing is decided**) |
+| Version | 0.2 (decision brief; recommendations only, **nothing is decided**; v0.2 records that two conditions are now met) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.7 (FR-POL-1, FR-AUTHZ-8..11, FR-UI-3, Section 12), `Plan/architecture.md` v0.5 (Section 12), `Plan/implementation-plan.md` v0.6 (Sections 3, 4.4, WP-1.5, WP-1.8, WP-1.11), `docs/data-model.md` v0.2, `docs/deployment-architecture.md` v0.4 (Section 9), `docs/tech-evaluation.md` v0.2 (Section 3.4), `docs/authn-authz-design.md` v0.1, `docs/roadmap.md` v0.4 (Sections 4 and 5), `docs/governance.md` v0.5 (Sections 5 and 8), `docs/customer-inputs.md` v0.2 |
+| Depends on | `Plan/functional-spec.md` v0.8 (FR-POL-1, FR-AUTHZ-8..11, FR-UI-3, Section 12), `Plan/architecture.md` v0.6 (Section 12), `Plan/implementation-plan.md` v0.7 (Sections 3, 4.4, WP-1.5, WP-1.8, WP-1.11), `docs/data-model.md` v0.3, `docs/deployment-architecture.md` v0.4 (Section 9), `docs/tech-evaluation.md` v0.3 (Section 3.4), `docs/authn-authz-design.md` v0.2, `docs/roadmap.md` v0.4 (Sections 4 and 5), `docs/governance.md` v0.6 (Sections 5 and 8), `docs/customer-inputs.md` v0.2 |
 | Purpose | Put the three decisions that gate Phase 1 in front of the people who must make them: what each choice is, what it changes in the plan, what is recommended and why, and what would change the recommendation. Closes nothing by itself; the decision is recorded in `docs/governance.md` Section 5. |
 | Audience | Sponsor, security architect, product owner. Each decision names its decider below. |
 | Status | The recommendations are the drafter's judgement from the design documents. Nothing here was run or measured: no SQL, Rego or integration has been executed, and the technology facts are those in `docs/tech-evaluation.md`, much of which is unverified. |
@@ -33,7 +33,7 @@ The decider column follows the owners named in `Plan/architecture.md` Section 12
 
 **Recommendation: A, with tenant ID on every table so that B stays a deployment decision rather than a schema change.** This is the default in `docs/deployment-architecture.md` Section 9, `docs/data-model.md` and the customer-input assumption CI-3. Isolation must pass the cross-tenant tests (TC-I3) in every model, so choosing A does not lower the test bar.
 
-**What the decider is accepting.** A larger blast radius if row-level security or the application filters fail. The plan's mitigations are database role design (no superuser, no `BYPASSRLS`), the tenant set per transaction and never per session, and the interleaved-tenant test on a pooled connection (WP-1.5, IG-9). These are designs, not results: the data-model SQL has not been run on PostgreSQL (checklist row P0-19). Accept A conditionally on that test passing.
+**What the decider is accepting.** A larger blast radius if row-level security or the application filters fail. The plan's mitigations are database role design (no superuser, no `BYPASSRLS`), the tenant set per transaction and never per session, and the interleaved-tenant test on a pooled connection (WP-1.5, IG-9). The first results are in (2026-11-22, `db/spike/`): on PostgreSQL 17.12 all 78 checks passed, including the interleaved-tenant test on one connection, forced row-level security and composite tenant foreign keys, and mutated versions of the schema were caught. The run also found that a plain foreign key lets one tenant's row reference another's; the data model now requires composite keys. Not yet shown: a real connection pooler, the other tables, load. The condition on the interleaved-tenant test is met; the condition on customer input CI-3 is not.
 
 **What would change the recommendation.** A first customer that requires a dedicated database or a sovereign deployment at launch (customer input CI-3), or a regulator or contract that rules out shared databases. Then B or C is chosen for that customer, and the Phase 1 code stays the same; per `Plan/implementation-plan.md` Section 3 the dedicated-database option adds deployment work, not tables. Per-tenant key hierarchy (FR-ADM-2) is a Phase 5 item under any option.
 
@@ -66,7 +66,7 @@ The decider column follows the owners named in `Plan/architecture.md` Section 12
 
 **Recommendation: A, conditional on spike S3.** The decision should be taken after S3 (policy latency, weeks -5 to -4), which measures decision latency with realistic data against NFR-1 and informs the cache design. If S3 shows Rego cannot meet the latency budget with a decision cache, revisit; otherwise confirm A. The technology evaluation's own provisional recommendation is OPA and Rego for the MVP, revisiting Cedar only if formal analysis becomes a requirement.
 
-**What the decider is accepting.** Rego skills as a team dependency and the unexecuted state of the sketch: `opa test` has not been run on any policy in this repository (checklist row P0-16 asks for that).
+**What the decider is accepting.** Rego skills as a team dependency, and a policy that is still a spike. It has now been run: under OPA 1.22.4 the sketch needed three fixes (one real defect: an integer compared with a string made every expiring grant look expired), then 15 of 15 tests passed and a benchmark gave a median of about 0.2 ms at 100,000 grants once the agent-to-server data was keyed (indicative only; `docs/authn-authz-design.md` Section 6.1). OPA's licence is Apache-2.0 (repository metadata). Spike S3 with realistic data sizes and concurrency is still outstanding, so the decision stays conditional on it.
 
 **What would change the recommendation.** A requirement to prove properties of policies formally, a team that already runs Cedar, or an S3 result that rules Rego out. Choosing B is not a Phase 1 shortcut: it changes FR-POL-1 in the specification, so the spec owner must be part of that decision.
 
@@ -76,9 +76,9 @@ Record each in `docs/governance.md` Section 5 with the decider's name and date, 
 
 | ADR | Recommended resolution | Condition | Decider | Record |
 |---|---|---|---|---|
-| ADR-4 | Shared multi-tenant with row-level security and tenant ID on every table; dedicated database or cluster models remain deployment options | Customer input CI-3 confirms no tenant needs a dedicated database at launch; the interleaved-tenant test (P0-19) passes | Security architect, with the sponsor | Decision log row ADR-4; plan Section 3 unchanged |
+| ADR-4 | Shared multi-tenant with row-level security and tenant ID on every table; dedicated database or cluster models remain deployment options | Customer input CI-3 confirms no tenant needs a dedicated database at launch. The interleaved-tenant test (P0-19) has passed (2026-11-22) | Security architect, with the sponsor | Decision log row ADR-4; plan Section 3 unchanged |
 | ADR-3 | Dashboard approval queue for definitions and registrations in Phase 1; webhook adapters to ticketing and chat later | Customer input CI-2 confirms | Product owner | Decision log row ADR-3; correct the wording in `Plan/architecture.md` Section 12 |
-| ADR-6 | Rego on OPA | Spike S3 result does not rule it out; OPA licence confirmed | Security architect | Decision log row ADR-6 |
+| ADR-6 | Rego on OPA | Spike S3 result with realistic data does not rule it out (the indicative run does not). OPA licence: confirmed Apache-2.0 on 2026-11-22 | Security architect | Decision log row ADR-6 |
 
 A decision with a condition is recorded as "decided, conditional" with the condition and its due week; the plan treats an unmet condition like an open decision for the packages it gates.
 
@@ -91,7 +91,7 @@ A decision with a condition is recorded as "decided, conditional" with the condi
 
 ## 7. Evidence and limits
 
-- Everything above comes from the documents named in the header table. No option was tested; no product was evaluated here beyond what `docs/tech-evaluation.md` records.
+- Everything above comes from the documents named in the header table plus the 2026-11-22 runs of OPA and PostgreSQL. The options were not compared by running them: only the recommended options (Rego, shared tenancy) were exercised, and only on small spikes.
 - The cost comparisons are qualitative. The plan does not estimate an adapter package for ADR-3 option C or a deployment package for ADR-4 options B and C.
 - The recommendations are those of the drafter (an AI assistant working from the repository) and are for the named deciders to accept, change or reject.
 
