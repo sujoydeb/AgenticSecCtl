@@ -41,4 +41,6 @@ Done only when steps 3 to 6 and 10 are observed working (not just configured), t
 | 10 | Partly: `docs-check` ran on the push (not on a pull request) and every step passed in 6 seconds | Run 45031349199 |
 | 3 to 8 | Not done: no CODEOWNERS file, no branch protection, no signed-commit requirement, no Actions restrictions, no environments, no secret scanning settings. Whether branch protection is available for a private repository on this account's plan was not checked **[VERIFY]** | None |
 
+A pull request was opened on 2026-11-22 to exercise step 10 on a `pull_request` event; its result is recorded below once observed.
+
 Acceptance (Section 3) is therefore not met, and gap G4 stays open. The SSH private key has no passphrase and lives in the user's home directory; treat it as a development convenience.
