@@ -18,17 +18,19 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `db/migrations/` | Postgres schema migrations | architecture 7 |
 | `deploy/compose/` | Docker Compose for dev and CI end-to-end tests (not yet written; topology in `docs/deployment-architecture.md` Section 13) | architecture 8 |
 | `deploy/helm/`, `deploy/k8s/`, `deploy/admission/` | Helm charts, NetworkPolicies, admission policies | architecture 8 |
-| `controls/` | Control catalogue: `catalogue.yaml` (source) and `catalogue.md` (generated); 27 controls, CTL-01..27 | FR-COMP-1 |
+| `controls/` | Control catalogue: `catalogue.yaml` (source) and `catalogue.md` (generated); 29 controls, CTL-01..29 | FR-COMP-1 |
 | `compliance/` | Compliance mapping matrix (`compliance-matrix.md`: framework mappings and findings register; unverified, not legally reviewed) | FR-COMP-2..3 |
 | `tests/unit`, `integration`, `e2e`, `fuzz`, `adversarial` | Test suites; IDs follow `TC-*` in the threat model | threat model 7 |
 | `tests/fixtures/evil_mcp/`, `benign_mcp/` | Hostile and benign MCP servers, run only on an isolated network | threat model 7 |
-| `docs/testing/` | Test case catalogue (`cases.md`, 65 cases, not yet executed) | threat model 7 |
+| `docs/testing/` | Test case catalogue (`cases.md`, 90 cases, not yet executed) | threat model 7 |
 | `docs/prd.md` | Product requirements document | — |
 | `docs/tech-evaluation.md` | Technology evaluation (mostly unverified; has a verification log) | architecture 10, 12 |
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
 | `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/`, `.github/dependabot.yml` | `docs-check.yml` is the only active workflow (document consistency and generated-file freshness; untested on GitHub); Dependabot for action updates | NFR-9 |
 | `docs/roadmap.md` | Implementation roadmap: phases 0-5 with deliverables, dependencies, effort, acceptance, risks, decision gates, cross-document findings (estimates unvalidated) | PRD 8 |
+| `docs/architecture-assessment.md`, `docs/data-model.md`, `docs/api-specification.md`, `docs/api/openapi.yaml` | Architecture assessment, data model and API specification (drafts closing review gaps A1 to A3) | architecture 7, spec 4.21 |
+| `docs/governance.md`, `docs/reviewgap.md` | Governance templates (owners, reviews, decisions) and the review gap register with closure status | — |
 | `docs/deployment-architecture.md` | Deployment architecture: environments, topology, network policy matrix, data tier, HA/DR, multi-tenancy, multi-cloud adapters, hardening, acceptance criteria (untested) | architecture 8, 9 |
 | `docs/ci-cd-pipeline.md`, `docs/ci-templates/` | CI/CD security pipeline design (stages, gates, waivers, pipeline threats) and an inactive template for the product gates (action pins TBD) | NFR-9, CTL-17, CTL-27 |
 | `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`), `build_catalogue_md.py` and `catalogue_lib.py` (generate `controls/catalogue.md`) | — |

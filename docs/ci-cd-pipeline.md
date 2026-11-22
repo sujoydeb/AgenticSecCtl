@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design draft; the product pipeline is a template, only the document checks are wired up) |
-| Depends on | `Plan/functional-spec.md` v0.3 (NFR-9, FR-SCAN-5, FR-SUP-1..3, FR-POL-1..4), `Plan/architecture.md` v0.2 (Sections 8, 10), `Plan/threat-model.md` v0.2 (threats L, X8), `docs/testing/cases.md` v0.2 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.2 (Section 6 change management), `controls/catalogue.md` v0.1 (CTL-16, CTL-17, CTL-27) |
+| Version | 0.2 (design draft; the product pipeline is a template, only the document checks are wired up) |
+| Depends on | `Plan/functional-spec.md` v0.4 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.3 (Sections 8, 10), `Plan/threat-model.md` v0.3 (threats L, X8), `docs/testing/cases.md` v0.3 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.2 (Section 6 change management), `controls/catalogue.md` v0.2 (CTL-16, CTL-17, CTL-27) |
 | Platform | GitHub Actions (decision recorded in this document; no remote repository is configured yet) |
 | Status | Untested. No workflow in this repository has run on GitHub. Third-party action names, versions and commit SHAs are **not verified** (web research was blocked); they are tagged **[VERIFY]** or left as `TBD` placeholders. |
 
@@ -71,7 +71,7 @@ Candidate tools are listed for orientation only; none has been verified against 
 | G2.2 SBOM generation | Inventory of components per image | Syft, CycloneDX or SPDX output | SBOM missing or empty | FR-SCAN-5 |
 | G2.3 Image vulnerability scan | Known vulnerabilities in OS and language layers | Trivy, Grype | Critical/High above policy (to be set); scanner unavailable | FR-SCAN-5, TC-L3 |
 | G2.4 Malware and secret scan of artifacts | Final image contents | Scanner of choice | Any finding | CTL-17 |
-| G2.5 Signing | Prove origin and integrity | cosign keyless or KMS-held key | Signing fails | FR-SUP-1, TC-L2 |
+| G2.5 Signing | Prove origin and integrity | cosign keyless or KMS-held key | Signing fails | FR-SUP-1, TC-L4 |
 | G2.6 Provenance attestation | Record how the artifact was built | SLSA-style provenance, GitHub artifact attestations | Attestation missing | CTL-17 |
 | G2.7 Publish by digest | Reference immutable digests only | Registry push, digest output | Tag-only reference produced | FR-SUP-1 |
 
@@ -89,8 +89,8 @@ Candidate tools are listed for orientation only; none has been verified against 
 
 | Gate | Purpose | Fails when | Requirement / control / test |
 |---|---|---|---|
-| G4.1 Signature and provenance verification | Verify signer identity, digest and attestation before any environment | Verification fails or identity does not match the expected workflow | FR-SUP-1, TC-L2 |
-| G4.2 Admission control | Cluster rejects unsigned, tag-only or non-compliant workloads | Admission denies | TC-L2 |
+| G4.1 Signature and provenance verification | Verify signer identity, digest and attestation before any environment | Verification fails or identity does not match the expected workflow | FR-SUP-1, TC-L4 |
+| G4.2 Admission control | Cluster rejects unsigned, tag-only or non-compliant workloads | Admission denies | TC-L4 |
 | G4.3 Environment protection | Required reviewers (deployer is not the author), wait timers, branch restrictions | Approval missing | SoD-1, CTL-23 |
 | G4.4 Staged rollout | Dev, staging, canary pods, then wider; policy bundles first in shadow mode (runbook 7.1) | Deny-rate, latency or error metrics beyond rollback triggers (runbook Section 6) | CTL-16, CTL-24 |
 | G4.5 Database migration safety | Expand/contract compatibility with the running version | Backward-incompatible migration | Runbook Section 6 |
@@ -182,6 +182,8 @@ Evidence is linked to controls in `controls/catalogue.md` and consumed by the co
 | P3 | Supply-chain intake automation for third-party servers, evidence pack automation |
 | P4 | Provenance enforcement for server images in the fleet, continuous deployed-vs-signed comparison |
 | P5 | Multi-cloud deployment targets, regional release gates, external pen-test cadence |
+
+Signing and admission of the platform's own images are required from Phase 2 (FR-SUP-1, retagged from Phase 4 in spec v0.4 to match this pipeline); the server-fleet equivalent is FR-SUP-4 in Phase 4. This closes the phase conflict recorded as F2 in the roadmap.
 
 The template for the product gates is `docs/ci-templates/product-security-gates.yml`. It is not an active workflow: it sits outside `.github/workflows/`, its action pins are `TBD`, and it must not be copied into place until each action has been verified and pinned.
 

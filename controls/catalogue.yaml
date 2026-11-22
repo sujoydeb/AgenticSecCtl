@@ -1,8 +1,8 @@
 # Control catalogue source. Strict YAML subset: see scripts/catalogue_lib.py.
 # Generated view: controls/catalogue.md (python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md)
-version: "0.1"
+version: "0.2"
 status_note: "Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set."
-depends_on_docs: "Plan/functional-spec.md v0.3, Plan/architecture.md v0.2, Plan/threat-model.md v0.2, docs/testing/cases.md v0.2, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.2"
+depends_on_docs: "Plan/functional-spec.md v0.4, Plan/architecture.md v0.3, Plan/threat-model.md v0.3, docs/testing/cases.md v0.3, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.3"
 satisfies: "FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here."
 intro: "A control is a platform capability that reduces a named threat. Each entry says how the control works step by step, what it contributes to prevention, detection, response and recovery, how it fails, where it produces false positives and false negatives, how it can be bypassed, and what risk remains. Owners are roles, not people. Status is specified for every control."
 enforcement_classes:
@@ -89,6 +89,7 @@ controls:
       - "An optional classifier can only raise severity; it never lowers a deterministic finding and never approves."
       - "A reviewer who is not the owner approves; a Critical finding needs two distinct approvers and a justification with expiry."
       - "On a rule-set update approved tools are re-scanned; a Critical finding quarantines the tool and notifies, lower severities create review items."
+      - "The scanner protects itself: input size and complexity caps, per-tenant queue quotas, and timeouts that leave a tool not approved, never approved; an evasion regression set runs on every rule-set or model update."
     prevent:
       - "Tools with Critical findings cannot be approved by one person."
     detect:
@@ -108,6 +109,7 @@ controls:
     false_negatives:
       - "Paraphrased, multilingual or split-across-fields instructions that rules do not match."
       - "A tool that is benign at review and changes later (see CTL-03)."
+      - "Evasion between regression updates (homoglyphs, split or nested encodings)."
     bypass_scenarios:
       - "Instruction text phrased to avoid the rule set."
       - "Collusion between two approvers."
@@ -118,14 +120,19 @@ controls:
       - "FR-SCAN-9"
       - "SoD-1"
       - "SoD-2"
+      - "FR-SCAN-7"
+      - "FR-SCAN-10"
     threats:
       - "A"
       - "X1"
       - "X6"
+      - "X12"
     tests:
       - "TC-A1..A5"
       - "TC-E4"
       - "TC-Z2"
+      - "TC-X12"
+      - "TC-Z12"
     evidence:
       - "Scan reports with rule-set version, findings and evidence."
       - "Approval and override records with approver identities."
@@ -175,6 +182,7 @@ controls:
     residual_risk: "Hashing detects change, not malice; unchanged definitions can still behave badly (threat B, X7). Compensating controls are CTL-09 and behaviour baselines."
     requirements:
       - "FR-DRIFT-1..7"
+      - "FR-RT-1"
     threats:
       - "A"
       - "B"
@@ -262,6 +270,7 @@ controls:
       - "Session IDs are unguessable, expire and are bound to the authenticated client; reuse by another client is rejected."
       - "The server certificate or JWKS is checked against the pin in the registry before data is sent."
       - "Logs, traces, errors and the UI redact tokens and secrets."
+      - "Client registration is closed by default: dynamic client registration and client-metadata-document registration are enabled only per tenant with approval, allowlisted redirect URIs or metadata hosts, rate limits and an owner; new clients start unapproved."
     prevent:
       - "Tokens for another audience, expired or forged tokens, and session reuse by a different client."
     detect:
@@ -283,14 +292,17 @@ controls:
     residual_risk: "In fallback mode a stolen token is usable inside its lifetime (threat G); the test record states the mode used."
     requirements:
       - "FR-AUTHN-1..6"
+      - "FR-AUTHN-7"
     threats:
       - "C"
       - "F"
       - "G"
+      - "X13"
     tests:
       - "TC-C2"
       - "TC-F2"
       - "TC-G1..G5"
+      - "TC-X13"
     evidence:
       - "Token validation configuration."
       - "Authentication failure logs without secret values."
@@ -304,7 +316,7 @@ controls:
     owner_role: "Identity and access team"
     phase: "P1/P2"
     status: "specified"
-    verify: "MCP authorization requirements, DPoP/mTLS support and token exchange are unverified against the current MCP specification and IdP documentation."
+    verify: "MCP authorization requirements, DPoP/mTLS support and token exchange: search-verified background is in the verification log of docs/tech-evaluation.md (MCP revision 2026-07-28; Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only); section-level details and the production IdP remain unverified."
   - id: "CTL-06"
     name: "Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting"
     type: "P, D"
@@ -488,6 +500,7 @@ controls:
       - "Tier 2 and 3 classifiers add advisory signals with confidence."
       - "Policy maps signals to an action: allow with label, redact, block, or quarantine the tool."
       - "Taint rule: after an untrusted read of sensitive data, write, execute and external-send tools are blocked in that session until approved."
+      - "Non-text content (images, documents, audio) is labelled untrusted, limited by type and size, extracted for inspection and delivered only if policy allows; content that cannot be inspected is blocked for sessions holding sensitive data. Server error payloads are inspected like any response, and platform errors use fixed catalogue text."
     prevent:
       - "Tainted sessions cannot send data out or act without approval."
       - "Neutralised markup removes common exfiltration channels."
@@ -506,6 +519,7 @@ controls:
       - "Benign text with imperative language flagged or redacted."
     false_negatives:
       - "Paraphrased, multilingual, image-embedded or split payloads."
+      - "Instructions in non-text forms that extraction cannot read."
     bypass_scenarios:
       - "Visible-text injections that read like normal content."
       - "Sensitive data not tagged, so taint is not set."
@@ -514,12 +528,18 @@ controls:
       - "FR-RT-4..5"
       - "FR-RT-9"
       - "FR-RT-11"
+      - "FR-RT-12"
+      - "FR-RT-13"
     threats:
       - "A"
       - "D"
       - "I"
+      - "X10"
+      - "X11"
     tests:
       - "TC-D1..D5"
+      - "TC-X10"
+      - "TC-X11"
     evidence:
       - "Detector configuration and versions."
       - "Shadow-mode results before enforcement."
@@ -532,6 +552,7 @@ controls:
       - "CTL-07"
       - "CTL-08"
       - "CTL-13"
+      - "CTL-29"
     owner_role: "Security engineering"
     phase: "P2"
     status: "specified"
@@ -547,6 +568,7 @@ controls:
       - "Per-tenant policy maps matches to redact, block or alert, depending on agent clearance."
       - "Every request, cache entry, log and evidence record carries a tenant ID; database row-level security enforces separation even if application filters fail."
       - "Audit stores digests and redacted excerpts; raw evidence goes to an encrypted vault."
+      - "Scan inputs go to an external classifier service only for tenants that opted in, and only tool definition text is sent; a self-hosted option is available (FR-SCAN-8)."
     prevent:
       - "Redaction or blocking of matched data; cross-tenant reads fail."
     detect:
@@ -570,11 +592,13 @@ controls:
       - "FR-RT-6"
       - "FR-RT-8"
       - "FR-AUD-3"
+      - "FR-SCAN-8"
     threats:
       - "I"
     tests:
       - "TC-I1..I3"
       - "TC-G5"
+      - "TC-Z13"
     evidence:
       - "DLP policies and tuning records."
       - "Match logs."
@@ -586,6 +610,7 @@ controls:
     depends_on:
       - "CTL-08"
       - "CTL-22"
+      - "CTL-29"
     owner_role: "Data protection / security engineering"
     phase: "P2"
     status: "specified"
@@ -735,6 +760,7 @@ controls:
     residual_risk: "The chain is tamper-evident, not tamper-proof; anchoring narrows but does not close the window (threat X6, X8)."
     requirements:
       - "FR-AUD-1..7"
+      - "NFR-7"
     threats:
       - "X5"
       - "X6"
@@ -742,6 +768,9 @@ controls:
     tests:
       - "TC-Z6"
       - "TC-X5"
+      - "TC-Z20"
+      - "TC-Z22"
+      - "TC-Z23"
     evidence:
       - "Chain verification reports and the latest anchor."
       - "Sample decision replays from policy hash and input digest."
@@ -804,7 +833,7 @@ controls:
     depends_on:
       - "CTL-13"
     owner_role: "Security operations"
-    phase: "P2/P4"
+    phase: "P1/P2/P4"
     status: "specified"
     verify: "OpenTelemetry GenAI semantic convention maturity is unverified."
   - id: "CTL-15"
@@ -928,7 +957,7 @@ controls:
     objective: "Keep malicious or vulnerable packages, images, models and plugins out of the platform and the server fleet."
     how_it_works:
       - "CI produces an SBOM for each build and scans dependencies and images for known vulnerabilities and secrets."
-      - "Images are signed and referenced by digest; admission policy admits only signed, pinned images to server namespaces."
+      - "Images are signed and referenced by digest; admission policy admits only signed, pinned images to the platform namespaces from Phase 2 (FR-SUP-1) and to the MCP server namespaces from Phase 4 (FR-SUP-4)."
       - "Package names are checked against allowlists and known popular names for typosquatting."
       - "Third-party servers go through intake: SBOM, owner, licence and vulnerability status, before approval."
       - "Model artifact provenance is reported when supplied."
@@ -952,13 +981,14 @@ controls:
     residual_risk: "Unknown vulnerabilities and compromised upstream sources remain (threat L)."
     requirements:
       - "FR-SCAN-5"
-      - "FR-SUP-1..3"
+      - "FR-SUP-1..4"
       - "FR-MOD-3"
       - "NFR-9"
     threats:
       - "L"
     tests:
       - "TC-L1..L3"
+      - "TC-L4"
     evidence:
       - "SBOMs and scan reports."
       - "Signature verification and admission logs."
@@ -970,7 +1000,7 @@ controls:
     depends_on:
       - "CTL-27"
     owner_role: "Platform security"
-    phase: "P3/P4"
+    phase: "P2/P3/P4"
     status: "specified"
     verify: "Tooling (Syft, Grype, Trivy, cosign, SLSA) features, licences and offline behaviour are unverified."
   - id: "CTL-18"
@@ -1024,7 +1054,7 @@ controls:
       - "CTL-05"
       - "CTL-03"
     owner_role: "Security engineering"
-    phase: "P2"
+    phase: "P1/P2"
     status: "specified"
     verify: "Current MCP specification wording on transports, sampling, elicitation and roots is unverified; see spec Section 4.12."
   - id: "CTL-19"
@@ -1089,6 +1119,7 @@ controls:
       - "Each call carries the delegation chain."
       - "The effective permission of a sub-agent is the intersection with the delegator's permission for that request."
       - "The gateway blocks cycles and chains deeper than the limit."
+      - "Agent cards and discovery documents are untrusted input: advertised capabilities, endpoints and keys are verified against registry identity and pins before use, and unverified cards are not routed (FR-ID-8)."
     prevent:
       - "Privilege amplification, circular delegation, unauthorized agent-to-agent calls."
     detect:
@@ -1104,17 +1135,21 @@ controls:
       - "Legitimate deep workflows blocked by the depth limit."
     false_negatives:
       - "Cycles that pass through systems outside the gateway."
+      - "A forged card signed with a compromised genuine key."
     bypass_scenarios:
       - "Direct calls by a high-privilege agent outside the delegation path."
     residual_risk: "Phase 4 capability; agent-to-agent protocols are still evolving (threat M)."
     requirements:
       - "FR-ID-4..6"
+      - "FR-ID-8"
     threats:
       - "M"
       - "F"
+      - "X9"
     tests:
       - "TC-M1"
       - "TC-M2"
+      - "TC-X9"
     evidence:
       - "Delegation logs with chains."
       - "Policy tests for intersection logic."
@@ -1174,7 +1209,7 @@ controls:
     depends_on:
       - "CTL-01"
     owner_role: "AI governance / model owner"
-    phase: "P3/P4"
+    phase: "P2/P3/P4"
     status: "specified"
     verify: ""
   - id: "CTL-22"
@@ -1216,6 +1251,7 @@ controls:
       - "I"
     tests:
       - "TC-I3"
+      - "TC-Z19"
     evidence:
       - "Tenant configuration and key inventory."
       - "Retention job reports and legal-hold lists."
@@ -1274,6 +1310,7 @@ controls:
       - "TC-E4"
       - "TC-X6"
       - "TC-X8"
+      - "TC-Z24"
     evidence:
       - "Role bindings and access reviews."
       - "Break-glass usage records and post-use reviews."
@@ -1322,12 +1359,19 @@ controls:
       - "FR-AUTHZ-8"
       - "FR-AUD-7"
       - "NFR-3..4"
+      - "NFR-1..2"
+      - "NFR-5"
     threats:
       - "E"
       - "X8"
     tests:
       - "TC-Z5"
       - "TC-Z6"
+      - "TC-Z14"
+      - "TC-Z15"
+      - "TC-Z16"
+      - "TC-Z17"
+      - "TC-Z18"
     evidence:
       - "HA design and configuration."
       - "Backup, restore and DR exercise reports."
@@ -1445,6 +1489,7 @@ controls:
       - "Changes are classified as standard, security-relevant or emergency with matching approvals; security-relevant changes roll out via shadow mode and canary."
       - "Data plane and control plane use separate deployments and credentials; the gateway holds no long-lived upstream secrets."
       - "A dedicated penetration test covers the gateway and control plane."
+      - "Platform configuration is declarative, validated at load, versioned and audited; invalid configuration is refused (FR-ADM-1)."
     prevent:
       - "Vulnerable or unsigned artifacts and unreviewed changes reach production."
     detect:
@@ -1465,12 +1510,14 @@ controls:
     residual_risk: "Compromise of the gateway or control plane remains possible (threat X8); impact is limited by short-lived credentials and plane separation."
     requirements:
       - "NFR-9"
+      - "FR-ADM-1"
     threats:
       - "X8"
       - "L"
     tests:
       - "TC-L3"
       - "TC-X8"
+      - "TC-Z10"
     evidence:
       - "CI gate results and SBOMs."
       - "Change approvals and penetration test reports."
@@ -1482,3 +1529,123 @@ controls:
     phase: "P1 onward"
     status: "specified"
     verify: ""
+  - id: "CTL-28"
+    name: "Fleet dashboard, approval workflow and notifications"
+    type: "P, D, R"
+    enforcement: "human"
+    component: "Dashboard, API"
+    objective: "Give people an accurate view of the fleet and a safe workflow for approvals, drift review and incidents, with notifications that do not block containment."
+    how_it_works:
+      - "The dashboard reads counts and relationships from the registry and audit data: agents, servers, tools, approved and unapproved, quarantined, findings, drift events, authentication failures, blocked operations, leakage attempts and incidents."
+      - "Drill-down opens agent, server and tool pages with owner, environment, criticality, version history, scan evidence and permissions; a relationship graph links agent, model, server, tool, data source and enterprise system."
+      - "The approval queue shows the diff and evidence for each request; the API enforces that the requester cannot approve, whatever the UI shows."
+      - "Excessive-permission and compliance posture views are generated from the same data, with evidence-support wording and mandatory, guidance and voluntary items shown separately."
+      - "Notifications go to per-tenant channels (email, webhook); delivery failures are retried and reported, and never delay containment actions."
+    prevent:
+      - "Self-approval and approval without seeing the diff and evidence."
+    detect:
+      - "Operational views surface denials, blocked operations and leakage attempts; stale counters are visible by age."
+    respond:
+      - "Reviewers quarantine, reject or approve from the queue; incident links open the incident workflow (CTL-15)."
+    recover:
+      - "Re-approval of a corrected version from the same queue."
+    parameters:
+      - "Approval timeout: to be set."
+      - "Maximum counter staleness shown in the UI: to be set."
+      - "Notification retry policy: to be set."
+    failure_behavior: "Dashboard or notification failure does not change enforcement; the API and break-glass path remain available for containment."
+    false_positives:
+      - "Counters that lag the audit data suggest a problem that does not exist."
+    false_negatives:
+      - "Alerts or approvals that never reach a human because a notification channel failed silently (mitigated by failure reporting)."
+    bypass_scenarios:
+      - "Approver fatigue and rubber-stamping."
+      - "Misleading approval summaries."
+    residual_risk: "Human approval quality depends on what the approver sees and on attention; approval content and step-up authentication need explicit design (gap H4 in docs/reviewgap.md)."
+    requirements:
+      - "FR-UI-1..6"
+      - "FR-ADM-3"
+      - "NFR-10"
+    threats:
+      - "E"
+      - "X6"
+      - "X2"
+    tests:
+      - "TC-Z7"
+      - "TC-Z8"
+      - "TC-Z9"
+      - "TC-Z11"
+      - "TC-Z21"
+    evidence:
+      - "Dashboard test results against seeded data."
+      - "Approval records with approver identity and displayed diff reference."
+      - "Notification delivery and failure logs."
+    metrics:
+      - "Median time from drift or request to decision."
+      - "Notification failures per week."
+      - "Approvals completed in under 10 seconds (rubber-stamp indicator)."
+    depends_on:
+      - "CTL-13"
+      - "CTL-23"
+      - "CTL-26"
+    owner_role: "Security engineering"
+    phase: "P1/P2/P3"
+    status: "specified"
+    verify: ""
+  - id: "CTL-29"
+    name: "Data classification and labelling"
+    type: "P, D"
+    enforcement: "hybrid"
+    component: "Registry, Gateway, DLP"
+    objective: "Make sensitivity explicit so that DLP, the taint rule and the high-impact definition act on the same labels."
+    how_it_works:
+      - "Ordered classification levels are defined per tenant (default Public, Internal, Confidential, Restricted), each with a written meaning."
+      - "Owners assign a label to every tool, resource and data source in the registry and the approver confirms it; unlabelled items are treated as Confidential."
+      - "At run time the gateway gives each tool output and session the highest label of the data it contains or comes from."
+      - "Sensitive (Confidential or above) sessions trigger the taint rule, stricter DLP policy and the high-impact definition for external sends."
+      - "Every label and every change is audited; lowering a label needs an approver other than the requester."
+    prevent:
+      - "Unlabelled or mislabelled data does not silently become less restricted; downgrades need a second person."
+    detect:
+      - "Label changes and taint transitions in the audit log; items without owner labels in reports."
+    respond:
+      - "Relabel upward and re-run affected reviews when a leak shows a label was too low."
+    recover:
+      - "Recompute labels for affected sessions and outputs."
+    parameters:
+      - "Default levels: Public, Internal, Confidential, Restricted (proposed, pending approval)."
+      - "Default for unlabelled items: Confidential."
+    failure_behavior: "Missing or unreadable label: treat as Confidential."
+    false_positives:
+      - "Over-labelled data blocks legitimate sends and raises approval volume."
+    false_negatives:
+      - "Data labelled too low at the source; derived content that inherits no label."
+    bypass_scenarios:
+      - "Owners labelling everything Public to avoid friction; data copied through tools that do not carry labels."
+    residual_risk: "Label quality depends on owners and reviews (threat I); DLP content detection remains the backstop."
+    requirements:
+      - "FR-DATA-1..4"
+    threats:
+      - "I"
+      - "D"
+    tests:
+      - "TC-Z25"
+      - "TC-I1"
+      - "TC-D5"
+    evidence:
+      - "Classification model document and per-tenant configuration."
+      - "Label assignment and change records."
+      - "Test results for inheritance and downgrade rules."
+    metrics:
+      - "Share of registry items with an owner-assigned label."
+      - "Downgrades per month and who approved them."
+      - "Sends blocked or approved because of labels."
+    depends_on:
+      - "CTL-06"
+      - "CTL-07"
+      - "CTL-10"
+      - "CTL-13"
+    owner_role: "Data protection / security engineering"
+    phase: "P1/P2"
+    status: "specified"
+    verify: "The level names and the Confidential default are proposals pending approval."

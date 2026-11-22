@@ -3,12 +3,26 @@
 
 | | |
 |---|---|
-| Version | 0.3 (draft for review) |
-| Supersedes | 0.2 |
+| Version | 0.4 (draft for review) |
+| Supersedes | 0.3 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
 ## 0. Change log
+
+### v0.3 → v0.4 (closure of High review gaps)
+
+Changes made to close the High findings in `docs/reviewgap.md`. New requirements are marked *added in v0.4; review required*. Decisions are recorded as **proposed, pending approval**.
+
+| # | Change | Where |
+|---|---|---|
+| 1 | Data classification model added: FR-DATA-1..4 (gap D1) | Section 4.22 |
+| 2 | Threats X9..X13 get requirements: FR-ID-8, FR-RT-12, FR-RT-13, FR-SCAN-10, FR-AUTHN-7 (gap H1) | Sections 4.2, 4.4, 4.5, 4.7 |
+| 3 | FR-SUP-1 retagged to P2 for the platform's own images; new FR-SUP-4 keeps the P4 server-fleet requirement (gap C1) | Section 4.11 |
+| 4 | Threat traceability extended to X13 with test cases for every threat; phase-conflicting test cases corrected in the test catalogue (gaps B2, B3, C1) | Section 5 |
+| 5 | AC-5 and AC-6 mapped to additional test cases | Section 11 |
+| 6 | Assumptions A5 and A6 added from verification of the MCP specification revision 2026-07-28 (gap E3, partly) | Section 3 |
+| 7 | Open decisions get proposed resolutions pending approval (ADR-1, 2, 3, 4, 6) (gap F1) | Section 12 |
 
 ### v0.2 → v0.3 (document synchronisation)
 
@@ -98,17 +112,19 @@ Separation-of-duties rules (SoD):
 
 ## 3. Context and assumptions
 
-Trust zones, component responsibilities and the interceptor pipeline are defined in `architecture.md` (v0.2) and analysed in `threat-model.md` (v0.2). Assumptions:
+Trust zones, component responsibilities and the interceptor pipeline are defined in `architecture.md` (v0.3) and analysed in `threat-model.md` (v0.3). Assumptions:
 - A1: An OIDC identity provider is available (Keycloak for development; production IdP undecided).
 - A2: MCP servers and all content they return are untrusted until registered and pinned; even then, response content stays untrusted.
 - A3: MVP gateway covers Streamable HTTP. Local stdio servers need a wrapper (Phase 2).
 - A4: Detectors are probabilistic. Enforcement of high-impact actions never depends on a single detector or on an LLM classifier.
+- A5: The reference MCP specification revision is 2026-07-28 (search-verified; section-level details still to be checked against the specification text). In that revision authorization is optional for MCP implementations, HTTP transports are expected to follow the authorization specification (OAuth 2.1 based, protected resource metadata per RFC 9728), and dynamic client registration is deprecated in favour of client ID metadata documents.
+- A6: Because server-side authorization is optional and stdio transports take credentials from the environment, the platform enforces authentication and authorization at the gateway and never relies on a server doing so.
 
 ---
 
 ## 4. Functional requirements
 
-Priority: **M** must, **S** should, **C** could. Phase: **P1** MVP, **P2** runtime protection, **P3** governance, **P4** advanced threat protection, **P5** enterprise production. "Threats" refer to Section 5 (A–P plus added vectors X1–X8). "Verify" is the test method: UT unit, IT integration, E2E end-to-end, RT red-team, PT penetration, FZ fuzz, DM demonstration/inspection.
+Priority: **M** must, **S** should, **C** could. Phase: **P1** MVP, **P2** runtime protection, **P3** governance, **P4** advanced threat protection, **P5** enterprise production. "Threats" refer to Section 5 (A–P plus added vectors X1–X13). "Verify" is the test method: UT unit, IT integration, E2E end-to-end, RT red-team, PT penetration, FZ fuzz, DM demonstration/inspection.
 
 ### 4.1 Inventory and discovery (FR-INV)
 
@@ -139,6 +155,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 | FR-SCAN-7 | Scans shall re-run on a schedule and on any drift; findings shall be deduplicated and tracked by status (open, accepted with expiry, fixed). | S | P3 | A, B | IT |
 | FR-SCAN-8 | Scan inputs sent to an external LLM service shall require explicit per-tenant opt-in; a self-hosted option shall be supported. | S | P2 | I | DM |
 | FR-SCAN-9 | When a rule set is updated, approved tools shall be re-scanned: a Critical finding on an approved tool shall quarantine it and notify its owner and approvers; lower severities shall create review items without quarantine. *(added from runbook; review required)* | S | P3 | A, B | IT |
+| FR-SCAN-10 | The scanner and detectors shall protect their own availability and integrity: input size and complexity caps, per-tenant queue quotas, timeouts that result in not approved (never in automatic approval), and a regression set of evasion samples that runs on every rule-set or model update. *(added in v0.4; review required)* | S | P2 | A, X12 | UT, FZ |
 
 ### 4.3 Definition integrity and drift (FR-DRIFT)
 
@@ -163,6 +180,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 | FR-ID-5 | The system shall detect and block circular delegation and enforce a maximum delegation depth (default 3). | S | P4 | K, M | UT, RT |
 | FR-ID-6 | A sub-agent shall never receive more permission than the delegating agent holds for the same request (no privilege amplification). | M | P4 | M | UT, RT |
 | FR-ID-7 | If the revocation list or revocation service cannot be consulted, the gateway shall deny the request rather than skip the check. *(added from runbook; review required)* | M | P2 | F, G | IT |
+| FR-ID-8 | Agent cards and discovery documents shall be treated as untrusted input: capabilities, endpoints and keys they advertise shall be verified against registry identity and pins before use, and unverified cards shall not be routed. *(added in v0.4; review required)* | S | P4 | F, M, X9 | IT, RT |
 
 ### 4.5 Authentication (FR-AUTHN)
 
@@ -174,6 +192,7 @@ Risk score (reproducible): `score = min(100, Σ rule_weight × confidence)` with
 | FR-AUTHN-4 | Sessions shall be bound to the authenticated client; use of a session ID by a different client or network identity shall be rejected and alerted. | M | P2 | G | PT |
 | FR-AUTHN-5 | Server identity shall be validated (TLS chain, pinned certificate or JWKS per registry entry); failure shall deny and raise an alert. | M | P2 | C | IT |
 | FR-AUTHN-6 | Secrets and tokens shall never appear in logs, findings or UI; this shall be enforced by log redaction tests. | M | P1 | G, I | UT |
+| FR-AUTHN-7 | Client registration with the platform's authorization components shall not be open: dynamic client registration and client-metadata-document registration shall be disabled unless enabled per tenant with approval, allowlisted redirect URIs or metadata hosts, rate limits and an assigned owner; newly registered clients shall start unapproved. *(added in v0.4; review required)* | M | P2 | G, F, X13 | IT, PT |
 
 ### 4.6 Authorization (FR-AUTHZ)
 
@@ -205,6 +224,8 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-RT-9 | Taint rule: after an untrusted read of sensitive data, the session shall be blocked from write/execute/external-send tools until approved (the "private data + untrusted content + external communication" combination). | M | P2 | D, I, K | RT |
 | FR-RT-10 | Response size, time and rate limits shall apply per tool and per session. | M | P2 | K, N | DoS test |
 | FR-RT-11 | Inspection detectors shall emit signals with confidence; no LLM classifier shall be the only control for any high-impact decision. | M | P2 | D | DM |
+| FR-RT-12 | Non-text content in tool responses (images, documents, audio) shall be labelled untrusted and limited by type and size; it shall reach the model only if policy allows, text extracted from it shall pass the same inspection as text responses (FR-RT-4), and content that cannot be inspected shall be blocked for sessions that hold sensitive data. *(added in v0.4; review required)* | M | P2 | D, X10 | UT, RT |
+| FR-RT-13 | Error payloads returned by servers shall be treated as untrusted responses and inspected like any response; errors generated by the platform towards agents shall use fixed catalogue text and shall not echo untrusted content. *(added in v0.4; review required)* | M | P2 | D, X11 | UT, RT |
 
 ### 4.8 Agent autonomy controls (FR-AUTO)
 
@@ -244,9 +265,10 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 |---|---|---|---|---|---|
 | FR-EXEC-1 | Server-owner guidance and admission policy shall require platform-hosted MCP servers to run non-root, read-only filesystem, no privileged capabilities, resource limits, and a sandboxed runtime for tools executing code. [VERIFY runtime availability per cloud] | S | P4 | O | DM, PT |
 | FR-EXEC-2 | File upload/download tools shall enforce type, size and malware-scan checks. | S | P4 | O | IT |
-| FR-SUP-1 | Only images signed by trusted keys and pinned by digest shall be admitted to the server namespace. | S | P4 | L | IT |
+| FR-SUP-1 | The platform's own images shall be signed, referenced by digest and verified at admission; unsigned, tag-only or non-compliant workloads shall be rejected in platform namespaces. *(retagged P4 to P2 in v0.4: the CI/CD and deployment designs require it)* | M | P2 | L | IT |
 | FR-SUP-2 | Server package names shall be checked for typosquatting against registry allowlists and known popular names. | S | P4 | L | UT |
 | FR-SUP-3 | Third-party servers shall go through a documented intake (SBOM, owner, licence, vulnerability status) before approval. | S | P3 | L | DM |
+| FR-SUP-4 | Only images signed by trusted keys and pinned by digest shall be admitted to the MCP server namespace (server fleet). *(split from FR-SUP-1 in v0.4)* | S | P4 | L | IT |
 
 ### 4.12 MCP lifecycle controls (FR-MCP)
 
@@ -367,24 +389,35 @@ Framework status (for the mapping matrix):
 - Gateway errors toward agents are minimal and non-informative about policy internals ("tool unavailable", "not permitted") with an opaque correlation ID.
 - Pagination, filtering and sorting standardized; all list endpoints tenant-scoped.
 
+### 4.22 Data classification (FR-DATA)
+
+Default levels, lowest to highest: **Public**, **Internal**, **Confidential**, **Restricted**. A tenant may rename levels or add levels between them, but the order and the rules below hold. In this specification "sensitive" means Confidential or above. *(Section added in v0.4; review required. The level names are a proposed default pending approval.)*
+
+| ID | Requirement | Pri | Ph | Threats | Verify |
+|---|---|---|---|---|---|
+| FR-DATA-1 | The platform shall define ordered data classification levels with a written meaning for each, configurable per tenant within the ordering rules above. | M | P1 | I | DM |
+| FR-DATA-2 | Tools, resources and data sources in the registry shall carry a classification label assigned by the owner and confirmed at approval; unlabelled items shall be treated as Confidential. | M | P1 | I | IT |
+| FR-DATA-3 | Tool outputs and session context shall inherit the highest classification of the data they contain or come from; the gateway shall use that label as the sensitive input to the taint rule (FR-RT-9), DLP policy (FR-RT-6) and the high-impact definition (FR-AUTHZ-5). | M | P2 | I, D | IT, RT |
+| FR-DATA-4 | Classification labels and every change shall be audited; lowering a label shall require an approver other than the requester. | S | P2 | I, X6 | IT |
+
 ---
 
 ## 5. Threat traceability
 
 | Threat | Requirements | First phase | Residual gap | Test cases |
 |---|---|---|---|---|
-| A Tool poisoning | FR-SCAN-1..4, 6, FR-RT-1, FR-SCAN-9 | P1 | Novel phrasing evades rules; LLM advisory only | TC-A1..A5 |
+| A Tool poisoning | FR-SCAN-1..4, 6, FR-RT-1, FR-SCAN-9, FR-SCAN-10 | P1 | Novel phrasing evades rules; LLM advisory only | TC-A1..A5, TC-X12 |
 | B Rug pull / drift | FR-DRIFT-1..7 | P1 | Behavior change without definition change (FR-DRIFT-6, P4) | TC-B1..B4, TC-Z3 |
 | C Shadowing / impersonation | FR-INV-2..4, FR-AUTHN-5, FR-AUTHZ-2 | P1/P2 | Local stdio servers (A3) | TC-C1..C3 |
-| D Response injection | FR-RT-4, 5, 9, 11 | P2 | Probabilistic detection; relies on blast-radius controls | TC-D1..D5 |
+| D Response injection | FR-RT-4, 5, 9, 11, 12, 13, FR-DATA-3 | P2 | Probabilistic detection; relies on blast-radius controls | TC-D1..D5, TC-X10, TC-X11 |
 | E Excessive permissions | FR-AUTHZ-1..8 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5 |
-| F Agent spoofing | FR-ID-1..4, FR-ID-7 | P1/P2 | Compromised legitimate agent identity | TC-F1..F2 |
-| G Auth attacks | FR-AUTHN-1..6, FR-ID-7 | P1/P2 | IdP-dependent features [VERIFY] | TC-G1..G5 |
+| F Agent spoofing | FR-ID-1..4, FR-ID-7, FR-ID-8 | P1/P2 | Compromised legitimate agent identity | TC-F1..F2, TC-X9 |
+| G Auth attacks | FR-AUTHN-1..7, FR-ID-7 | P1/P2 | IdP-dependent features [VERIFY] | TC-G1..G5, TC-X13 |
 | H SSRF | FR-SSRF-1..5, FR-SCAN-6, FR-RT-3, 7 | P1/P2 | Misconfigured exceptions | TC-H1..H4 |
-| I Data exfiltration | FR-RT-6..9, FR-AUD-3 | P2 | Encoded/steganographic leakage; low-and-slow | TC-I1..I4 |
+| I Data exfiltration | FR-RT-6..9, FR-AUD-3, FR-DATA-1..4 | P2 | Encoded/steganographic leakage; low-and-slow | TC-I1..I4, TC-Z25 |
 | J Memory poisoning | FR-MEM-1..4 | P4 | Not covered until P4 | TC-J1..J2 |
-| K Autonomy abuse | FR-AUTO-1..4, FR-ID-5, FR-RT-9, 10, FR-AUTO-5 | P2 | | TC-K1..K3 |
-| L Supply chain | FR-SCAN-5, FR-SUP-1..3, FR-MOD-3 | P3/P4 | Not covered until P3/P4 | TC-L1..L3 |
+| K Autonomy abuse | FR-AUTO-1..5, FR-ID-5, FR-RT-9, 10 | P2 | | TC-K1..K3 |
+| L Supply chain | FR-SCAN-5, FR-SUP-1..4, FR-MOD-3 | P2/P3/P4 | Server-fleet controls not covered until P3/P4 | TC-L1..L4 |
 | M Inter-agent | FR-ID-4..6, FR-MEM-3 | P4 | Not covered until P4 | TC-M1..M2 |
 | N Model/inference | FR-MOD-1..3, FR-RT-10 | P3/P4 | Model-internal attacks out of scope | TC-N1..N2 |
 | O Tool execution | FR-RT-2, 3, FR-EXEC-1..2 | P2/P4 | Server-side bugs outside platform control | TC-O1..O3 |
@@ -397,8 +430,13 @@ Framework status (for the mapping matrix):
 | X6 Insider approving malicious tool | SoD-1, SoD-2, FR-ADM-6 | P1 | Collusion | TC-E4, TC-X6 |
 | X7 Check-to-use gap | FR-DRIFT-7 | P2 | | TC-B4, TC-Z3 |
 | X8 Gateway as high-value target | FR-AUTHN-3, FR-AUD-4, FR-ADM-2, FR-ADM-6, FR-AUD-7 | P2 | See NFR-9 | TC-X8 |
+| X9 Agent-card / discovery document spoofing | FR-ID-8, FR-ID-4 | P4 | Depends on emerging agent-to-agent standards | TC-X9 |
+| X10 Non-text (multimodal) content injection | FR-RT-12 | P2 | Extraction quality limits inspection | TC-X10 |
+| X11 Error-message injection | FR-RT-13 | P2 | | TC-X11 |
+| X12 Scanner and detector evasion or overload | FR-SCAN-10, FR-SCAN-6 | P2 | Novel evasion between regression updates | TC-X12 |
+| X13 Client registration abuse (dynamic or metadata-document) | FR-AUTHN-7 | P2 | IdP-dependent controls [VERIFY] | TC-X13 |
 
-Test cases are defined in `docs/testing/cases.md` (65 cases; threat-model Section 7 is the index). Requirements without a dedicated test case yet: FR-SCAN-9, FR-AUD-7, FR-ADM-6, FR-AUTO-5 (resume step covered by an extension of TC-K2 only). These are tracked as known gaps.
+Test cases are defined in `docs/testing/cases.md` (90 cases; threat-model Section 7 is the index). Every requirement now has a dedicated case or is covered through the control-level test lists in `controls/catalogue.md`; requirements still without a case of their own are listed in Section 21 of the test catalogue.
 
 ---
 
@@ -461,20 +499,23 @@ MVP (P1):
 - AC-8 (FR-SCAN-6): Importer rejects an oversized, deeply nested, slow, and redirecting response from a hostile test server.
 - AC-9 (FR-AUTHN-6): Log redaction test finds no token or secret in logs under error conditions. Test case: TC-G5.
 
-Acceptance-criteria-to-test mapping: AC-1 ← TC-A1..A3; AC-2 ← TC-B1, B2; AC-3 ← TC-E1, C3, F1; AC-4 ← TC-H1..H4; AC-5 ← TC-Z6; AC-6 ← TC-E4; AC-7 ← TC-Z5; AC-8 ← TC-Z2; AC-9 ← TC-G5.
+Acceptance-criteria-to-test mapping: AC-1 ← TC-A1..A3; AC-2 ← TC-B1, B2; AC-3 ← TC-E1, C3, F1; AC-4 ← TC-H1..H4; AC-5 ← TC-Z6 (chain verification; anchoring is covered by TC-Z22 in Phase 2); AC-6 ← TC-E4, TC-Z7; AC-7 ← TC-Z5; AC-8 ← TC-Z2; AC-9 ← TC-G5.
 
 Phase 2+ acceptance criteria are defined per requirement via the Verify column and the test catalogue.
 
 ## 12. Risks, assumptions and open decisions
 
-| Item | Impact | Owner / next step |
-|---|---|---|
-| Build vs extend an open-source MCP gateway | Schedule, maintenance | Technology evaluation [VERIFY] before Phase 2 |
-| Production IdP and support for DPoP/mTLS binding and token exchange | FR-AUTHN-2/3 feasibility | Decide IdP; test features [VERIFY] |
-| SIEM/SOAR target | Integration scope | Customer decision |
-| Approval channel (dashboard only vs ServiceNow/Slack) | UX and SoD enforcement | Customer decision |
-| Single vs multi-tenant deployment first | Schema and isolation effort | Decide before P1 schema freeze |
-| Jurisdictions and regulators for the compliance matrix | Mapping scope | Compliance input |
-| MCP spec churn | Rework | Version-pinned compatibility matrix; track spec revisions |
-| Detector false positives hindering adoption | Adoption | Shadow mode; budgets in Section 10 |
-| Unmanaged endpoints and local stdio servers | Coverage | Discovery, reporting, wrapper; accepted residual risk |
+Proposed resolutions are recommendations awaiting approval by the named owners; none is settled. Verified facts come from the verification log in `docs/tech-evaluation.md`.
+
+| Item | Impact | Owner / next step | Proposed resolution (pending approval) |
+|---|---|---|---|
+| Build vs extend an open-source MCP gateway (ADR-1) | Schedule, maintenance | Spike S1 before Phase 2 | Custom thin gateway for the MVP; decide the Phase 2 base after S1 (candidates verified to exist: agentgateway, IBM ContextForge, Docker MCP Gateway, Envoy AI Gateway with MCP support since its v0.4) |
+| Production IdP and support for DPoP/mTLS binding and token exchange (ADR-2) | FR-AUTHN-2/3 feasibility | Decide IdP; test features | Keycloak for development (DPoP supported from 26.4; token exchange V2 limited to internal-to-internal use); production IdP capability matrix from spike S2 |
+| SIEM/SOAR target | Integration scope | Customer decision | None proposed |
+| Approval channel (ADR-3) | UX and SoD enforcement | Product owner | Dashboard approval queue in the MVP; webhook adapters for ticketing/chat later |
+| Single vs multi-tenant deployment first (ADR-4) | Schema and isolation effort | Decide before P1 schema freeze | Shared multi-tenant with tenant ID on every row and PostgreSQL row-level security; dedicated namespace/database or cluster models as later options |
+| Policy language (ADR-6) | Policy authoring and tooling | Decide before P1 policies | Rego on OPA |
+| Jurisdictions and regulators for the compliance matrix | Mapping scope | Compliance input | None proposed |
+| MCP spec churn | Rework | Version-pinned compatibility matrix; track spec revisions | Pin 2026-07-28 as reference; re-review on each revision |
+| Detector false positives hindering adoption | Adoption | Shadow mode; budgets in Section 10 | Keep |
+| Unmanaged endpoints and local stdio servers | Coverage | Discovery, reporting, wrapper; accepted residual risk | Keep |

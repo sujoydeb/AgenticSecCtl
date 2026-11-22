@@ -96,6 +96,11 @@ short = {
     "ci-cd-pipeline.md": "docs/ci-cd-pipeline.md",
     "deployment-architecture.md": "docs/deployment-architecture.md",
     "roadmap.md": "docs/roadmap.md",
+    "architecture-assessment.md": "docs/architecture-assessment.md",
+    "data-model.md": "docs/data-model.md",
+    "api-specification.md": "docs/api-specification.md",
+    "governance.md": "docs/governance.md",
+    "reviewgap.md": "docs/reviewgap.md",
 }
 versions = {}
 for name, path in short.items():
@@ -169,7 +174,7 @@ else:
             err(f"catalogue: {pr}")
         ctl_ids = [c["id"] for c in cat["controls"]]
         other_ids = set(ctl_ids)
-        valid_threats = set("ABCDEFGHIJKLMNOP") | {f"X{i}" for i in range(1, 9)}
+        valid_threats = set("ABCDEFGHIJKLMNOP") | {f"X{i}" for i in range(1, 14)}
         sod_defined = set(re.findall(r"\b(SoD-\d+)\b", spec))
         for c in cat["controls"]:
             cid = c["id"]

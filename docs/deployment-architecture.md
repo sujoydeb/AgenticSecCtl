@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design draft; nothing is deployed or tested) |
-| Depends on | `Plan/architecture.md` v0.2 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.3 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.2, `controls/catalogue.md` v0.1 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.2 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.1, `docs/testing/cases.md` v0.2 |
+| Version | 0.2 (design draft; nothing is deployed or tested) |
+| Depends on | `Plan/architecture.md` v0.3 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.4 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.3, `controls/catalogue.md` v0.2 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.2 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.2, `docs/testing/cases.md` v0.3 |
 | Purpose | Where each component runs, how the network and trust zones are enforced, how data is stored and protected, how the platform stays available and recovers, and how it scales across tenants, regions and clouds. Extends `Plan/architecture.md` Section 8; if the two disagree, resolve the conflict in both. |
 | Unverified | Product, cloud-service and Kubernetes feature statements are from background knowledge and tagged **[VERIFY]**. Sizing, replica counts beyond those in the architecture, and timeouts are placeholders marked "to be set". No figure here has been measured. |
 
@@ -14,7 +14,7 @@
 3. **Plane separation.** Data plane (gateway, OPA, egress proxy) and control plane (API, scanner, audit, UI) have separate deployments, service accounts, credentials and network paths; the secrets/evidence zone is separate again (architecture Section 2).
 4. **Fail closed.** Deployment choices must preserve the rule that loss of PDP, registry, bundle freshness, revocation lookup or audit capacity results in denial, not bypass (FR-AUTHZ-8, FR-ID-7, FR-AUD-7).
 5. **No long-lived secrets in workloads.** Workloads use federated workload identity and short-lived credentials from the broker; secrets are mounted from an external manager, never baked into images or manifests (NFR-9).
-6. **Only verified artifacts run.** Images are signed, pinned by digest and verified at admission (FR-SUP-1, TC-L2).
+6. **Only verified artifacts run.** Images are signed, pinned by digest and verified at admission (FR-SUP-1, TC-L4).
 7. **Everything declarative and reviewed.** Cluster and application configuration is in source control, changes are reviewed, and drift from the declared state is detected (CI/CD pipeline Sections 5 and 10).
 8. **Cloud-neutral core, cloud-specific adapters.** The same charts run on any conformant Kubernetes; identity, storage, KMS, object lock and load balancers are behind adapters (Section 12).
 
@@ -395,7 +395,7 @@ DNS egress to the internal resolver, metadata blocking and the egress proxy's ow
 | Compromised gateway pod pivots to control plane or other tenants | X8, PB-11 | Separate namespaces and service accounts, network policy, no long-lived secrets, per-service DB roles; TC-X8 |
 | Stolen workload credentials | G | Short-lived federated identity; secrets from external manager; no static keys |
 | Database administrator rewrites audit | X6, X8 | Insert-only roles, anchors in separate account with object lock (CTL-13); TC-Z6 |
-| Unsigned or tampered image deployed | L | Admission verification and deploy by digest; TC-L2 |
+| Unsigned or tampered image deployed | L | Admission verification and deploy by digest; TC-L4 |
 | Noisy or hostile tenant exhausts shared capacity | K | Per-tenant rate limits and quotas; dedicated models for high-risk tenants |
 | Region failover violates residency | I | Pinned failover targets; manual failover decision |
 | Failover breaks audit continuity | X8 | Chain verification and anchor comparison before resuming traffic (runbook Section 11) |
@@ -406,9 +406,9 @@ DNS egress to the internal resolver, metadata blocking and the egress proxy's ow
 |---|---|---|
 | DA-1 | No direct agent→server or server→server connection succeeds; only the gateway reaches servers | TC-X2 |
 | DA-2 | A server pod cannot reach 169.254.169.254, RFC 1918 ranges or arbitrary internet hosts; the allowlisted destination works | TC-H1, TC-I4 |
-| DA-3 | Unsigned, tag-only and privileged workloads are rejected at admission | TC-L2 |
+| DA-3 | Unsigned, tag-only and privileged workloads are rejected at admission | TC-L4 |
 | DA-4 | Stopping OPA or serving a stale bundle makes gateways deny; reads on the fail-open allowlist are flagged | TC-Z5 |
-| DA-5 | Killing the audit service or filling the outbox denies high-impact calls and loses no events | Runbook 8.4 exercise; FR-AUD-7 (no dedicated test case yet) |
+| DA-5 | Killing the audit service or filling the outbox denies high-impact calls and loses no events | TC-Z23; runbook 8.4 exercise |
 | DA-6 | After restore or failover the audit chain verifies and matches the latest anchor | TC-Z6, runbook Section 11 |
 | DA-7 | Tenant A cannot read tenant B data through API, cache, logs or backups | TC-I3 |
 | DA-8 | Gateway added latency within NFR-1 under the reference load | NFR-1 load test (unmeasured) |

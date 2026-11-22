@@ -8,21 +8,26 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 
 | File | Role | Version |
 |---|---|---|
-| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.3 |
-| `Plan/architecture.md` | Components, interceptor pipeline, sequences, deployment, ADRs, provisional audit event vocabulary (4.8). Source of truth for *how* | v0.2 |
-| `Plan/threat-model.md` | Assets, adversaries, threats A–P and X1–X8, STRIDE, attack trees, TC index (Section 7), risk register | v0.2 |
-| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.3 |
-| `docs/prd.md` | Product requirements: problem, personas, scope, release plan, metrics | v0.2 |
-| `docs/testing/cases.md` | 65 security test cases (specifications, none executed) | v0.2 |
-| `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.1 |
+| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.4 |
+| `Plan/architecture.md` | Components, interceptor pipeline, sequences, deployment, ADRs, provisional audit event vocabulary (4.8). Source of truth for *how* | v0.3 |
+| `Plan/threat-model.md` | Assets, adversaries, threats A–P and X1–X13, STRIDE, attack trees, TC index (Section 7), risk register | v0.3 |
+| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.4 |
+| `docs/prd.md` | Product requirements: problem, personas, scope, release plan, metrics | v0.3 |
+| `docs/testing/cases.md` | 90 security test cases (specifications, none executed) | v0.3 |
+| `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.2 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
-| `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.1 |
-| `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.1 |
-| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.1 |
+| `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.2 |
+| `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.1 |
+| `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.1 |
+| `docs/api-specification.md`, `docs/api/openapi.yaml` | Management API endpoints, roles, SoD, errors; OpenAPI 3.1 outline (unvalidated) | v0.1 |
+| `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.1 |
+| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.2 |
+| `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.2 |
+| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.2 |
 | `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
-| `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..27): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.1 |
-| `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.1 |
-| `compliance/compliance-matrix.md` | Control-to-framework mapping by source type (mandatory/guidance/voluntary) and threat-level findings register; references controls by ID only; framework IDs unverified, not legally reviewed | v0.2 |
+| `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..29): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.2 |
+| `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.2 |
+| `compliance/compliance-matrix.md` | Control-to-framework mapping by source type (mandatory/guidance/voluntary) and threat-level findings register; references controls by ID only; framework IDs unverified, not legally reviewed | v0.3 |
 
 There are no build, lint or test commands for the product yet. When code is added, update this file with them.
 

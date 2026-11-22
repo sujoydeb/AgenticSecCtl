@@ -2,15 +2,15 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft; **not reviewed by legal or compliance**) |
-| Depends on | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `docs/tech-evaluation.md` v0.1, `controls/catalogue.md` v0.1 |
+| Version | 0.3 (draft; **not reviewed by legal or compliance**) |
+| Depends on | `Plan/functional-spec.md` v0.4, `Plan/architecture.md` v0.3, `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.2 |
 | Satisfies | FR-COMP-2..3 (mandatory/guidance/voluntary labelling, per-finding record). The control catalogue of FR-COMP-1 is in `controls/catalogue.md`. FR-COMP-5 (legal review before release) is **not yet satisfied**. |
 | Review status | Review date: none. Reviewer: none. Release as an authoritative mapping is blocked until reviewed. |
 
 ## 1. Read this first
 
 1. **A mapping is not compliance.** This matrix says which platform controls *support* which framework items by providing evidence or technical measures. It does not assert that any organisation, system or deployment complies with any law, regulation, guidance or standard. Compliance depends on the organisation's scope, role, processes, other controls and legal interpretation.
-2. **Framework references are unverified.** Web research to confirm current article, clause and control identifiers was blocked during authoring (see `docs/tech-evaluation.md` verification log). Every identifier below comes from background knowledge and is marked as unverified at framework level in Section 2. Editions and numbering change (for example, annexes, control sets, guidance status). Verify each against the official text before relying on it.
+2. **Framework references are only partly verified.** Section 2 states, per framework, which identifiers were confirmed from search results (mostly secondary sources, not the official texts) and which come from background knowledge. Even confirmed identifiers must be checked against the official text and the edition in force before the matrix is relied on. Editions and numbering change (for example annexes, control sets, guidance status).
 3. **Three kinds of source are kept apart** (FR-COMP-2):
    - **Mandatory law/regulation or contractual/industry mandate** (EU AI Act, GDPR, DORA, PCI DSS where in scope).
    - **Supervisory guidance** (SR 11-7, FFIEC): expected by examiners, not statute.
@@ -22,22 +22,22 @@
 
 | ID | Framework | Source type (FR-COMP-2) | Applies when | Edition to confirm | Verified |
 |---|---|---|---|---|---|
-| F-EUAI | EU AI Act (Regulation (EU) 2024/1689) | **Mandatory law** | Organisation is a provider/deployer/importer etc. of AI systems in scope; obligations depend on role and risk class (high-risk, GPAI) | Consolidated text and application dates | No |
+| F-EUAI | EU AI Act (Regulation (EU) 2024/1689) | **Mandatory law** | Organisation is a provider/deployer/importer etc. of AI systems in scope; obligations depend on role and risk class (high-risk, GPAI) | Consolidated text and application dates | Partly: Articles 9, 12, 14, 15 confirmed (secondary sources); Articles 26 and 73 titles only |
 | F-GDPR | GDPR (Regulation (EU) 2016/679) | **Mandatory law** | Processing personal data of people in the EU/EEA (or UK equivalents where relevant) | Current text | No |
-| F-DORA | DORA (Regulation (EU) 2022/2554) | **Mandatory law** (EU financial entities and ICT third-party providers in scope) | Entity is in DORA scope | Regulation plus technical standards | No |
-| F-PCI | PCI DSS | **Contractual/industry mandate** (via card brand and acquirer agreements) | Cardholder data environment or connected systems in scope | v4.x (confirm exact version) | No |
+| F-DORA | DORA (Regulation (EU) 2022/2554) | **Mandatory law** (EU financial entities and ICT third-party providers in scope) | Entity is in DORA scope | Regulation plus technical standards | Partly: titles of Articles 6, 9, 10, 11, 17 and 28 confirmed (secondary sources) |
+| F-PCI | PCI DSS | **Contractual/industry mandate** (via card brand and acquirer agreements) | Cardholder data environment or connected systems in scope | v4.x (confirm exact version) | Partly: 12 requirements and the titles of Requirements 1 and 2 confirmed; others from background |
 | F-SR117 | SR 11-7 / OCC 2011-12 Supervisory Guidance on Model Risk Management | **Supervisory guidance** | US banking organisations; models include AI/ML used in decisioning | Current guidance | No |
 | F-FFIEC | FFIEC IT Examination Handbook booklets and related guidance | **Supervisory guidance** | US financial institutions | Current booklet set; confirm status of any retired tools | No |
-| F-CSF | NIST Cybersecurity Framework | **Voluntary framework** (can be mandated by contract or policy) | Any | CSF 2.0 | No |
+| F-CSF | NIST Cybersecurity Framework | **Voluntary framework** (can be mandated by contract or policy) | Any | CSF 2.0 | Partly: category identifiers PR.AA, PR.DS, PR.PS, PR.IR, DE.CM, DE.AE, RS.MA, RS.AN, GV.SC, ID.AM confirmed (secondary) |
 | F-AIRMF | NIST AI Risk Management Framework 1.0 | **Voluntary framework** | Any | 1.0 (confirm updates) | No |
 | F-AI600 | NIST AI 600-1 Generative AI Profile | **Voluntary profile** | Organisations using generative AI | July 2024 edition (confirm) | No |
-| F-ISO27001 | ISO/IEC 27001 | **Voluntary standard** (certifiable) | Organisations with or seeking certification | 2022 edition; Annex A numbering | No |
+| F-ISO27001 | ISO/IEC 27001 | **Voluntary standard** (certifiable) | Organisations with or seeking certification | 2022 edition; Annex A numbering | Partly: A.5.15, A.8.12, A.8.15, A.8.28 titles confirmed (secondary) |
 | F-ISO42001 | ISO/IEC 42001 AI management system | **Voluntary standard** (certifiable) | Organisations with or seeking certification | 2023 edition | No |
 | F-ISO23894 | ISO/IEC 23894 AI risk management guidance | **Voluntary guidance** (not certifiable) | Any | 2023 edition | No |
 | F-SOC2 | SOC 2 Trust Services Criteria | **Voluntary attestation framework** | Service organisations reporting to customers | Current TSC revision | No |
-| F-OWLLM | OWASP Top 10 for LLM Applications | **Community guidance** | Any | 2025 edition (confirm) | No |
-| F-OWMCP | OWASP MCP Top 10 | **Community guidance** | Any | Project existence verified; entry identifiers not retrieved; licence reported as CC BY-NC-SA 4.0 | Partly (existence only) |
-| F-ATLAS | MITRE ATLAS | **Knowledge base** | Any | Current matrix and technique IDs | No |
+| F-OWLLM | OWASP Top 10 for LLM Applications | **Community guidance** | Any | 2025 edition (confirm) | Partly: LLM01 to LLM03 confirmed; a 2026 edition also exists, so the edition to map against must be chosen |
+| F-OWMCP | OWASP MCP Top 10 | **Community guidance** | Any | 2025 list (the roadmap on the project page says beta; the sidebar says production project) | Yes for the ten entries and IDs (official project pages); content licence CC BY-NC-SA 4.0 |
+| F-ATLAS | MITRE ATLAS | **Knowledge base** | Any | Current matrix and technique IDs | Partly: AML.T0051 and AML.T0010 confirmed; the ID for exfiltration via the inference API is disputed between sources (AML.T0024 or AML.T0025) |
 | F-ATTCK | MITRE ATT&CK | **Knowledge base** | Any | Enterprise matrix version | No |
 
 ## 3. Controls
@@ -59,20 +59,22 @@ Control definitions (objective, how each control works, prevent/detect/respond/r
 | CTL-11 | Argument guards, schema validation, execution sandboxing | P | Gateway, platform | Platform security | P2/P4 |
 | CTL-12 | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | Gateway, API | Security engineering | P2 |
 | CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | Audit service | Security operations / audit liaison | P1/P2 |
-| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | Security operations | P2/P4 |
+| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | Security operations | P1/P2/P4 |
 | CTL-15 | Incident detection, containment, evidence preservation, reporting | R, V | Incident manager | Incident commander / security operations | P2/P3/P4 |
 | CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P | PDP, CI | Security engineering | P1/P3 |
-| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | Platform security | P3/P4 |
-| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Security engineering | P2 |
+| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | Platform security | P2/P3/P4 |
+| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Security engineering | P1/P2 |
 | CTL-19 | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | Memory tools, Inspection | Security engineering | P4 |
 | CTL-20 | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | Gateway, PDP | Security engineering | P4 |
-| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | AI governance / model owner | P3/P4 |
+| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | AI governance / model owner | P2/P3/P4 |
 | CTL-22 | Multi-tenancy, data residency and retention | P | Platform | Data protection / platform ops | P2/P5 |
 | CTL-23 | Separation of duties, privileged and break-glass access | P, D | API, IdP | Security administration | P1/P2 |
 | CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | Platform | Platform operations | P1/P5 |
 | CTL-25 | Compliance evidence generation and framework mapping governance | D | Compliance engine | Compliance liaison | P3 |
 | CTL-26 | Discovery and coverage reporting (known gaps) | D | Discovery | Security engineering | P2/P3 |
 | CTL-27 | Secure development and change management for the platform | P | CI/CD, process | Engineering management / platform security | P1 onward |
+| CTL-28 | Fleet dashboard, approval workflow and notifications | P, D, R | Dashboard, API | Security engineering | P1/P2/P3 |
+| CTL-29 | Data classification and labelling | P, D | Registry, Gateway, DLP | Data protection / security engineering | P1/P2 |
 
 ## 4. Control-to-framework mapping
 
@@ -109,6 +111,8 @@ Cell entries are *candidate supporting references*. "—" means no meaningful di
 | CTL-25 Compliance evidence | Art. 11, 12 (documentation, logs) | Art. 5(2), 24, 30 | Art. 6; Art. 17..19 | Req. 12 |
 | CTL-26 Discovery/coverage | Art. 26 | Art. 30 | Art. 8 | Req. 12.5 |
 | CTL-27 Secure development/change | Art. 15, 17 | Art. 25, 32 | Art. 9; Art. 16 (simplified framework) | Req. 6 |
+| CTL-28 Dashboard/approval workflow | Art. 14 (human oversight), Art. 26 | Art. 5(2), 24 | Art. 9, 10 | Req. 7, 10 |
+| CTL-29 Data classification | Art. 10 (data governance; where applicable) | Art. 5(1)(c)(f), 25, 32 | Art. 9 | Req. 3, 7 |
 
 ### 4.2 Supervisory guidance (F-SR117, F-FFIEC)
 
@@ -141,6 +145,8 @@ Cell entries are *candidate supporting references*. "—" means no meaningful di
 | CTL-25 Compliance evidence | Documentation and reporting to senior management/board | Audit; Management |
 | CTL-26 Discovery/coverage | Complete inventory of models in use (shadow AI) | Information Security; Management |
 | CTL-27 Secure development/change | Implementation controls; testing before use | Development, Acquisition and Maintenance |
+| CTL-28 Dashboard/approval workflow | Governance reporting and effective challenge | Management; Information Security |
+| CTL-29 Data classification | Data quality and confidentiality of model inputs | Information Security |
 
 Note: SR 11-7 expects model validation (conceptual soundness, outcomes analysis) by qualified independent staff. **The platform does not perform model validation** (Section 6).
 
@@ -175,32 +181,44 @@ Note: SR 11-7 expects model validation (conceptual soundness, outcomes analysis)
 | CTL-25 | GV.OV | GOVERN | A.5.35, A.5.36 (independent review; compliance with policies) | 42001 performance evaluation, internal audit | CC4 |
 | CTL-26 | ID.AM | MAP | A.5.9 | 42001 inventory | CC3 |
 | CTL-27 | PR.PS | MANAGE | A.8.25..A.8.32 | 42001 life cycle | CC8 |
+| CTL-28 | GV.OV, DE.AE | GOVERN; MANAGE | A.5.3, A.8.16 | 42001 performance evaluation | CC4, CC7 |
+| CTL-29 | ID.AM, PR.DS | MAP; MANAGE; AI 600-1: data privacy | A.5.12, A.5.13 (classification, labelling) | 42001 data for AI systems | C1 |
 
 ### 4.4 Community guidance and knowledge bases by threat
 
-Linked to threats in `Plan/threat-model.md`. OWASP MCP entry identifiers are **not recorded**: the project exists, but its entry list was not retrieved. MITRE identifiers are from background knowledge; confirm names and numbers.
+Linked to threats in `Plan/threat-model.md`. The OWASP MCP Top 10 column uses the ten entries confirmed from the official project pages (2025 list; the project's own roadmap marks it beta). The mapping of threats to entries is a judgment and is not part of the OWASP document. OWASP LLM and MITRE identifiers are only partly verified (Section 2); threats with no counterpart show a dash.
 
-| Threat | OWASP LLM Top 10 (2025; confirm) | OWASP MCP Top 10 | MITRE ATLAS (technique, confirm ID) | MITRE ATT&CK (technique, confirm ID) |
+| Threat | OWASP LLM Top 10 (2025; confirm edition) | OWASP MCP Top 10 (2025) | MITRE ATLAS (technique, confirm ID) | MITRE ATT&CK (technique, confirm ID) |
 |---|---|---|---|---|
-| A Tool poisoning | LLM01 Prompt Injection; LLM03 Supply Chain | Entry TBD | LLM prompt injection (AML.T0051) | — |
-| B Rug pull/drift | LLM03 Supply Chain | Entry TBD | ML supply chain compromise (AML.T0010) | T1195 Supply Chain Compromise |
-| C Shadowing/impersonation | LLM03 Supply Chain | Entry TBD | — | T1036 Masquerading |
-| D Response injection | LLM01 Prompt Injection; LLM05 Improper Output Handling | MCP10 context injection and over-sharing (name per secondary source; confirm) | LLM prompt injection (AML.T0051) | — |
-| E Excessive permissions | LLM06 Excessive Agency | Entry TBD | — | T1078 Valid Accounts; T1098 Account Manipulation |
-| F Agent spoofing | LLM06 Excessive Agency | Entry TBD | — | T1078 Valid Accounts |
-| G Auth attacks | LLM02 Sensitive Information Disclosure; LLM06 | Token mismanagement and secret exposure (name per secondary source; confirm) | — | T1528 Steal Application Access Token; T1550 Use Alternate Authentication Material; T1552 Unsecured Credentials |
-| H SSRF | LLM06 Excessive Agency | Entry TBD | — | T1552.005 Cloud Instance Metadata API; T1190 Exploit Public-Facing Application |
-| I Exfiltration | LLM02 Sensitive Information Disclosure | MCP10 (over-sharing) | Exfiltration via ML inference API (AML.T0024; applicability partial) | T1041 Exfiltration Over C2 Channel; T1567 Exfiltration Over Web Service |
-| J Memory/RAG poisoning | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses | Entry TBD | Poison training data (AML.T0020; applicability partial) | T1565 Data Manipulation |
-| K Autonomy abuse | LLM06 Excessive Agency; LLM10 Unbounded Consumption | Entry TBD | — | T1499 Endpoint Denial of Service (analogous) |
-| L Supply chain | LLM03 Supply Chain | Entry TBD | ML supply chain compromise (AML.T0010) | T1195 Supply Chain Compromise |
-| M Inter-agent | LLM01; LLM06 | Entry TBD | — | T1021 Remote Services (analogous) |
-| N Model/inference | LLM10 Unbounded Consumption; LLM02 | — | Model extraction techniques (confirm IDs) | — |
-| O Tool execution | LLM05 Improper Output Handling | Entry TBD | — | T1059 Command and Scripting Interpreter; T1611 Escape to Host; T1190 |
-| P MCP protocol | LLM06 | Entry TBD | — | — |
-| X5 Log injection | LLM05 | Entry TBD | — | T1070 Indicator Removal (analogous) |
-| X6 Insider approval | LLM06 | Entry TBD | — | T1078 Valid Accounts |
-| X8 Gateway compromise | LLM03 | Entry TBD | — | T1190; T1611; T1078 |
+| A Tool poisoning | LLM01 Prompt Injection; LLM03 Supply Chain | MCP03 Tool Poisoning | LLM prompt injection (AML.T0051) | — |
+| B Rug pull/drift | LLM03 Supply Chain | MCP03 Tool Poisoning; MCP04 Software Supply Chain Attacks & Dependency Tampering | ML supply chain compromise (AML.T0010) | T1195 Supply Chain Compromise |
+| C Shadowing/impersonation | LLM03 Supply Chain | MCP09 Shadow MCP Servers; MCP07 Insufficient Authentication & Authorization | — | T1036 Masquerading |
+| D Response injection | LLM01 Prompt Injection; LLM05 Improper Output Handling | MCP06 Prompt Injection via Contextual Payloads; MCP10 Context Injection & Over-Sharing | LLM prompt injection (AML.T0051) | — |
+| E Excessive permissions | LLM06 Excessive Agency | MCP02 Privilege Escalation via Scope Creep; MCP07 | — | T1078 Valid Accounts; T1098 Account Manipulation |
+| F Agent spoofing | LLM06 Excessive Agency | MCP07 Insufficient Authentication & Authorization | — | T1078 Valid Accounts |
+| G Auth attacks | LLM02 Sensitive Information Disclosure; LLM06 | MCP01 Token Mismanagement & Secret Exposure; MCP07 | — | T1528 Steal Application Access Token; T1550 Use Alternate Authentication Material; T1552 Unsecured Credentials |
+| H SSRF | LLM06 Excessive Agency | No direct entry | — | T1552.005 Cloud Instance Metadata API; T1190 Exploit Public-Facing Application |
+| I Exfiltration | LLM02 Sensitive Information Disclosure | MCP10 Context Injection & Over-Sharing; MCP01 | Exfiltration via ML inference API (AML.T0024; applicability partial) | T1041 Exfiltration Over C2 Channel; T1567 Exfiltration Over Web Service |
+| J Memory/RAG poisoning | LLM04 Data and Model Poisoning; LLM08 Vector and Embedding Weaknesses | MCP10 Context Injection & Over-Sharing | Poison training data (AML.T0020; applicability partial) | T1565 Data Manipulation |
+| K Autonomy abuse | LLM06 Excessive Agency; LLM10 Unbounded Consumption | No direct entry | — | T1499 Endpoint Denial of Service (analogous) |
+| L Supply chain | LLM03 Supply Chain | MCP04 Software Supply Chain Attacks & Dependency Tampering | ML supply chain compromise (AML.T0010) | T1195 Supply Chain Compromise |
+| M Inter-agent | LLM01; LLM06 | No direct entry | — | T1021 Remote Services (analogous) |
+| N Model/inference | LLM10 Unbounded Consumption; LLM02 | No direct entry | Model extraction techniques (confirm IDs) | — |
+| O Tool execution | LLM05 Improper Output Handling | MCP05 Command Injection & Execution | — | T1059 Command and Scripting Interpreter; T1611 Escape to Host; T1190 |
+| P MCP protocol | LLM06 | MCP07; no entry for lifecycle abuse | — | — |
+| X1 Hidden text and encoding | LLM01 Prompt Injection | MCP03 Tool Poisoning | — | — |
+| X2 Gateway bypass / unmanaged endpoints | LLM06 Excessive Agency | MCP09 Shadow MCP Servers | — | — |
+| X3 Sampling abuse | LLM10 Unbounded Consumption | No direct entry | — | — |
+| X4 Elicitation phishing | LLM02 Sensitive Information Disclosure | No direct entry | — | — |
+| X5 Log injection | LLM05 | MCP08 Lack of Audit and Telemetry (partial) | — | T1070 Indicator Removal (analogous) |
+| X6 Insider approval | LLM06 | MCP02; MCP07 | — | T1078 Valid Accounts |
+| X7 Check-to-use gap | LLM03 Supply Chain | MCP03; MCP04 | ML supply chain compromise (AML.T0010) | T1195 Supply Chain Compromise |
+| X8 Gateway compromise | LLM03 | No direct entry | — | T1190; T1611; T1078 |
+| X9 Agent-card spoofing | LLM06 Excessive Agency | MCP09; MCP07 | — | T1036 Masquerading |
+| X10 Non-text content injection | LLM01 Prompt Injection | MCP06 | Indirect prompt injection (AML.T0051) | — |
+| X11 Error-message injection | LLM05 Improper Output Handling | MCP06 | — | — |
+| X12 Scanner/detector evasion or overload | LLM10 Unbounded Consumption | MCP03 (partial) | — | T1499 Endpoint Denial of Service (analogous) |
+| X13 Client registration abuse | LLM06 Excessive Agency | MCP07; MCP01 | — | T1078 Valid Accounts |
 
 ## 5. Findings register (threat-level)
 
@@ -216,7 +234,7 @@ One record per threat, with the nine fields required by the brief. Risk ratings 
 | FND-F | Agent identity spoofing or credential misuse | Identity/broker, Gateway | CTL-04, 05, 12 | PCI DSS Req. 8; ISO 27001 A.5.16/8.5; NIST CSF PR.AA; ATT&CK T1078 | High / Medium | Unique identities, approval for registration, revocation incl. deny on lookup failure, kill switch | Client registry, revocation logs, TC-F1..F2 | Identity and access team | Design only (P1/P2) |
 | FND-G | Token theft, replay, confused deputy, session hijack, credential leakage | Gateway, broker, logging | CTL-04, 05, 10 | PCI DSS Req. 8/10; GDPR Art. 32; ISO 27001 A.5.17/8.5/8.15; ATT&CK T1528/T1552 | Critical / Medium | Audience binding, sender-constrained tokens (where IdP supports), token exchange, redaction | Token validation config, redaction tests TC-G5, TC-G1..G4 results | Identity and access team | Design only (P1/P2) |
 | FND-H | SSRF to metadata or internal services | Egress proxy, Scanner | CTL-08, 11 | PCI DSS Req. 1; GDPR Art. 32; ISO 27001 A.8.20/8.22; ATT&CK T1552.005; DORA Art. 9 | Critical / Low-Medium | Resolve-then-pin guard, redirect re-validation, per-server egress allowlists, cloud metadata hardening | Guard config, blocked events, TC-H1..H4 | Platform security | Design only (P1/P2) |
-| FND-I | Data exfiltration or cross-tenant leakage | Gateway, DLP, tenancy layer | CTL-08, 09, 10, 22 | GDPR Art. 5, 25, 32, 33/34, Ch. V; PCI DSS Req. 3/4; DORA Art. 9; ISO 27001 A.8.12; AI 600-1 data privacy; OWASP LLM02 | Critical / Medium | DLP, egress allowlists, taint rules, tenant isolation with RLS | DLP logs, egress logs, isolation tests, TC-I1..I4 | Data protection / security engineering | Design only (P2) |
+| FND-I | Data exfiltration or cross-tenant leakage | Gateway, DLP, tenancy layer | CTL-08, 09, 10, 22, 29 | GDPR Art. 5, 25, 32, 33/34, Ch. V; PCI DSS Req. 3/4; DORA Art. 9; ISO 27001 A.8.12; AI 600-1 data privacy; OWASP LLM02 | Critical / Medium | DLP, egress allowlists, taint rules, tenant isolation with RLS | DLP logs, egress logs, isolation tests, TC-I1..I4 | Data protection / security engineering | Design only (P2) |
 | FND-J | Memory/RAG poisoning | Memory tools, Inspection | CTL-19, 09 | EU AI Act Art. 10/15 (if in scope); OWASP LLM04/08; AI 600-1 information integrity; GDPR Art. 5(1)(d) | High / Medium (target) | Attributed writes, provenance labels, partitions, rollback | Write logs, rollback records, TC-J1..J2 | Security engineering | Design only (P4) |
 | FND-K | Excess autonomy, loops, budget exhaustion, unauthorised transactions | Gateway, API | CTL-12, 07 | EU AI Act Art. 14 (if in scope); OWASP LLM06/10; DORA Art. 9; ISO 27001 A.8.6 (analogous) | High / Medium | Limits, loop detection, kill switch, approvals for financial/irreversible actions | Limit config, suspension logs, TC-K1..K3 | Security engineering | Design only (P2) |
 | FND-L | Supply-chain compromise | CI, admission, scanner | CTL-17, 27 | DORA Art. 28..30; GDPR Art. 28; ISO 27001 A.5.19..5.23; NIST CSF GV.SC; OWASP LLM03; PCI DSS Req. 6/12.8; EU AI Act Art. 25 (if in scope) | High / Medium | SBOM, scanning, signing and provenance, admission control, third-party intake | SBOMs, scan logs, admission logs, TC-L1..L3 | Platform security | Design only (P3/P4) |
@@ -228,6 +246,11 @@ One record per threat, with the nine fields required by the brief. Risk ratings 
 | FND-X5 | Log injection into SIEM | Audit service | CTL-13 | ISO 27001 A.8.15; PCI DSS Req. 10; NIST CSF DE.CM | not rated / Low | Escape control characters, inert UI rendering | TC-X5 results | Security operations | Design only (P2) |
 | FND-X6 | Insider approves a malicious tool or edits policy | Registry, policy store | CTL-23, 16, 13 | ISO 27001 A.5.3/8.2; SOC 2 CC6/CC8; PCI DSS Req. 7; DORA Art. 9 | not rated / Medium | SoD, dual control, source-controlled signed policy, access recertification | Approval records, policy history, TC-E4, TC-X6 | Security administration | Design only (P1/P3) |
 | FND-X8 | Compromise of gateway or control plane | Platform | CTL-27, 13, 23, 15, 24 | DORA Art. 9..11; ISO 27001 A.8.x (hardening, monitoring); PCI DSS Req. 6/10/11; NIST CSF PR/DE/RS | not rated / Medium | Plane separation, no long-lived secrets, sealed break-glass, runtime detection, pen test | Pen-test reports, TC-X8 results, access reviews | Platform security | Design only (P2/P5) |
+| FND-X9 | Forged agent card or discovery document attracts delegation or calls | Gateway, registry | CTL-20, 01 | OWASP MCP09/MCP07; ATT&CK T1036; ISO 27001 A.5.16; NIST CSF PR.AA | not rated / Medium | Treat cards as untrusted, verify against registry identity and pins, do not route unverified cards | Card verification logs, TC-X9 | Security engineering | Design only (P4) |
+| FND-X10 | Instructions hidden in images, documents or audio reach the model | Gateway, inspection | CTL-09, 29 | OWASP MCP06; OWASP LLM01; ATLAS AML.T0051 | not rated / Medium | Label untrusted, limit type and size, extract and inspect, block when uninspectable in sensitive sessions | Content-handling policy, signal logs, TC-X10 | Security engineering | Design only (P2) |
+| FND-X11 | Server or platform error messages carry instructions | Gateway | CTL-09 | OWASP MCP06; OWASP LLM05 | not rated / Low-Medium | Inspect server errors; fixed catalogue text for platform errors | Error-handling tests, TC-X11 | Security engineering | Design only (P2) |
+| FND-X12 | Scanner or detector evasion and overload | Scanner, detectors | CTL-02, 14 | OWASP MCP03 (partial); OWASP LLM10; ATT&CK T1499 (analogous) | not rated / Medium | Caps, quotas, timeouts that never approve, evasion regression set | Regression results per rule-set version, TC-X12 | Security engineering | Design only (P2) |
+| FND-X13 | Open client registration produces trusted-looking clients | Identity/broker | CTL-05, 04 | OWASP MCP07, MCP01; ATT&CK T1078; NIST CSF PR.AA | not rated / Low-Medium | Disable by default, allowlists, rate limits, owner, start unapproved | Registration policy and logs, TC-X13 | Identity and access team | Design only (P2) |
 
 X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-to-use gap) are covered inside FND-A, FND-P and FND-B respectively; they have no separate rows.
 
@@ -244,7 +267,7 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 
 ## 7. Gaps, limits and review plan
 
-- **Unverified identifiers:** every framework reference. Priority verification list: EU AI Act article numbers, DORA articles (including technical standards), PCI DSS requirement numbers for the current version, ISO 27001:2022 Annex A numbering, NIST CSF 2.0 category IDs, SOC 2 criteria mapping, OWASP LLM and MCP lists, MITRE technique IDs.
+- **Partly verified identifiers:** see Section 2 for what was confirmed; everything else is background knowledge. Priority verification list: EU AI Act article numbers, DORA articles (including technical standards), PCI DSS requirement numbers for the current version, ISO 27001:2022 Annex A numbering, NIST CSF 2.0 category IDs, SOC 2 criteria mapping, OWASP LLM and MCP lists, MITRE technique IDs.
 - **Coverage not exhaustive:** other regimes relevant to a given organisation (sector or national laws, other privacy laws, other AI laws) are not mapped. Jurisdictions were not specified (PRD open question 6).
 - **Phase dependence:** many controls are P2 or later; a mapping row does not mean the control exists today.
 - **Matrix quality checks required before release:** legal and compliance review (FR-COMP-5); sampling of mappings by a second reviewer; confirm each "supports" statement is defensible; remove or soften any cell that cannot be justified.
@@ -257,3 +280,4 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 |---|---|---|
 | 0.1 | 2026-11-22 | First draft; unverified references; not reviewed |
 | 0.2 | 2026-11-22 | Control definitions moved to `controls/catalogue.yaml`; Section 3 reduced to the ID list |
+| 0.3 | 2026-11-22 | OWASP MCP entries filled from the official project; verification status per framework; threats X9..X13 and controls CTL-28, CTL-29 added; control list regenerated from the catalogue |

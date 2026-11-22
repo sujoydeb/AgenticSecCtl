@@ -2,26 +2,41 @@
 
 | | |
 |---|---|
-| Version | 0.1 (**provisional: mostly unverified, see Section 1**) |
-| Depends on | `Plan/architecture.md` v0.2 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.3 (its Section 4.19 OWASP row matches the verification log below) |
+| Version | 0.2 (**provisional: partly verified from search results, see Section 1**) |
+| Depends on | `Plan/architecture.md` v0.3 (Sections 4, 10, 12 ADRs), `Plan/functional-spec.md` v0.4 (its Section 4.19 OWASP row and Section 12 proposals match the verification log below) |
 | Purpose | Decide what to reuse vs build, and feed ADR-1, 2, 5, 6, 7 |
 | Rule from the brief | Do not invent product capabilities. Verify current documentation before vendor-specific recommendations. |
 
 ## 1. Verification status (read this first)
 
-This evaluation was meant to be grounded in current product documentation. It is not, yet:
+This evaluation was meant to be grounded in current product documentation. It is partly grounded now:
 
-- Web research for this document was attempted. Seven of eight searches were blocked by a permission hook in the session and were not retried or routed around. The one that returned results was a secondary-source comparison of licences for Presidio, Prompt Guard 2 and NeMo Guardrails.
-- Therefore **almost every vendor, product, licence and protocol statement below comes from general background knowledge and is unverified**. Each is tagged **[VERIFY]**. The only exception is the licence note in Section 3.4, which has secondary-source support and still needs the primary LICENSE file.
+- A first research attempt was blocked by a permission hook (most searches denied). A second attempt, made while closing the High findings of `docs/reviewgap.md`, succeeded; its results are in the verification log below. Most sources are search-result summaries and third-party indexes, not the primary repositories or official texts, so the log says for each item what kind of source supports it.
+- Items not listed in the log are still background knowledge tagged **[VERIFY]**. Examples: Presidio performance, Cedar maturity, supply-chain tool features, cloud-specific capabilities, Vault and OpenBao licences.
 - Ratings in the tables are qualitative judgments for shortlisting, not benchmark results. No performance figure here was measured.
-- **Do not use this document to make a purchase, licence or architecture-lock decision** until the checklist in Section 8 is completed. Recommendations are limited to what to *spike*, not what to adopt.
+- **Do not use this document to make a purchase, licence or architecture-lock decision** until the remaining checklist items in Section 8 are completed and primary sources (repository LICENSE files, official specification text, vendor documentation) have been read. Recommendations are limited to what to *spike*, not what to adopt.
 
 ### Verification log
 
-| Date | Item | Result | Source |
+Dates are the day the search was made. "Secondary" means a search-result summary, third-party index or vendor blog, not the primary source.
+
+| Date | Item | Result | Source type and links |
 |---|---|---|---|
-| 2026-11-22 | OWASP MCP Top 10 exists (checklist item 5) | **Verified.** An OWASP project named "OWASP MCP Top 10" exists and is described as a living document, with the latest version maintained on GitHub. Secondary articles list entries (e.g., token mismanagement and secret exposure; context injection and over-sharing as MCP10). The full list and identifiers were **not** retrieved; take them from the official project before mapping in the compliance matrix. The document is reported as licensed CC BY-NC-SA 4.0 (non-commercial clause: have legal review before reproducing its text in a commercial product). | [OWASP MCP Top 10 project](https://owasp.org/projects/mcp-top-10), [project page](https://owasp.org/www-project-mcp-top-10/); secondary: [Nordic APIs guide](https://nordicapis.com/guide-to-the-owasp-mcp-top-10/), [Cycode](https://cycode.com/blog/owasp-mcp-top-10/) |
-| 2026-11-22 | MCP spec authorization, Cisco scanner, Context Forge, agentgateway, Keycloak DPoP/token exchange (checklist items 1–4) | **Not verified.** Five searches were denied by a permission hook; not retried or bypassed. Rows remain **[VERIFY]**. | — |
+| 2026-11-22 | MCP specification: current revision and authorization | Latest revision in the results is **2026-07-28**. Authorization is optional for MCP implementations; HTTP transports SHOULD follow the authorization specification (OAuth 2.1 based); stdio transports SHOULD NOT and take credentials from the environment; servers use protected resource metadata (RFC 9728); dynamic client registration is deprecated in favour of client ID metadata documents (still working for now); a future revision is expected to raise the `iss` parameter check from SHOULD to MUST. Section-level text was not read. | Official pages and third-party summaries: [authorization (latest)](https://modelcontextprotocol.io/specification/latest/basic/authorization), [2026-07-28 authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization), [MCP blog 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/), [Auth0 summary](https://auth0.com/blog/mcp-specs-update-all-about-auth/) |
+| 2026-11-22 | Cisco AI Defense MCP scanner | Exists as open source (repository `cisco-ai-defense/mcp-scanner`, PyPI `cisco-ai-mcp-scanner`). Three engines (YARA rules, LLM-as-judge, optional Cisco AI Defense API); CLI and REST server; scans tools, prompts and resources. Licence Apache-2.0 per a third-party index (LICENSE file not read). | Secondary: [GitHub](https://github.com/cisco-ai-defense/mcp-scanner), [PyPI](https://pypi.org/project/cisco-ai-mcp-scanner/), [Cisco blog](https://blogs.cisco.com/ai/securing-the-ai-agent-supply-chain-with-ciscos-open-source-mcp-scanner) |
+| 2026-11-22 | Invariant Labs mcp-scan / Snyk agent-scan | mcp-scan is now Snyk's agent-scan after Snyk acquired Invariant Labs; Apache-2.0 per GitHub metadata and Homebrew; PyPI states it does not accept external contributions. A third-party summary says it needs a Snyk API token and sends tool names and descriptions to Snyk's API (data-egress consequence; see FR-SCAN-8). | Secondary: [GitHub snyk/agent-scan](https://github.com/snyk/agent-scan), [Snyk Labs](https://labs.snyk.io/resources/snyk-labs-invariant-labs) |
+| 2026-11-22 | IBM ContextForge MCP gateway | Open-source registry and proxy that federates MCP servers, A2A servers and REST/gRPC APIs; Apache-2.0 (IBM blog and indexes); container image published. Capability fit untested. | Secondary: [GitHub](https://github.com/IBM/mcp-context-forge), [IBM Developer blog](https://developer.ibm.com/blogs/context-forge-mcp-gateway-now-available/) |
+| 2026-11-22 | agentgateway | Apache-2.0 gateway and control plane for MCP, A2A, LLM, HTTP and gRPC traffic; hosted under the Linux Foundation, moved under the Agentic AI Foundation in June 2026. | Secondary: [Linux Foundation announcement](https://linuxfoundation.org/press/linux-foundation-welcomes-agentgateway-project-to-accelerate-ai-agent-adoption-while-maintaining-security-observability-and-governance), [agentgateway.dev](https://agentgateway.dev/blog/2026-06-04-agentgateway-joins-aaif/) |
+| 2026-11-22 | Docker MCP Gateway | Open-source CLI plugin running MCP servers in containers; MIT per package listings and mirrors; Docker documentation describes a separate invite-only governance feature (commercial, not covered by the MIT claim). | Secondary: [Docker blog](https://www.docker.com/blog/docker-mcp-gateway-secure-infrastructure-for-agentic-ai/), [Go package page](https://pkg.go.dev/github.com/docker/mcp-gateway@v0.41.0) |
+| 2026-11-22 | Envoy AI Gateway | MCP gateway added in v0.4 (multiplexing, OAuth, session handling); CEL-based MCP authorization in v0.5; v1.0 is described as the first stable release. Licence not confirmed in these results. | Official docs and release notes: [MCP capability](https://aigateway.envoyproxy.io/docs/capabilities/mcp/), [v0.5 release notes](https://aigateway.envoyproxy.io/release-notes/v0.5/), [v1.0 announcement](https://aigateway.envoyproxy.io/blog/v1.0-release-announcement/) |
+| 2026-11-22 | Keycloak DPoP and token exchange | DPoP (RFC 9449) officially supported from 26.4 (preview since 23). Token exchange V2 supports only the internal-to-internal case, so RFC 8693 is partially supported. Documentation for DPoP-bound subject tokens in token exchange differs between 26.6 (not supported) and 26.7 (supported under conditions); release notes were not read. | Official docs: [DPoP in 26.4](https://www.keycloak.org/2025/10/dpop-support-26-4), [DPoP guide 26.7](https://www.keycloak.org/26.7/securing-apps/dpop), [specifications implemented](https://www.keycloak.org/26.6/securing-apps/specifications) |
+| 2026-11-22 | Open Policy Agent | CNCF graduated project (graduated 29 January 2021, announced 4 February 2021). Apache-2.0 licence **not confirmed** by these results. | Official: [CNCF announcement](https://www.cncf.io/announcements/2021/02/04/cloud-native-computing-foundation-announces-open-policy-agent-graduation/), [CNCF project page](https://cncf.io/projects/open-policy-agent-opa) |
+| 2026-11-22 | Redis, Valkey, Vault, OpenBao licences | Redis moved from BSD-3 to dual SSPL/RSALv2 (March 2024) and added AGPLv3 as an option with Redis 8; Valkey is a BSD 3-clause Linux Foundation fork. Vault and OpenBao were not covered by the results and remain unverified. | Secondary: [InfoQ](https://www.infoq.com/news/2025/05/redis-agpl-license), [Percona](https://www.percona.com/blog/the-redis-license-has-changed-what-you-need-to-know/) |
+| 2026-11-22 | OWASP MCP Top 10 | **Verified from the official project pages.** Ten entries, 2025 edition: MCP01 Token Mismanagement & Secret Exposure; MCP02 Privilege Escalation via Scope Creep; MCP03 Tool Poisoning; MCP04 Software Supply Chain Attacks & Dependency Tampering; MCP05 Command Injection & Execution; MCP06 Prompt Injection via Contextual Payloads; MCP07 Insufficient Authentication & Authorization; MCP08 Lack of Audit and Telemetry; MCP09 Shadow MCP Servers; MCP10 Context Injection & Over-Sharing. The roadmap on the page says Phase 3 beta while the sidebar says production project (conflict on the page). Content licence CC BY-NC-SA 4.0 (non-commercial clause: legal review before reproducing text). No last-updated date shown. | Official: [project page](https://owasp.org/www-project-mcp-top-10/), [top 10 tab](https://owasp.org/projects/mcp-top-10?tab=top10) |
+| 2026-11-22 | OWASP Top 10 for LLM Applications | LLM01 Prompt Injection, LLM02 Sensitive Information Disclosure and LLM03 Supply Chain confirmed for the 2025 edition; the rest of the 2025 numbering is background knowledge. A 2026 edition also exists, so the edition to map must be chosen. | Secondary and official: [OWASP GenAI 2025 list](https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/) |
+| 2026-11-22 | MITRE ATLAS identifiers | AML.T0051 (LLM Prompt Injection) and AML.T0010 (AI Supply Chain Compromise) confirmed; sources disagree on the ID for exfiltration via the AI inference API (AML.T0024 or AML.T0025). A 2026.07 data release exists. | Secondary: [Akamai](https://www.akamai.com/blog/ai/2026/jun/mitre-atlas), [ATLAS data file](https://atlas.mitre.org/atlas-data/dist/v6/ATLAS-2026.07.yaml) |
+| 2026-11-22 | Regulatory and standards identifiers | NIST CSF 2.0 category identifiers PR.AA, PR.DS, PR.PS, PR.IR, DE.CM, DE.AE, RS.MA, RS.AN, GV.SC, ID.AM exist. ISO/IEC 27001:2022 Annex A: A.5.15, A.8.12, A.8.15, A.8.28 titles confirmed. DORA: titles of Articles 6, 9, 10, 11, 17, 28 confirmed. EU AI Act: Articles 9, 12, 14, 15 confirmed; Articles 26 and 73 titles only. PCI DSS v4.0.1: 12 requirements; titles of Requirements 1 and 2 confirmed. | Secondary: [NIST CSF 2.0 core](https://www.nist.gov/document/nist-csf-20-core-withdrawn-csf-11-elements), [ISO 27001 controls](https://opensecurityarchitecture.org/frameworks/iso-27001-2022), [DORA article reference](https://eur-lex.europa.eu/eli/reg/2022/2554/art_6/oj), [AI Act articles](https://artificialintelligenceact.eu/article/9/), [PCI DSS v4.0.1](https://www.middlebury.edu/sites/default/files/2025-01/PCI-DSS-v4_0_1.pdf) |
+| 2026-11-22 | Presidio, Llama Prompt Guard 2, NeMo Guardrails licences | Earlier result (unchanged): Presidio MIT, NeMo Guardrails Apache-2.0 per secondary sources; Prompt Guard 2 under Meta's community licence, not a permissive licence. NeMo documentation notes startup telemetry. Primary LICENSE files not read. | Secondary: [NVIDIA NeMo Guardrails docs](https://docs.nvidia.com/nemo/guardrails/about-nemo-guardrails-library/overview), [AIMultiple](https://aimultiple.com/ai-guardrails) |
 
 ## 2. Method and criteria
 
@@ -48,8 +63,8 @@ Decision stance (from `Plan/architecture.md` principle 6): integrate mature comp
 
 | Candidate | Coverage | Integration | Complexity | Licence | Overhead | Readiness | Limitations / lock-in |
 |---|---|---|---|---|---|---|---|
-| Cisco AI Defense MCP scanner (open-source project) **[VERIFY existence, scope, licence]** | Tool-description analysis (rules plus possibly model-based) — U | CLI/library; Python likely — U | Low | U | Offline scan, off hot path | U | Description-time only; does not cover runtime (threat D, I). Use as rule/corpus source or second opinion |
-| Invariant Labs mcp-scan / successor under another vendor **[VERIFY current name, owner, status]** | Tool poisoning, rug-pull style pinning checks — U | CLI — U | Low | U | Off hot path | U | Ownership and roadmap may have changed; do not depend on a hosted API without checking data handling |
+| Cisco AI Defense MCP scanner (open-source project) (*verified: exists; Apache-2.0 per a third-party index; YARA, LLM-as-judge and optional API engines; CLI and REST*) | Tool-description analysis (rules plus possibly model-based) — U | CLI/library; Python likely — U | Low | U | Offline scan, off hot path | U | Description-time only; does not cover runtime (threat D, I). Use as rule/corpus source or second opinion |
+| Invariant Labs mcp-scan / successor under another vendor (*verified: now Snyk agent-scan; Apache-2.0; sends tool names and descriptions to Snyk's API per a third-party summary*) | Tool poisoning, rug-pull style pinning checks — U | CLI — U | Low | U | Off hot path | U | Ownership and roadmap may have changed; do not depend on a hosted API without checking data handling |
 | Custom rules engine (our scanner) | Full control of severity taxonomy, reproducible scoring, SoD hooks | Native | Medium (we maintain rules and corpus) | Ours | Off hot path | We own quality | Needs a labelled corpus (spec Section 10); duplicating community rules is wasteful |
 
 **Provisional recommendation:** build the deterministic core (it is small and must be reproducible, FR-SCAN-2); spike one or two external scanners as *advisory secondary signals and as test corpus sources*, behind the pluggable classifier interface (FR-SCAN-3). Hosted scanners require explicit per-tenant opt-in (FR-SCAN-8).
@@ -58,10 +73,10 @@ Decision stance (from `Plan/architecture.md` principle 6): integrate mature comp
 
 | Candidate | What to check | Licence | Notes |
 |---|---|---|---|
-| IBM Context Forge (MCP gateway/registry) **[VERIFY]** | Registry, federation, auth, plugin/hook model, transport support, maturity | U (believed permissive) | Python — would fit the stack if its plugin points can host our pipeline |
-| agentgateway **[VERIFY]** | Rust data plane, MCP/A2A support, policy integration | U (believed Apache-2.0, foundation-hosted) | Strong for performance if it exposes the hooks we need; extending in Rust is a skills question |
-| Docker MCP Gateway/Toolkit **[VERIFY]** | Container-based server isolation, profile/catalog | U | More developer-desktop oriented; check enterprise multi-tenant story |
-| Envoy AI Gateway / Envoy-based **[VERIFY]** | MCP support level, ext_authz / ext_proc hooks to OPA and inspection | U (believed Apache-2.0) | Mature proxy; MCP-aware inspection (tools/list rewrite, hash pin) may need custom filters |
+| IBM ContextForge (MCP gateway/registry; *verified: registry and proxy for MCP, A2A and REST/gRPC*) | Registry, federation, auth, plugin/hook model, transport support, maturity | Apache-2.0 (verified) | Python — would fit the stack if its plugin points can host our pipeline |
+| agentgateway (*verified: MCP, A2A and LLM traffic; Agentic AI Foundation under the Linux Foundation*) | Rust data plane, MCP/A2A support, policy integration | Apache-2.0 (verified) | Strong for performance if it exposes the hooks we need; extending in Rust is a skills question |
+| Docker MCP Gateway/Toolkit (*verified: open-source CLI plugin with container isolation; separate invite-only governance feature*) | Container-based server isolation, profile/catalog | MIT (verified for the open-source CLI) | More developer-desktop oriented; check enterprise multi-tenant story |
+| Envoy AI Gateway / Envoy-based (*verified: MCP gateway since v0.4, CEL-based MCP authorization v0.5, v1.0 stable*) | MCP support level, ext_authz / ext_proc hooks to OPA and inspection | U (believed Apache-2.0) | Mature proxy; MCP-aware inspection (tools/list rewrite, hash pin) may need custom filters |
 | API gateways with AI plugins (Kong, others) **[VERIFY]** | Any MCP-specific features | U | Often commercial tiers for AI/MCP features |
 | Custom FastAPI gateway | Everything in architecture Section 5 | Ours | Fastest path to a correct MVP and pipeline; maintenance and performance risk; may need rewrite in Go/Rust if NFR-1 fails |
 
@@ -83,13 +98,13 @@ Decision stance (from `Plan/architecture.md` principle 6): integrate mature comp
 | Official MCP Python SDK **[VERIFY]** | Client/server protocol types, transports; use for scanner importer and fixtures; gateway proxying support level is unknown | Current protocol revision supported, Streamable HTTP support, whether it can act as a transparent proxy, release cadence, licence |
 | Other-language official SDKs (TypeScript, Go, Rust, etc.) **[VERIFY]** | Possible gateway implementation language if Python fails NFR-1 | Feature parity, maturity |
 
-The MCP specification revision and its authorization section must be pinned and re-reviewed on every revision (threat model Section 9, ADR tracking). **[VERIFY current revision and auth requirements: OAuth 2.1 profile, resource indicators (RFC 8707), protected resource metadata (RFC 9728), dynamic client registration status.]**
+The MCP specification revision and its authorization section must be pinned and re-reviewed on every revision. The reference revision is **2026-07-28** (search-verified: authorization optional, protected resource metadata, dynamic client registration deprecated in favour of client ID metadata documents); section-level text still has to be read.
 
 ### 3.4 Policy engines (ADR-6; FR-AUTHZ-1, FR-POL-*)
 
 | Candidate | Coverage | Integration | Complexity | Licence | Overhead | Readiness | Limitations / lock-in |
 |---|---|---|---|---|---|---|---|
-| OPA / Rego | General decision engine; bundles, decision logs, `opa test` | HTTP/sidecar/library; mature ecosystem | Medium (Rego learning curve) | Apache-2.0, CNCF — U | Low per decision when local — U | High — U | Rego skills needed; large data in policy needs care (bundle size, latency) |
+| OPA / Rego | General decision engine; bundles, decision logs, `opa test` | HTTP/sidecar/library; mature ecosystem | Medium (Rego learning curve) | CNCF graduated (verified); Apache-2.0 — U | Low per decision when local — U | High — U | Rego skills needed; large data in policy needs care (bundle size, latency) |
 | Cedar **[VERIFY]** | Entity-based authz with formal analysis tooling | Libraries mainly Rust; Python bindings maturity unknown | Medium | Apache-2.0 — U | Low — U | Medium — U | Smaller ecosystem; decision logging/bundles are your job |
 | OpenFGA / SpiceDB (relationship stores) **[VERIFY]** | Large agent–server–tool relationship graphs | Service | Medium-High | U | Network hop | U | Add only if relationships outgrow OPA data |
 
@@ -101,7 +116,7 @@ The critical capability questions are the same for every IdP: sender-constrained
 
 | Candidate | Role | Check |
 |---|---|---|
-| Keycloak **[VERIFY]** | Development and possibly production (self-hosted) | Current support level of DPoP, token exchange (standard vs preview/legacy), mTLS binding; HA operations; licence (believed Apache-2.0) |
+| Keycloak (*verified: DPoP supported from 26.4; token exchange V2 internal-to-internal only*) | Development and possibly production (self-hosted) | Current support level of DPoP, token exchange (standard vs preview/legacy), mTLS binding; HA operations; licence (believed Apache-2.0) |
 | Okta / Auth0 **[VERIFY]** | Commercial SaaS options | DPoP and token exchange availability per plan; MCP-specific authorization features |
 | Microsoft Entra ID **[VERIFY]** | Common enterprise IdP | Support for DPoP, on-behalf-of flow vs RFC 8693, resource indicators; the Microsoft Learn docs are the authoritative source |
 | SPIFFE/SPIRE **[VERIFY]** | Workload identity for agents/services | Fit with OAuth client model; operational burden |
@@ -150,7 +165,7 @@ The critical capability questions are the same for every IdP: sender-constrained
 | Component | Choice for MVP | Notes **[VERIFY]** |
 |---|---|---|
 | Database | PostgreSQL | Row-level security, triggers for immutability (FR-DRIFT-1), insert-only roles for audit; PostgreSQL licence is permissive |
-| Cache/session store (Phase 2) | Redis or a compatible fork (e.g., Valkey) | Redis licensing changed in recent years; confirm the current licence and compatible alternatives before standardising |
+| Cache/session store (Phase 2) | Redis or a compatible fork (e.g., Valkey) | Redis licensing changed (SSPL/RSALv2 in 2024, AGPLv3 option from Redis 8; Valkey is the BSD fork; both search-verified); choose deliberately before standardising |
 | Event streaming (Phase 2) | Outbox → Kafka (or managed equivalent) | Only if volume or SIEM integration justifies; start with the outbox table and OTel exporters |
 | Telemetry | OpenTelemetry (SDKs, Collector) | Check stability of GenAI semantic conventions before depending on them; use stable HTTP/DB conventions for platform telemetry |
 | Secrets/keys | Vault, OpenBao, cloud KMS/secrets managers | HashiCorp changed Vault's licence in 2023 and a community fork exists; confirm current terms and customer standard |
@@ -206,13 +221,13 @@ The critical capability questions are the same for every IdP: sender-constrained
 ## 8. Verification checklist (to complete before approving this document)
 
 For every **[VERIFY]** row: capture URL, version/date checked, licence file, and a one-line fact. Priority order:
-1. MCP specification: current revision, authorization section, transports, sampling/elicitation/roots wording.
-2. Candidate MCP gateways: licence, MCP support, extension points, release activity.
-3. Keycloak and customer IdP: DPoP, token exchange, resource indicators.
-4. Existing MCP scanners: existence, licence, rules, data handling.
-5. OWASP MCP guidance: ~~whether a Top 10 exists~~ (verified, see log); still needed: the full list, identifiers and current version from the official project, for the compliance matrix.
+1. MCP specification: revision 2026-07-28 and its authorization summary are search-verified; still to read: the specification text for transports, sampling, elicitation, roots, and the exact authorization requirements.
+2. Candidate MCP gateways: existence and licences are search-verified (agentgateway, ContextForge, Docker MCP Gateway, Envoy AI Gateway); still to do: extension points, release activity and the seven-test spike (S1).
+3. Keycloak and customer IdP: Keycloak DPoP and token exchange are search-verified; still to do: resource indicators and the customer's production IdP (spike S2).
+4. Existing MCP scanners: Cisco and Snyk scanners exist and are Apache-2.0 per third-party sources; still to do: read the LICENSE files, rules and data handling, and run them on the corpus (spike S5).
+5. OWASP MCP guidance: verified from the official project (ten entries, 2025 list, beta status conflict, CC BY-NC-SA 4.0); recheck when the project releases a final version.
 6. Presidio, Prompt Guard 2, NeMo Guardrails: primary LICENSE/model-card terms.
-7. Redis/Valkey and Vault/OpenBao current licences.
+7. Redis/Valkey licences are search-verified; Vault and OpenBao licences are still unverified.
 8. Cloud specifics: egress controls, metadata hardening, object-lock, sandboxed runtimes per target cloud.
 
 Authoritative source types to use: project repositories (LICENSE, README, release notes), the MCP specification site, vendor product documentation, and, for Microsoft/Azure, Microsoft Learn.

@@ -2,12 +2,12 @@
 
 | | |
 |---|---|
-| Version | 0.1 |
+| Version | 0.2 (adds the closure update in Section 9; Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
 | Method | Scripted traceability checks (requirement, control, test, threat, phase) plus cross-document reading against the master brief; see Section 2 |
-| Effect on other files | None. This task changed no other document; recommendations are for the owners |
+| Effect on other files | Version 0.1 changed no other document. The closure work recorded in Section 9 changed many (specification, threat model, architecture, test catalogue, control catalogue, compliance matrix, tech evaluation, roadmap and others) and added new documents; Section 9 lists them |
 
 ## 1. Executive summary
 
@@ -232,8 +232,40 @@ Combined entries (for example "Before Phase 1 (P1 items), then per phase") are l
 
 The counts in Sections 1 and 4 and in B1 to B4, C1, C2, D4 and E7 come from a one-off analysis that parses: requirement rows in `Plan/functional-spec.md` (ID, priority, phase); the `requirements`, `tests` and `threats` fields in `controls/catalogue.yaml` (via `scripts/catalogue_lib.py`); test-case headers in `docs/testing/cases.md` (threat, requirement and phase fields); and `[VERIFY`, `TBD`, "to be set" counts per file. The recommended follow-up (G2) is to fold these checks into `scripts/check_docs.py` as warnings, so the register can be refreshed mechanically. Until then, treat counts as accurate at the document versions listed above.
 
+## 9. Closure update (v0.2)
+
+The 14 High gaps were worked on after the register was written. Status vocabulary: **Closed, pending review** (the artefact or change exists but nobody independent has reviewed it, so it is a draft, not an approved fact); **Partly closed**; **Open** (needs people, decisions or evidence this work could not supply). Counts in the register above are the original counts; this table is the current status. `scripts/check_docs.py` passes after the changes (125 requirements, 10 non-functional requirements, 9 acceptance criteria, 90 test cases, 29 controls).
+
+| Gap | Status | What changed | Where | What remains |
+|---|---|---|---|---|
+| A1 | Closed, pending review | Critical architecture assessment written and traced to requirements, controls, tests and decisions | `docs/architecture-assessment.md` | Review by security architecture, compliance and operations |
+| A2 | Closed, pending review | Data model with tables, constraints, roles, retention and migration plan (illustrative SQL, not run) | `docs/data-model.md` | ADR-4 approval; run and validate on PostgreSQL; final names |
+| A3 | Closed, pending review | API specification (endpoint table with roles, separation of duties, requirements and audit events; error catalogue) and an OpenAPI 3.1 outline | `docs/api-specification.md`, `docs/api/openapi.yaml` | Validate with an OpenAPI tool; add configuration, notification, break-glass, discovery and model endpoints |
+| B1 | Closed, pending review | All 11 requirements now belong to a control: dashboard and notifications to new CTL-28; scan scheduling to CTL-02; external classifier opt-in to CTL-10; list filtering to CTL-03; configuration to CTL-27 | `controls/catalogue.yaml` | Owner review of the two new controls |
+| B2 | Closed, pending review | Every requirement now has a test case directly or through its control; new cases TC-Z7..Z13, Z25 cover the former gaps. Requirements still covered only through control-level lists: 30 of 125 | `docs/testing/cases.md` v0.3 | Name the requirement in case headers where possible; execute the cases |
+| B3 | Closed, pending review | Measurement cases exist for NFR-1, 2, 3, 4, 5, 6, 7 and 10 (TC-Z14..Z21) | `docs/testing/cases.md` | Reference environment and workload definition (gap D6); execution |
+| C1 | Closed, pending approval | Phase conflicts resolved with proposed changes: TC-B2, TC-K1, TC-O1, TC-L3 headers corrected; TC-Z6 split with new TC-Z22; FR-SUP-1 retagged to Phase 2 with FR-SUP-4 for the server fleet and new TC-L4; control phases for CTL-14, 17, 18, 21 aligned. Script check finds no remaining test-case/requirement or control/requirement phase conflict | Spec v0.4, cases v0.3, catalogue v0.2, CI/CD pipeline v0.2, deployment architecture v0.2 | Owner approval of the retags (DEC-2 in `docs/governance.md`) |
+| D1 | Closed, pending approval | Data classification model: FR-DATA-1..4, control CTL-29, test TC-Z25; default levels Public, Internal, Confidential, Restricted; unlabelled items treated as Confidential | Spec Section 4.22, catalogue | Approval of the level names and default (DEC-1); labelling source and owner process |
+| E1 | Partly closed | Search-verified: MCP revision 2026-07-28 and its authorization changes; Cisco and Snyk scanners (Apache-2.0 per third-party sources); ContextForge, agentgateway, Docker MCP Gateway, Envoy AI Gateway existence and licences; Keycloak DPoP and token exchange; OPA graduation; Redis and Valkey licences | `docs/tech-evaluation.md` v0.2 verification log | Primary-source reading (LICENSE files, specification text), Cedar, supply-chain tools, DLP and classifier performance, Vault and OpenBao, cloud capabilities, spikes S1..S6 |
+| E2 | Partly closed | OWASP MCP Top 10 entries and IDs verified from the official project; per-framework verification status recorded; confirmed identifiers for NIST CSF categories, ISO 27001 controls, DORA and EU AI Act articles (titles), PCI DSS structure, ATLAS techniques | `compliance/compliance-matrix.md` v0.3 | Official texts for every identifier, GDPR, SR 11-7, FFIEC, ISO 42001/23894, SOC 2, AI RMF; legal and compliance review (FR-COMP-5) |
+| F1 | Partly closed | Proposed resolutions recorded for ADR-1..7 and for decisions DEC-1 and DEC-2; nothing is decided | Architecture Section 12, spec Section 12, `docs/governance.md` | Approval by the product owner and security architect |
+| F2 | Open | Governance templates (role glossary, RACI, owner table, risk acceptance register) created; no names assigned | `docs/governance.md` | Name owners, reviewers, risk owners and sponsor |
+| G1 | Open | Review and sign-off log created; no review has happened | `docs/governance.md` Section 4 | Independent reviews and recorded outcomes |
+| H1 | Closed, pending review | Threats X9..X13 (agent-card spoofing, non-text injection, error-message injection, scanner and detector evasion or overload, client registration abuse) added with requirements FR-ID-8, FR-RT-12, FR-RT-13, FR-SCAN-10, FR-AUTHN-7, controls, five test cases and matrix rows | Threat model v0.3, spec v0.4, catalogue v0.2, cases v0.3, matrix v0.3 | Review; X9 depends on agent-to-agent standards that are still evolving |
+
+**Summary of the 14 High gaps:** 9 closed pending review or approval (A1, A2, A3, B1, B2, B3, C1, D1, H1), 3 partly closed (E1, E2, F1), 2 open because they need people and decisions (F2, G1). No gap was closed by claiming a fact that has not been checked.
+
+**New items created by the closure work and to watch**
+- Ten new requirements (FR-DATA-1..4, FR-ID-8, FR-RT-12, FR-RT-13, FR-SCAN-10, FR-AUTHN-7, FR-SUP-4) are tagged "review required"; FR-SUP-1 changed meaning and phase.
+- Twenty-five new test cases are specifications; the Phase 1 MVP set grew from 18 to 19.
+- The new documents (assessment, data model, API specification, governance templates) and the OpenAPI outline have not been reviewed or validated with tools.
+- The compliance mappings for the two new controls and five new threats come from background knowledge and are unverified.
+- The proposed ADR resolutions and the classification defaults are recommendations only.
+- The Medium and Low gaps in the register are untouched, except where the same change closed them incidentally (for example the role-name issue C4 is helped by the glossary in `docs/governance.md`, but the catalogue still uses the old strings).
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2 | 2026-11-22 | Closure update for the High gaps (Section 9) |
 | 0.1 | 2026-11-22 | First review of the full documentation set |

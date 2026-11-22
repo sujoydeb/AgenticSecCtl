@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.1 (design-stage draft) |
 | Status | Written before any implementation exists. Procedures are manual and describe intended use of platform capabilities (quarantine, revoke, kill switch, evidence snapshot; FR-IR-*, FR-AUTO-4/5). Automation with approval gates is Phase 4 (FR-IR-4). Names of commands, queries and dashboards are placeholders `[TBD]` until built. |
-| Depends on | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2 (audit event vocabulary, Section 4.8), `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2 |
+| Depends on | `Plan/functional-spec.md` v0.4, `Plan/architecture.md` v0.3 (audit event vocabulary, Section 4.8), `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3, `docs/runbooks/operational-runbook.md` v0.2 |
 | Audience | Incident commanders, security on-call, platform on-call, compliance and legal liaisons, agent and server owners |
 | Scope | Security incidents affecting AI agents, MCP servers, tools and the platform itself. Availability and routine operations are in the operational runbook. |
 | Not legal advice | Notification duties (regulators, customers, card brands, supervisory authorities) are decided by legal and compliance. Deadlines and thresholds in any regulation must be checked by them; none are asserted here **[VERIFY with legal]**. |

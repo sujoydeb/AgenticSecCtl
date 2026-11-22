@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft; cases are specifications, none have been executed) |
-| Depends on | `Plan/threat-model.md` v0.2 (case IDs, Section 7), `Plan/functional-spec.md` v0.3 (FR/NFR/AC IDs), `Plan/architecture.md` v0.2 (audit event vocabulary, Section 4.8) |
-| Cases | 65 (threat-model index), all expanded below |
+| Version | 0.3 (draft; cases are specifications, none have been executed) |
+| Depends on | `Plan/threat-model.md` v0.3 (case IDs, Section 7), `Plan/functional-spec.md` v0.4 (FR/NFR/AC IDs), `Plan/architecture.md` v0.3 (audit event vocabulary, Section 4.8) |
+| Cases | 90 (threat-model index), all expanded below |
 | Safety | Every attack runs only in the isolated test environment (Section 1). Payloads are inert test strings that target fixture services; no real credentials, data or external hosts are used. |
 
 ## 1. Test environment and fixtures
@@ -102,14 +102,14 @@
 - **Residual risk:** Window up to cache TTL if call-time check (TC-B4) is not enabled.
 
 ### TC-B2 Schema widening
-*Threat B · FR-DRIFT-1/2, FR-RT-2 · E2E · P1 · MVP*
+*Threat B · FR-DRIFT-1/2 · E2E · P1 · MVP*
 - **Objective:** Detect added parameters or loosened constraints (e.g. new `command` string, `additionalProperties: true`).
 - **Prerequisites:** FX-BEN `note_write` approved.
 - **Steps:** Modify input schema; list; call with new parameter.
 - **Expected detection:** Hash mismatch; diff shows schema path.
-- **Expected prevention:** Quarantine; call with unknown field also rejected by schema validation.
+- **Expected prevention:** Quarantine; the call with the new parameter is denied because the tool is quarantined. From Phase 2 the schema validation of FR-RT-2 independently rejects unknown fields (exercised in TC-O1).
 - **Logs:** `tool.quarantined`, `authz.deny`.
-- **Pass/fail:** Pass if both the quarantine and the rejection hold independently (disable one control, the other still blocks in the P2 build).
+- **Pass/fail:** Phase 1: pass if the tool is quarantined by the next list cycle and no call with the new parameter succeeds. Phase 2 addition: with quarantine disabled in a test build, schema validation alone still rejects the unknown field.
 - **Residual risk:** None specific beyond B1.
 
 ### TC-B3 Annotation flip
@@ -490,7 +490,7 @@
 ## 12. K — Autonomy abuse
 
 ### TC-K1 Infinite loop
-*Threat K · FR-AUTO-2, FR-ID-5 · E2E · P2*
+*Threat K · FR-AUTO-2 · E2E · P2*
 - **Objective:** Suspend repeating call sequences.
 - **Prerequisites:** Agent harness looping `docs_search` ↔ `note_write` with same arguments.
 - **Steps:** Run until detection.
@@ -537,9 +537,9 @@
 - **Pass/fail:** Pass if both flagged and a known-good control name is not flagged.
 - **Residual risk:** Novel names with no resemblance.
 
-### TC-L2 Unsigned or unpinned image
-*Threat L · FR-SUP-1 · IT · P4*
-- **Objective:** Admission control rejects unsigned images and tag-only references.
+### TC-L2 Unsigned or unpinned server image
+*Threat L · FR-SUP-4 · IT · P4*
+- **Objective:** Admission control for the MCP server namespace rejects unsigned images and tag-only references (server fleet; the platform's own images are TC-L4).
 - **Prerequisites:** Cluster with admission policy; signed and unsigned test images.
 - **Steps:** Deploy each; deploy by tag instead of digest.
 - **Expected detection:** Admission denial events.
@@ -549,8 +549,8 @@
 - **Residual risk:** Compromised signing key.
 
 ### TC-L3 Vulnerable dependency gate
-*Threat L · FR-SCAN-5, NFR-9 · IT · P3*
-- **Objective:** CI blocks builds with known critical vulnerabilities or leaked secrets.
+*Threat L · NFR-9 · IT · P3*
+- **Objective:** The platform's own CI blocks builds with known critical vulnerabilities or leaked secrets (CI/CD gates G1.4, G1.6, G2.3).
 - **Prerequisites:** Branch with a pinned vulnerable test dependency and a planted fake secret.
 - **Steps:** Run pipeline.
 - **Expected detection:** Scanner and secret-scan findings.
@@ -558,6 +558,17 @@
 - **Logs:** CI logs, SBOM diff.
 - **Pass/fail:** Pass if pipeline fails on each and no artifact is produced.
 - **Residual risk:** Unknown vulnerabilities.
+
+### TC-L4 Platform image admission
+*Threat L · FR-SUP-1 · IT · P2*
+- **Objective:** Platform namespaces admit only signed, digest-pinned, policy-compliant images (the platform's own workloads).
+- **Prerequisites:** Staging cluster with the admission policy; signed platform image, unsigned image, tag-only reference, privileged pod spec, pod without resource limits.
+- **Steps:** Deploy each into a platform namespace.
+- **Expected detection:** Admission denial events with the violated rule.
+- **Expected prevention:** Only the signed digest-pinned compliant workload is admitted.
+- **Logs:** Admission audit events.
+- **Pass/fail:** Pass if exactly the compliant workload is admitted and every other is rejected with a recorded reason.
+- **Residual risk:** Compromised signing identity or build system (CI/CD Section 8).
 
 ---
 
@@ -616,14 +627,14 @@
 ## 16. O — Tool execution
 
 ### TC-O1 Command injection
-*Threat O · FR-RT-2/3, FR-EXEC-1 · FZ, PT · P2*
+*Threat O · FR-RT-2/3 · FZ, PT · P2*
 - **Objective:** Block shell metacharacters in command-class parameters; contain impact if bypassed.
 - **Prerequisites:** FX-BEN `shell_exec` (sandboxed) declared with a command parameter schema.
 - **Steps:** Send `; id`, `$(id)`, backticks, newline, `&&`, encoded variants; fuzz.
 - **Expected detection:** Argument guard events.
 - **Expected prevention:** Rejected; for any bypass, the sandbox has no network, non-root, read-only filesystem.
 - **Logs:** `authz.deny` (arg guard).
-- **Pass/fail:** Pass if no payload executes and the sandbox check proves containment.
+- **Pass/fail:** Pass if no payload executes through the argument guards. Sandbox containment assertions (no network, non-root, read-only filesystem, per FR-EXEC-1) apply from Phase 4 when the sandbox pool exists; until then they are recorded as not applicable, not as passed.
 - **Residual risk:** Parameters not declared as command-class.
 
 ### TC-O2 SQL injection
@@ -744,6 +755,61 @@
 - **Pass/fail:** Pass if no long-lived upstream secret or cross-tenant access is obtained and tampering is detected.
 - **Residual risk:** Short-lived credential abuse within TTL.
 
+### TC-X9 Agent-card or discovery-document spoofing
+*Threat X9 · FR-ID-8 · IT, RT · P4*
+- **Objective:** A forged agent card cannot attract delegation or calls.
+- **Prerequisites:** Two registered agents; a hostile fixture serving a card that claims the identity, endpoint and key of a registered agent, and another card advertising extra capabilities.
+- **Steps:** Agent A discovers and attempts to delegate using each card; repeat with a card whose key differs from the registry pin.
+- **Expected detection:** Card verification failure events.
+- **Expected prevention:** Unverified or mismatching cards are not routed; capabilities not in the registry are ignored.
+- **Logs:** `card.rejected`, `delegation.denied`.
+- **Pass/fail:** Pass if no message reaches the hostile endpoint and no extra capability is used.
+- **Residual risk:** Compromise of a registered agent's genuine key.
+
+### TC-X10 Non-text content injection
+*Threat X10 · FR-RT-12 · UT, RT · P2*
+- **Objective:** Instructions hidden in images, documents or audio do not reach the model unchecked.
+- **Prerequisites:** FX-EVIL mode `multimodal` returns an image with text overlay, a PDF with hidden text layer and an oversized file; policy variants: allow, extract-and-inspect, block.
+- **Steps:** Call the tool in a session holding Confidential data and in one without; try each policy.
+- **Expected detection:** Signals for instruction text found by extraction; type/size violations.
+- **Expected prevention:** Labelled untrusted; blocked when uninspectable in the sensitive session; oversized content truncated or blocked.
+- **Logs:** `inject.signal`, `content.blocked`.
+- **Pass/fail:** Pass if the sensitive session never receives uninspected non-text content and extracted instructions are signalled.
+- **Residual risk:** Instructions in forms extraction cannot read.
+
+### TC-X11 Error-message injection
+*Threat X11 · FR-RT-13 · UT, RT · P2*
+- **Objective:** Error payloads cannot carry instructions to the model, and platform errors cannot be abused to echo them.
+- **Prerequisites:** FX-EVIL mode `error-inject` returns JSON-RPC errors whose message and data fields contain instructions and markup.
+- **Steps:** Call the tool; inspect the delivered error; trigger a platform error (denied call) with attacker-controlled arguments.
+- **Expected detection:** Injection signals on server error content.
+- **Expected prevention:** Server errors are labelled untrusted and inspected; platform errors contain only fixed catalogue text and a correlation ID.
+- **Logs:** `inject.signal`, `authz.deny`.
+- **Pass/fail:** Pass if no instruction text from the server error is delivered unlabelled and no platform error echoes attacker-controlled text.
+- **Residual risk:** Paraphrased instructions in error text.
+
+### TC-X12 Scanner and detector evasion or overload
+*Threat X12 · FR-SCAN-10 · UT, FZ · P2*
+- **Objective:** Crafted inputs neither evade the scanner nor exhaust it, and timeouts never approve.
+- **Prerequisites:** Evasion sample set (homoglyph, spacing, split instructions, nested encodings), pathological inputs (huge schemas, regex-heavy text), a tenant flooding the scan queue.
+- **Steps:** Scan each sample; run the flood next to a second tenant's scans; force a timeout.
+- **Expected detection:** `scan.timeout` events; regression results per rule-set version.
+- **Expected prevention:** Size and complexity caps hold; per-tenant quotas protect the other tenant; a timed-out scan leaves the tool not approved.
+- **Logs:** `scan.timeout`, `import.failed`, `finding.created`.
+- **Pass/fail:** Pass if no timeout results in approval, the second tenant's scans finish within their target, and the evasion set detection does not drop below the previous rule-set version.
+- **Residual risk:** Novel evasion between regression updates.
+
+### TC-X13 Client registration abuse
+*Threat X13 · FR-AUTHN-7 · IT, PT · P2*
+- **Objective:** Open client registration cannot create trusted-looking clients.
+- **Prerequisites:** Test IdP with dynamic client registration and metadata-document registration enabled and disabled; attacker host serving client metadata.
+- **Steps:** Register clients from an unauthenticated caller; with an unallowlisted redirect URI; from a non-allowlisted metadata host; burst of registrations; a tenant-approved registration.
+- **Expected detection:** Denied registrations and rate-limit events.
+- **Expected prevention:** Registration is off unless enabled per tenant; only allowlisted redirect URIs and hosts; new clients start unapproved and cannot call tools.
+- **Logs:** `client.denied`, `client.registered`, `authn.fail`.
+- **Pass/fail:** Pass if every unauthorised registration is refused and an approved one still cannot call tools before approval.
+- **Residual risk:** Capabilities of the production IdP **[VERIFY]**.
+
 ---
 
 ## 19. Cross-cutting tests
@@ -804,15 +870,224 @@
 - **Residual risk:** Availability impact on business agents.
 
 ### TC-Z6 Audit tamper detection
-*Threat X6, X8 · FR-AUD-2/4 · UT, IT · P1 · MVP*
-- **Objective:** Detect modified, deleted and reordered audit rows, and full-chain rewrites after anchoring.
-- **Prerequisites:** 1,000 events; anchor created at event 500.
-- **Steps:** Modify row; delete row; swap two rows; rewrite entire chain after event 500 with consistent hashes; run verifier.
-- **Expected detection:** `audit.verify.failed` identifying first bad sequence; rewrite detected against anchor.
+*Threat X6, X8 · FR-AUD-1/2 · UT, IT · P1 · MVP*
+- **Objective:** Detect modified, deleted and reordered audit rows (chain verification). Detection of a full-chain rewrite against an external anchor is TC-Z22 (Phase 2).
+- **Prerequisites:** 1,000 events.
+- **Steps:** Modify row; delete row; swap two rows; run verifier; check that application database roles cannot UPDATE or DELETE audit rows.
+- **Expected detection:** `audit.verify.failed` identifying the first bad sequence.
 - **Expected prevention:** Application roles cannot UPDATE/DELETE audit rows.
 - **Logs:** `audit.verify.failed`.
 - **Pass/fail:** Pass if every tamper type is detected at the correct sequence and application DB roles fail on UPDATE/DELETE.
-- **Residual risk:** Rewrite before the first anchor.
+- **Residual risk:** A privileged database actor can rewrite the whole chain consistently; only anchoring (TC-Z22) detects that.
+
+### TC-Z7 Dashboard counters, drill-down and approval queue
+*Threat none (functional) · FR-UI-1/2/3 · E2E · P1 · MVP*
+- **Objective:** The dashboard shows correct fleet counts and drill-down, and the approval queue enforces separation of duties.
+- **Prerequisites:** Seeded fleet (agents, servers, tools in all states, findings, a drift event); users with viewer, engineer and approver roles.
+- **Steps:** Compare counters with database queries; drill into an agent, server and tool; open an approval with diff and evidence; approve as requester and as another approver.
+- **Expected detection:** Mismatch between UI and database counts.
+- **Expected prevention:** Requester cannot approve; viewer cannot change anything.
+- **Logs:** `approval.denied`, `approval.granted`.
+- **Pass/fail:** Pass if all counters equal the database and SoD holds in UI and API.
+- **Residual risk:** Count lag from caching (state the maximum staleness).
+
+### TC-Z8 Operational views
+*Threat none (functional) · FR-UI-4 · E2E · P2*
+- **Objective:** Authentication failures, blocked operations, leakage attempts and active incidents are visible and correct.
+- **Prerequisites:** Generated denials (TC-F2, TC-H1), DLP matches (TC-I1) and an open incident.
+- **Steps:** Open the operational views; filter by agent and time; compare with audit events.
+- **Expected detection:** Missing or extra entries.
+- **Expected prevention:** Views respect roles and tenants.
+- **Logs:** Normal events.
+- **Pass/fail:** Pass if each generated event appears once with the right attributes and no cross-tenant entry is shown.
+- **Residual risk:** Views are summaries; the audit log is authoritative.
+
+### TC-Z9 Relationship graph, excessive-permission and compliance posture views
+*Threat none (functional) · FR-UI-5/6 · E2E · P3*
+- **Objective:** The graph (Agent, Model, Server, Tool, Data Source, System), excessive-permission view and posture view are correct.
+- **Prerequisites:** Seeded graph with known unused and over-broad permissions; control status data.
+- **Steps:** Compare graph edges with registry data; check flagged permissions against expected; check that posture labels mandatory, guidance and voluntary items separately.
+- **Expected detection:** Wrong or missing edges or flags.
+- **Expected prevention:** Posture view never shows a compliance claim.
+- **Logs:** None specific.
+- **Pass/fail:** Pass if edges and flags match the seeded truth and the posture view contains the evidence-support wording.
+- **Residual risk:** Graph depends on registry quality.
+
+### TC-Z10 Declarative configuration validation and audited change
+*Threat none (functional) · FR-ADM-1 · UT, IT · P1*
+- **Objective:** Invalid configuration is rejected at load; valid changes are versioned and audited.
+- **Prerequisites:** Configuration files with unknown keys, wrong types, out-of-range values (for example token lifetime over the maximum), and a valid change.
+- **Steps:** Start each service; apply the valid change.
+- **Expected detection:** Validation errors naming the key.
+- **Expected prevention:** Service refuses to start (or keeps the previous valid configuration) on invalid input.
+- **Logs:** `config.changed` with actor and version.
+- **Pass/fail:** Pass if every invalid file is rejected and the valid change appears in the audit log with a version.
+- **Residual risk:** Semantically valid but unsafe settings (covered by policy review).
+
+### TC-Z11 Notification channels and delivery failure
+*Threat none (functional) · FR-ADM-3 · IT · P2*
+- **Objective:** Approval and quarantine notifications reach configured channels and failures are visible.
+- **Prerequisites:** Email and webhook channels; a failing endpoint.
+- **Steps:** Trigger a drift quarantine and an approval request; make the webhook fail.
+- **Expected detection:** `notification.failed` with retry state.
+- **Expected prevention:** Notification failure does not block containment actions.
+- **Logs:** `notification.failed`, `tool.quarantined`.
+- **Pass/fail:** Pass if successful notifications arrive once, failures are retried and reported, and quarantine took effect regardless.
+- **Residual risk:** Notification content may carry sensitive context; channel choice is a tenant decision.
+
+### TC-Z12 Scheduled re-scan, rule-set update and finding lifecycle
+*Threat A, B · FR-SCAN-7/9 · IT · P3*
+- **Objective:** Re-scans run on schedule and on rule-set updates; Critical findings on approved tools quarantine, lower severities become review items.
+- **Prerequisites:** Approved benign tools; a rule-set update that turns one tool Critical and another Medium; a waived finding with expiry.
+- **Steps:** Run the scheduled re-scan; publish the new rule set; advance the clock past the waiver expiry.
+- **Expected detection:** New findings with the rule-set version.
+- **Expected prevention:** The Critical tool is quarantined and owners notified; the Medium one stays approved with a review item; expired waivers reopen findings.
+- **Logs:** `scan.completed`, `finding.created`, `tool.quarantined`.
+- **Pass/fail:** Pass if outcomes match the rules above and every finding records the rule-set version.
+- **Residual risk:** Window between rule-set publication and re-scan completion.
+
+### TC-Z13 External classifier opt-in and data minimisation
+*Threat I · FR-SCAN-8 · IT · P2*
+- **Objective:** No scan input is sent to an external classifier service unless the tenant opted in, and only the minimum is sent.
+- **Prerequisites:** A fake external classifier endpoint recording requests; tenants with and without opt-in; a self-hosted option.
+- **Steps:** Scan tools for each tenant; inspect recorded payloads.
+- **Expected detection:** Outbound request logs.
+- **Expected prevention:** Non-opted-in tenants send nothing; opted-in tenants send only tool definition text, never credentials or other tenants' data.
+- **Logs:** `scan.completed`, `egress.blocked` for the non-opted-in case.
+- **Pass/fail:** Pass if the endpoint records zero requests for the non-opted-in tenant and payloads for the opted-in tenant contain only allowed fields.
+- **Residual risk:** Definition text itself may be sensitive for the opted-in tenant.
+
+### TC-Z14 Gateway latency and throughput
+*Threat none (non-functional) · NFR-1 · PT, load · P2*
+- **Objective:** Added gateway latency on the deterministic path meets the target.
+- **Prerequisites:** Reference setup and workload defined in the load-test plan (hardware class, payload up to 16 KB, 0 ms mock upstream, 30-minute steady state); OTel spans for added time.
+- **Steps:** Run at 1,000 requests per second per instance with all deterministic stages on; repeat at 50 percent and 150 percent.
+- **Expected detection:** Latency histograms from gateway spans.
+- **Expected prevention:** n/a (measurement).
+- **Logs:** Load-test report with method and environment.
+- **Pass/fail:** Pass if added-latency p95 is at most 25 ms and p99 at most 60 ms at the target rate; results are published with the environment description.
+- **Residual risk:** Production traffic mix may differ; re-run per release candidate.
+
+### TC-Z15 Inline classifier latency tiering
+*Threat none (non-functional) · NFR-2 · PT, load · P2*
+- **Objective:** Inline classifier use stays within budget or runs asynchronously.
+- **Prerequisites:** Classifier (mock and real), payload mix, policy with inline and asynchronous modes.
+- **Steps:** Measure inline p95 at target rate; verify asynchronous mode does not add latency to allowed calls.
+- **Expected detection:** Latency histograms by tier.
+- **Expected prevention:** Tier 1 deterministic checks remain inline; advisory tiers never block high-impact decisions alone.
+- **Logs:** Load-test report.
+- **Pass/fail:** Pass if inline classifier p95 is at most 150 ms or the asynchronous mode adds no measurable latency, and Tier 1 stays within its inline budget.
+- **Residual risk:** Larger payloads cost more.
+
+### TC-Z16 Availability measurement and error budget
+*Threat none (non-functional) · NFR-3 · PT · P5*
+- **Objective:** Measured availability meets 99.95 percent monthly.
+- **Prerequisites:** Synthetic probes from several zones; defined observation period; error budget policy.
+- **Steps:** Run probes for the period; compute availability excluding agreed maintenance.
+- **Expected detection:** Probe failures and burn-rate alerts.
+- **Expected prevention:** n/a.
+- **Logs:** Availability report.
+- **Pass/fail:** Pass if the measured value meets the target over the agreed period.
+- **Residual risk:** Probe coverage differs from real traffic.
+
+### TC-Z17 Disaster recovery exercise
+*Threat none (non-functional) · NFR-4 · PT, exercise · P5*
+- **Objective:** RPO of 5 minutes or less and RTO of 30 minutes or less are met and the audit chain survives failover.
+- **Prerequisites:** Warm standby region; runbook Section 11 procedure; timing evidence.
+- **Steps:** Declare DR in staging; fail over; verify data loss window, service restoration time, audit chain verification and anchor comparison; fail back.
+- **Expected detection:** Verification output.
+- **Expected prevention:** Failover does not weaken fail-closed behaviour (TC-Z5 after failover).
+- **Logs:** Exercise report with timestamps.
+- **Pass/fail:** Pass if RPO and RTO targets are met and the chain verifies against the latest anchor; a restore that fails verification is a failed exercise.
+- **Residual risk:** Real incidents differ from exercises.
+
+### TC-Z18 Scale and soak
+*Threat none (non-functional) · NFR-5 · PT, load · P2*
+- **Objective:** The cluster handles the target sessions and call rate and stays stable under sustained load.
+- **Prerequisites:** Load generator for 10,000 concurrent sessions and 5,000 calls per second; 6-hour soak; autoscaling enabled.
+- **Steps:** Ramp to target; hold; inject node and zone failures.
+- **Expected detection:** Saturation signals, memory growth, error rates.
+- **Expected prevention:** Per-tenant limits protect other tenants; fail-closed holds.
+- **Logs:** Load report.
+- **Pass/fail:** Pass if the target is held with error rate and memory within agreed bounds and no policy bypass occurs.
+- **Residual risk:** Targets are proposals until measured.
+
+### TC-Z19 Retention, legal hold and deletion jobs
+*Threat I · NFR-6, FR-ADM-5 · IT · P2*
+- **Objective:** Retention classes delete on schedule and legal hold prevents deletion.
+- **Prerequisites:** Data in each retention class with aged timestamps; a legal hold on one tenant's evidence.
+- **Steps:** Run retention jobs; set and release the hold; attempt manual deletion by an operator.
+- **Expected detection:** Job reports and hold records.
+- **Expected prevention:** Held data survives; operators cannot delete raw evidence.
+- **Logs:** `retention.executed`, `legalhold.set`.
+- **Pass/fail:** Pass if expired unheld data is deleted, held data remains, and deletion by an operator is denied.
+- **Residual risk:** Backups keep data until their own expiry.
+
+### TC-Z20 Decision replay
+*Threat none (functional) · NFR-7, FR-AUD-6 · IT · P1*
+- **Objective:** Any sampled decision is reproducible from the stored policy hash and input digest.
+- **Prerequisites:** Audit events from varied decisions (allow, deny, approval, quarantine); stored policy bundles by hash.
+- **Steps:** Sample decisions; re-evaluate with the stored bundle and input digest source data.
+- **Expected detection:** Any mismatch.
+- **Expected prevention:** n/a.
+- **Logs:** Replay report.
+- **Pass/fail:** Pass if 100 percent of sampled decisions replay to the same result.
+- **Residual risk:** Inputs not fully captured by the digest would block replay; treat as a defect.
+
+### TC-Z21 Accessibility audit of core dashboard flows
+*Threat none (non-functional) · NFR-10, FR-UI-7 · manual, IT · P2*
+- **Objective:** Core flows (login, approval, drift diff, inventory) meet WCAG 2.1 AA.
+- **Prerequisites:** Automated checker and manual review with keyboard and screen reader.
+- **Steps:** Run both on each core flow.
+- **Expected detection:** List of failures by criterion.
+- **Expected prevention:** n/a.
+- **Logs:** Accessibility report.
+- **Pass/fail:** Pass if no AA failure remains open in the core flows.
+- **Residual risk:** Non-core screens are checked later.
+
+### TC-Z22 Anchoring and full-chain rewrite detection
+*Threat X6, X8 · FR-AUD-4 · UT, IT · P2*
+- **Objective:** A consistent rewrite of the whole chain after an anchor is detected against the external anchor.
+- **Prerequisites:** 1,000 events; anchor created at event 500 in a separate store.
+- **Steps:** Rewrite events 501..1000 with consistent hashes; run the verifier with anchor comparison; separately rewrite events before the anchor.
+- **Expected detection:** Anchor mismatch reported; rewrite before the first anchor is not detectable (recorded as residual).
+- **Expected prevention:** The anchor store accepts writes only from the audit identity and cannot be altered by the database administrator role.
+- **Logs:** `anchor.created`, `audit.verify.failed`.
+- **Pass/fail:** Pass if rewrites after the anchor are detected and the anchor store rejects modification by other identities.
+- **Residual risk:** Rewrite window before the first anchor.
+
+### TC-Z23 Audit buffer full denies high-impact calls
+*Threat X8 · FR-AUD-7 · E2E · P2*
+- **Objective:** When audit events cannot be recorded or buffered, high-impact calls are denied and no events are silently dropped.
+- **Prerequisites:** Gateway with small local buffer; audit sink stopped.
+- **Steps:** Send low-impact and high-impact calls until the buffer fills; restore the sink.
+- **Expected detection:** Buffer alerts.
+- **Expected prevention:** Low-impact calls continue until capacity; high-impact calls are denied once full; after recovery buffered events are delivered in order.
+- **Logs:** `audit.buffer_full`, `authz.deny`.
+- **Pass/fail:** Pass if no event is lost, ordering is preserved and no high-impact call succeeds while the buffer is full.
+- **Residual risk:** Buffer sizing.
+
+### TC-Z24 Break-glass access controls
+*Threat X6, X8 · FR-ADM-6 · IT, DM · P2*
+- **Objective:** Break-glass access is sealed, dual-approved, recorded and cannot touch audit or raw evidence.
+- **Prerequisites:** Break-glass account sealed in the secrets manager; a second approver; session recording enabled.
+- **Steps:** Attempt use without ticket and approval; use with both; attempt to modify audit records and read raw evidence; check rotation after use.
+- **Expected detection:** High-severity event on every use.
+- **Expected prevention:** Unapproved use refused; audit modification and evidence access refused; credential rotated after use.
+- **Logs:** `breakglass.used`, `approval.granted`, `authz.deny`.
+- **Pass/fail:** Pass if each step behaves as stated and the session recording exists.
+- **Residual risk:** Insider with both approvals.
+
+### TC-Z25 Data classification labelling and inheritance
+*Threat I · FR-DATA-1/2/3/4 · IT, RT · P2*
+- **Objective:** Labels attach to registry items, default to Confidential, propagate to outputs and drive taint, DLP and approval decisions; downgrade needs a second person.
+- **Prerequisites:** Tools and data sources labelled Public, Internal, Confidential, Restricted and one unlabelled; a session reading each; an external-send tool.
+- **Steps:** Read an unlabelled source then call the external-send tool; read Public only then send; request a downgrade as requester and as another approver.
+- **Expected detection:** Label events and taint transitions.
+- **Expected prevention:** Unlabelled counts as Confidential and blocks send without approval; Public-only sessions are not tainted; downgrade by requester refused.
+- **Logs:** `classification.changed`, `authz.deny`, `approval.requested`.
+- **Pass/fail:** Pass if outcomes match the rules above and every label change is audited.
+- **Residual risk:** Wrong labels at source.
 
 ---
 
@@ -831,18 +1106,22 @@
 | I Exfiltration | I1–I4 | none (Phase 2) |
 | J Memory | J1–J2 | none (Phase 4) |
 | K Autonomy | K1–K3 | none (Phase 2) |
-| L Supply chain | L1–L3 | none (Phase 3/4) |
+| L Supply chain | L1–L4 | none (L4 Phase 2, L1/L2 Phase 4, L3 Phase 3) |
 | M Inter-agent | M1–M2 | none (Phase 4) |
 | N Model | N1–N2 | none (Phase 3/4) |
 | O Tool execution | O1–O3 | none (Phase 2) |
 | P Protocol | P1–P4 | none (Phase 2) |
-| X / Z | X2, X5, X6, X8, Z1–Z6 | Z2, Z5, Z6 |
+| X (added vectors) | X2, X5, X6, X8, X9–X13 | none (X2, X5, X10..X13 Phase 2; X6 Phase 3; X9 Phase 4; X8 Phase 5) |
+| Z (cross-cutting, functional, non-functional) | Z1–Z25 | Z2, Z5, Z6, Z7 (Z10, Z20 are Phase 1 but not MVP-gating) |
 
-Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6; AC-6 ← E4; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← G5.
+Phase totals: Phase 1 has 26 cases (19 MVP-gating), Phase 2 has 48, Phase 3 has 5, Phase 4 has 8, Phase 5 has 3 (total 90).
+
+Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6 (chain verification; Z22 adds anchoring in Phase 2); AC-6 ← E4, Z7; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← G5.
 
 ## 21. Open items
-- Several cases assume capabilities marked **[VERIFY]** in the spec (DPoP/mTLS binding, token exchange); record the actual IdP mode in every run (TC-G1).
+- Several cases assume capabilities marked **[VERIFY]** in the spec (DPoP/mTLS binding, token exchange); record the actual IdP mode in every run (TC-G1). Search-verified background: Keycloak supports DPoP from 26.4 and its token exchange V2 is limited to internal-to-internal use (`docs/tech-evaluation.md` verification log).
 - Event names are provisional until the audit schema exists (definition: `Plan/architecture.md` Section 4.8).
-- Requirements without a dedicated case yet: FR-SCAN-9 (re-scan on rule-set update), FR-AUD-7 (audit buffer full), FR-ADM-6 (break-glass). FR-ID-7 and FR-AUTO-5 are covered by extensions of TC-G1 and TC-K2.
-- Benchmark corpora for detectors (spec Section 10) are not defined yet; cases A1–A5 and D1–D5 need a labelled corpus for precision/recall, beyond single examples.
+- Requirements covered only through control-level test lists, not by a case of their own, are tracked in `docs/reviewgap.md` (B2).
+- Benchmark corpora for detectors (spec Section 10) are not defined yet; cases A1–A5, D1–D5, X10 and X12 need a labelled corpus for precision/recall, beyond single examples.
+- Non-functional cases Z14..Z21 need the reference environment and workload definition (gap D6 in `docs/reviewgap.md`).
 - Execution has not happened: all pass/fail criteria are proposals to be refined once fixtures exist.

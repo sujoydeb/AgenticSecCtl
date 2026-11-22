@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft for review) |
-| Depends on | `functional-spec.md` v0.3 (FR/NFR IDs referenced below) |
-| Companion | `threat-model.md` v0.2; `../docs/testing/cases.md` v0.2; `../docs/runbooks/operational-runbook.md` v0.2; `../docs/tech-evaluation.md` v0.1 |
+| Version | 0.3 (draft for review) |
+| Depends on | `functional-spec.md` v0.4 (FR/NFR IDs referenced below) |
+| Companion | `threat-model.md` v0.3; `../docs/testing/cases.md` v0.3; `../docs/runbooks/operational-runbook.md` v0.2; `../docs/tech-evaluation.md` v0.2 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
 ## 1. Architectural principles
@@ -130,7 +130,7 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Reuse:** SBOM and vulnerability scanning via existing tools (Syft/Grype/Trivy/OSV-Scanner) **[VERIFY licences and current features]**; existing MCP scanners are evaluated as rule or corpus sources **[VERIFY]**.
 
 ### 4.6 Identity and token broker
-- **Responsibility:** agent registration, OAuth client lifecycle, upstream credentials for servers, token exchange to mint audience-bound tokens, revocation list distribution. Lookup failure is treated as deny by the gateway (FR-ID-7).
+- **Responsibility:** agent registration, OAuth client lifecycle, upstream credentials for servers, token exchange to mint audience-bound tokens, revocation list distribution. Lookup failure is treated as deny by the gateway (FR-ID-7). Client registration (dynamic or metadata-document based) is disabled unless a tenant enables it with approval, allowlists and rate limits, and new clients start unapproved (FR-AUTHN-7).
 - **Interfaces:** OIDC/OAuth 2.x with the enterprise IdP; secrets manager (Vault or cloud KMS/Secrets Manager) **[VERIFY]**.
 - **Constraint:** gateway holds no long-lived upstream secrets in memory; it requests short-lived credentials per call or per session (FR-AUTHN-3, NFR-9).
 - **Dependency risk:** DPoP/mTLS binding and token exchange depend on the chosen IdP **[VERIFY]**. Fallback: short-lived tokens with mTLS between agent and gateway.
@@ -140,13 +140,15 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Tiering:** Tier 1 deterministic (regex, structure parsing, checksum, entropy, allowlisted markup rules), inline, budget < 5 ms for typical payloads. Tier 2 small local model, async or sampled. Tier 3 LLM, escalation only, advisory.
 - **Parsing:** HTML, JSON and markdown are parsed (not just regex) to expose hidden elements, comments, attributes, alt text, link targets, image URLs.
 - **DLP reuse:** Microsoft Presidio and secret-scanning libraries as detectors **[VERIFY]**; custom code is limited to tenant policy, Luhn/checksum validation wrappers and redaction.
-- **Implements:** FR-RT-4..6, FR-RT-11.
+- **Non-text content and errors:** images, documents and audio are labelled untrusted, type and size limited, and passed through extraction and the same inspection as text, or blocked for sessions holding sensitive data (FR-RT-12); server error payloads are inspected like responses and platform errors use fixed catalogue text (FR-RT-13).
+- **Data classification:** the label of the data a call touches (FR-DATA-3) is an input to DLP policy, the taint rule and the high-impact definition.
+- **Implements:** FR-RT-4..6, FR-RT-11..13, FR-DATA-3.
 
 ### 4.8 Audit and evidence service
 - **Responsibility:** receive events from all services via outbox; compute hash chain; store digests and redacted excerpts; send raw evidence to vault; export to SIEM; anchor chain heads.
 - **Chain:** `hash_n = SHA-256(hash_{n-1} || canonical(event_n))`; heads anchored on a schedule to object-lock storage or an external timestamping service (FR-AUD-4). The chain alone is tamper-evident, not tamper-proof; anchoring defends against a privileged DB actor rewriting history.
 - **Implements:** FR-AUD-*, FR-IR-3.
-- **Audit event vocabulary (provisional; single definition, referenced by the test catalogue and runbook):** `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`. Names are confirmed when the audit schema is built; changes must be mirrored in `docs/testing/cases.md` and the runbook.
+- **Audit event vocabulary (provisional; single definition, referenced by the test catalogue and runbook):** `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`, `anchor.created`, `audit.buffer_full`, `breakglass.used`, `card.rejected`, `classification.changed`, `client.registered`, `client.denied`, `config.changed`, `content.blocked`, `legalhold.set`, `notification.failed`, `retention.executed`, `scan.timeout`. Names are confirmed when the audit schema is built; changes must be mirrored in `docs/testing/cases.md` and the runbook.
 
 ### 4.9 Behavior analytics and incident manager
 - MVP/Phase 2: threshold rules over audit stream (FR-BEH-1). Phase 4: per-agent baselines (FR-BEH-2).
@@ -393,30 +395,32 @@ Controls:
 
 | Component | Primary requirements |
 |---|---|
-| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-RT-1..11, FR-AUTO-1..4, FR-ID-7, FR-AUD-7, Section 4.12 |
+| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-RT-1..13, FR-AUTO-1..4, FR-ID-7, FR-ID-8, FR-DATA-3, FR-AUD-7, Section 4.12 |
 | PDP | FR-AUTHZ-1..5, FR-POL-* |
 | Egress/SSRF | FR-SSRF-1..5, FR-RT-7 |
-| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-* (incl. FR-ADM-6 break-glass), FR-AUTO-5, FR-UI-* |
-| Scanner | FR-SCAN-* (incl. FR-SCAN-9), FR-SUP-2 |
-| Broker | FR-AUTHN-2/3/6, FR-ID-3, FR-ID-7 |
-| Inspection | FR-RT-4..6, FR-RT-11, FR-MEM-2 |
+| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-* (incl. FR-ADM-6 break-glass), FR-AUTO-5, FR-DATA-1/2/4, FR-UI-* |
+| Scanner | FR-SCAN-* (incl. FR-SCAN-9, FR-SCAN-10), FR-SUP-2 |
+| Broker | FR-AUTHN-2/3/6/7, FR-ID-3, FR-ID-7 |
+| Inspection | FR-RT-4..6, FR-RT-11..13, FR-DATA-3, FR-MEM-2 |
 | Audit/evidence | FR-AUD-* (incl. FR-AUD-7), FR-IR-3, FR-COMP-4 |
 | Incident/analytics | FR-BEH-*, FR-IR-* |
 | Discovery | FR-INV-5/7 |
 | Compliance | FR-COMP-* |
-| Platform | FR-OBS-*, FR-EXEC-1, FR-SUP-1, NFR-* |
+| Platform | FR-OBS-*, FR-EXEC-1, FR-SUP-1 (platform images, P2), FR-SUP-4 (server fleet, P4), NFR-* |
 
-## 12. Architecture decision records (open)
+## 12. Architecture decision records
 
-| ADR | Question | Options | Needed by |
-|---|---|---|---|
-| ADR-1 | Build the gateway vs extend an open-source MCP gateway | Custom FastAPI / extend existing / Envoy-based | Before Phase 2 |
-| ADR-2 | IdP and sender-constrained token support | Keycloak/Okta/Entra with DPoP or mTLS | Before Phase 2 |
-| ADR-3 | Approval channel | Dashboard only / ServiceNow / Slack | Before Phase 1 UI freeze |
-| ADR-4 | Tenancy model | Single tenant per deployment / shared multi-tenant | Before Phase 1 schema freeze |
-| ADR-5 | Stdio server handling | Managed wrapper / sidecar / unsupported | Phase 2 |
-| ADR-6 | Policy language | Rego (default) vs Cedar | Before Phase 1 policies |
-| ADR-7 | Audit anchoring target | Object-lock bucket / external timestamping | Phase 2 |
+All seven records are **open**. The right-hand column is a proposal awaiting approval by the named owners (security architect and product owner); it is not a decision. Verified facts behind the proposals are in the verification log of `docs/tech-evaluation.md`.
+
+| ADR | Question | Options | Needed by | Proposed resolution (pending approval) |
+|---|---|---|---|---|
+| ADR-1 | Build the gateway vs extend an open-source MCP gateway | Custom FastAPI / extend existing / Envoy-based | Before Phase 2 | Custom thin gateway for the MVP (list filtering and hash-pinned allow or deny only); choose the Phase 2 base after spike S1. Candidates verified to exist: agentgateway (Apache-2.0, Linux Foundation), IBM ContextForge (Apache-2.0), Docker MCP Gateway (MIT, container-based), Envoy AI Gateway (MCP support since v0.4) |
+| ADR-2 | IdP and sender-constrained token support | Keycloak/Okta/Entra with DPoP or mTLS | Before Phase 2 | Keycloak for development (DPoP supported from 26.4; token exchange V2 only internal-to-internal; DPoP-bound subject tokens differ by version). Production IdP chosen after spike S2 against the customer's candidate; fallback is short-lived tokens with mTLS |
+| ADR-3 | Approval channel | Dashboard only / ServiceNow / Slack | Before Phase 1 UI freeze | Dashboard approval queue in the MVP, bound to argument hash; webhook adapters for ticketing and chat later, with step-up authentication |
+| ADR-4 | Tenancy model | Single tenant per deployment / shared multi-tenant | Before Phase 1 schema freeze | Shared multi-tenant: tenant ID on every row, PostgreSQL row-level security, per-tenant policy bundles; dedicated database or cluster models stay available later (see `docs/data-model.md`) |
+| ADR-5 | Stdio server handling | Managed wrapper / sidecar / unsupported | Phase 2 | Managed wrapper that runs the stdio server and enforces the gateway pipeline; the MCP revision 2026-07-28 expects stdio servers to take credentials from the environment, so the wrapper brokers short-lived credentials |
+| ADR-6 | Policy language | Rego (default) vs Cedar | Before Phase 1 policies | Rego on OPA (a graduated CNCF project; licence to be confirmed from the repository) |
+| ADR-7 | Audit anchoring target | Object-lock bucket / external timestamping | Phase 2 | Object-lock storage in a separate account, with external timestamping evaluated in spike S6 |
 
 ## 13. Known architectural weaknesses (accepted or mitigated)
 

@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft for review) |
+| Version | 0.3 (draft for review) |
 | Status | Proposal; no stakeholder has signed off |
-| Depends on | `Plan/functional-spec.md` v0.3 (detailed requirements), `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/tech-evaluation.md` v0.1 (mostly unverified), `docs/runbooks/operational-runbook.md` v0.2 |
+| Depends on | `Plan/functional-spec.md` v0.4 (detailed requirements), `Plan/architecture.md` v0.3, `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3, `docs/tech-evaluation.md` v0.2 (mostly unverified), `docs/runbooks/operational-runbook.md` v0.2 |
 | Owner | To be assigned (product); security architecture owner to be assigned |
 | Scope of this document | *Why* and *for whom*, scope, priorities, release plan and success measures. Requirement-level detail lives in the functional spec and is referenced by ID, not repeated. |
 
@@ -171,7 +171,7 @@ Pricing, packaging and commercial go-to-market are not covered; the document ass
 - Requirements: `Plan/functional-spec.md` (FR/NFR/AC IDs).
 - Threats and controls: `Plan/threat-model.md`.
 - Components and sequences: `Plan/architecture.md`.
-- Verification: `docs/testing/cases.md` (65 TC-* cases; MVP set in its Section 20).
+- Verification: `docs/testing/cases.md` (90 TC-* cases; MVP set in its Section 20).
 - Operations: `docs/runbooks/operational-runbook.md` (design-stage draft).
 - Audit event vocabulary: `Plan/architecture.md` Section 4.8.
 - Technology choices and unverified claims: `docs/tech-evaluation.md`.

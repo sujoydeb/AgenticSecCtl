@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.2 (design-stage draft) |
 | Status | **Written before any implementation exists.** Procedures describe intended operations. Commands, endpoints, metric names, alert names and thresholds are placeholders marked `[TBD]` and must be replaced with real ones when the services are built, then validated in a game day (Section 14). |
-| Depends on | `Plan/architecture.md` v0.2 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.3 (FR/NFR IDs), `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2 |
+| Depends on | `Plan/architecture.md` v0.3 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.4 (FR/NFR IDs), `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3 |
 | Audience | Platform operators, on-call engineers, security engineers, incident responders |
 | Out of scope | Security incident handling steps beyond first containment: see `docs/playbooks/incident-response-playbooks.md`. Application-level agent debugging. |
 

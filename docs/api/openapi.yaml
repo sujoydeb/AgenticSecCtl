@@ -1,0 +1,416 @@
+# DRAFT OpenAPI 3.1 outline for the AgenticSecCtl management API.
+# Not validated with an OpenAPI tool and not implemented. Paths, fields and enums may change at schema freeze.
+# Human-readable mapping to requirements, roles and audit events: docs/api-specification.md.
+openapi: 3.1.0
+info:
+  title: AgenticSecCtl Management API
+  version: 0.1.0-draft
+  description: Registry, approvals, findings, incidents, audit and governance. Gateway-facing hot paths are internal and not part of this document.
+servers:
+  - url: https://api.example.invalid/v1
+security:
+  - oidc: []
+tags:
+  - name: registry
+  - name: approvals
+  - name: security
+  - name: audit
+  - name: governance
+paths:
+  /agents:
+    get:
+      tags: [registry]
+      summary: List agents of the caller's tenant
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200': {description: Page of agents, content: {application/json: {schema: {$ref: '#/components/schemas/AgentPage'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [registry]
+      summary: Register an agent (starts pending; approval by a different user required)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/AgentCreate'}}}
+      responses:
+        '201': {description: Created, content: {application/json: {schema: {$ref: '#/components/schemas/Agent'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /agents/{agentId}:
+    parameters:
+      - {name: agentId, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [registry]
+      summary: Get an agent with effective permissions summary
+      responses:
+        '200': {description: Agent, content: {application/json: {schema: {$ref: '#/components/schemas/Agent'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /agents/{agentId}/suspension:
+    parameters:
+      - {name: agentId, in: path, required: true, schema: {type: string, format: uuid}}
+    put:
+      tags: [security]
+      summary: Suspend an agent (kill switch)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [reason], properties: {reason: {type: string}}}}}
+      responses:
+        '204': {description: Suspended; effective within 5 seconds}
+        default: {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [security]
+      summary: Resume an agent (approver must differ from the suspender unless an emergency policy applies)
+      responses:
+        '204': {description: Resumed}
+        default: {$ref: '#/components/responses/Problem'}
+  /servers:
+    get:
+      tags: [registry]
+      summary: List MCP servers
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200': {description: Page of servers, content: {application/json: {schema: {$ref: '#/components/schemas/ServerPage'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [registry]
+      summary: Register an MCP server (URL passes the SSRF guard before any connection)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ServerCreate'}}}
+      responses:
+        '201': {description: Created, content: {application/json: {schema: {$ref: '#/components/schemas/Server'}}}}
+        '422': {$ref: '#/components/responses/Problem'}
+        default: {$ref: '#/components/responses/Problem'}
+  /servers/{serverId}/imports:
+    parameters:
+      - {name: serverId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [registry]
+      summary: Import tools and start a scan (hardened importer)
+      responses:
+        '202': {description: Scan accepted, content: {application/json: {schema: {$ref: '#/components/schemas/Scan'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /tools/{toolId}:
+    parameters:
+      - {name: toolId, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [registry]
+      summary: Get a tool with current status and classification
+      responses:
+        '200': {description: Tool, content: {application/json: {schema: {$ref: '#/components/schemas/Tool'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /tools/{toolId}/versions:
+    parameters:
+      - {name: toolId, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      tags: [registry]
+      summary: Version history (immutable approved versions)
+      responses:
+        '200': {description: Versions, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/ToolVersion'}}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /tools/{toolId}/diff:
+    parameters:
+      - {name: toolId, in: path, required: true, schema: {type: string, format: uuid}}
+      - {name: from, in: query, required: true, schema: {type: integer}}
+      - {name: to, in: query, required: true, schema: {type: integer}}
+    get:
+      tags: [registry]
+      summary: Field-level diff between versions
+      responses:
+        '200': {description: Diff, content: {application/json: {schema: {type: object}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /tools/{toolId}/quarantine:
+    parameters:
+      - {name: toolId, in: path, required: true, schema: {type: string, format: uuid}}
+    put:
+      tags: [security]
+      summary: Quarantine a tool
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [reason], properties: {reason: {type: string}}}}}
+      responses:
+        '204': {description: Quarantined; effective within 5 seconds}
+        default: {$ref: '#/components/responses/Problem'}
+  /approvals:
+    get:
+      tags: [approvals]
+      summary: Approval queue
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+        - {name: status, in: query, schema: {type: string, enum: [pending, approved, rejected, expired]}}
+      responses:
+        '200': {description: Page of approvals, content: {application/json: {schema: {$ref: '#/components/schemas/ApprovalPage'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /approvals/{approvalId}/decision:
+    parameters:
+      - {name: approvalId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [approvals]
+      summary: Decide an approval (decider must differ from requester; enforced by the API)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Decision'}}}
+      responses:
+        '200': {description: Decision recorded, content: {application/json: {schema: {$ref: '#/components/schemas/Approval'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        default: {$ref: '#/components/responses/Problem'}
+  /findings:
+    get:
+      tags: [security]
+      summary: List findings
+      parameters:
+        - {name: severity, in: query, schema: {type: string, enum: [critical, high, medium, low, info]}}
+        - {name: status, in: query, schema: {type: string, enum: [open, accepted, fixed]}}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200': {description: Page of findings, content: {application/json: {schema: {type: object}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /grants:
+    post:
+      tags: [approvals]
+      summary: Request a just-in-time grant (TTL mandatory; approver differs from requester)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/GrantRequest'}}}
+      responses:
+        '201': {description: Grant request created, content: {application/json: {schema: {$ref: '#/components/schemas/Approval'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /incidents:
+    post:
+      tags: [security]
+      summary: Open an incident
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/IncidentCreate'}}}
+      responses:
+        '201': {description: Incident, content: {application/json: {schema: {$ref: '#/components/schemas/Incident'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /incidents/{incidentId}/containment:
+    parameters:
+      - {name: incidentId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [security]
+      summary: Containment action (quarantine, revoke, suspend) with evidence snapshot
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/Containment'}}}
+      responses:
+        '202': {description: Accepted; snapshot and effect within 5 seconds}
+        default: {$ref: '#/components/responses/Problem'}
+  /audit/events:
+    get:
+      tags: [audit]
+      summary: Query audit events (redacted excerpts only)
+      parameters:
+        - {name: subject_id, in: query, schema: {type: string}}
+        - {name: from, in: query, schema: {type: string, format: date-time}}
+        - {name: to, in: query, schema: {type: string, format: date-time}}
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/PageToken'
+      responses:
+        '200': {description: Page of audit events, content: {application/json: {schema: {type: object}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /audit/verification:
+    post:
+      tags: [audit]
+      summary: Verify the hash chain (and anchors) for a range
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, properties: {seq_from: {type: integer}, seq_to: {type: integer}}}}}
+      responses:
+        '200': {description: Verification result, content: {application/json: {schema: {$ref: '#/components/schemas/Verification'}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /classification-levels:
+    get:
+      tags: [governance]
+      summary: Data classification levels for the tenant
+      responses:
+        '200': {description: Levels, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/ClassificationLevel'}}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /evidence-packs:
+    post:
+      tags: [governance]
+      summary: Generate a signed evidence pack for a control and period
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [control_id, period_from, period_to], properties: {control_id: {type: string, pattern: '^CTL-[0-9]{2}$'}, period_from: {type: string, format: date}, period_to: {type: string, format: date}}}}}
+      responses:
+        '202': {description: Accepted}
+        default: {$ref: '#/components/responses/Problem'}
+  /health:
+    get:
+      tags: [governance]
+      summary: Liveness and dependency readiness (readiness fails when fail-closed guarantees cannot be honoured)
+      security: []
+      responses:
+        '200': {description: Healthy}
+        '503': {description: Not ready}
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://idp.example.invalid/.well-known/openid-configuration
+  parameters:
+    Limit: {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 200, default: 50}}
+    PageToken: {name: page_token, in: query, schema: {type: string}}
+    IdempotencyKey: {name: Idempotency-Key, in: header, required: true, schema: {type: string, maxLength: 128}}
+  responses:
+    Problem:
+      description: Error (RFC 9457 problem details; no secrets, stack traces or raw payloads)
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        correlation_id: {type: string}
+    ClassificationLevel:
+      type: object
+      properties:
+        name: {type: string}
+        rank: {type: integer}
+        description: {type: string}
+    AgentCreate:
+      type: object
+      required: [name, owner_user_id, environment, criticality]
+      properties:
+        name: {type: string}
+        owner_user_id: {type: string, format: uuid}
+        environment: {type: string, enum: [dev, staging, prod]}
+        criticality: {type: string, enum: [low, medium, high, critical]}
+        model_id: {type: string, format: uuid}
+    Agent:
+      allOf:
+        - $ref: '#/components/schemas/AgentCreate'
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            status: {type: string, enum: [pending, active, suspended, retired]}
+    AgentPage:
+      type: object
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Agent'}}
+        next_page_token: {type: string}
+    ServerCreate:
+      type: object
+      required: [namespace, url, transport, owner_user_id, environment, criticality]
+      properties:
+        namespace: {type: string}
+        url: {type: string, format: uri}
+        transport: {type: string, enum: [streamable_http, stdio_wrapper]}
+        owner_user_id: {type: string, format: uuid}
+        environment: {type: string}
+        criticality: {type: string}
+        classification_level: {type: string}
+        egress_allowlist: {type: array, items: {type: string}}
+    Server:
+      allOf:
+        - $ref: '#/components/schemas/ServerCreate'
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            status: {type: string, enum: [pending, approved, quarantined, retired]}
+    ServerPage:
+      type: object
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Server'}}
+        next_page_token: {type: string}
+    Tool:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        server_id: {type: string, format: uuid}
+        name: {type: string}
+        status: {type: string, enum: [pending, approved, quarantined, rejected]}
+        action_class: {type: string, enum: [read, write, execute, delete]}
+        classification_level: {type: string}
+        current_version: {type: integer}
+    ToolVersion:
+      type: object
+      properties:
+        version_no: {type: integer}
+        sha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+        approved_by: {type: string, format: uuid}
+        approved_at: {type: string, format: date-time}
+        scan_id: {type: string, format: uuid}
+    Scan:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        rule_set_version: {type: string}
+        risk_score: {type: integer, minimum: 0, maximum: 100}
+        status: {type: string}
+    Approval:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        subject_type: {type: string, enum: [tool_version, agent, grant, call]}
+        subject_id: {type: string}
+        arguments_hash: {type: string}
+        requested_by: {type: string, format: uuid}
+        status: {type: string, enum: [pending, approved, rejected, expired]}
+    ApprovalPage:
+      type: object
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Approval'}}
+        next_page_token: {type: string}
+    Decision:
+      type: object
+      required: [decision]
+      properties:
+        decision: {type: string, enum: [approve, reject]}
+        justification: {type: string}
+        acknowledged_findings: {type: array, items: {type: string}}
+    GrantRequest:
+      type: object
+      required: [agent_id, tool_id, action_classes, ttl_seconds, reason]
+      properties:
+        agent_id: {type: string, format: uuid}
+        tool_id: {type: string, format: uuid}
+        action_classes: {type: array, items: {type: string, enum: [read, write, execute, delete]}}
+        resource_pattern: {type: string}
+        ttl_seconds: {type: integer, minimum: 60}
+        reason: {type: string}
+    IncidentCreate:
+      type: object
+      required: [severity, summary]
+      properties:
+        severity: {type: string}
+        summary: {type: string}
+        assets: {type: array, items: {type: object}}
+    Incident:
+      allOf:
+        - $ref: '#/components/schemas/IncidentCreate'
+        - type: object
+          properties:
+            id: {type: string, format: uuid}
+            status: {type: string}
+    Containment:
+      type: object
+      required: [action, target_type, target_id]
+      properties:
+        action: {type: string, enum: [quarantine, revoke, suspend]}
+        target_type: {type: string, enum: [tool, server, agent, tenant]}
+        target_id: {type: string}
+    Verification:
+      type: object
+      properties:
+        ok: {type: boolean}
+        first_bad_seq: {type: integer}
+        anchor_checked: {type: boolean}

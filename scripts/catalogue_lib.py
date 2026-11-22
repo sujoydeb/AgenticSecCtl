@@ -144,6 +144,43 @@ def validate_structure(cat):
     return problems
 
 
+def _q(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def dump(cat, header_comment=""):
+    """Serialise a loaded catalogue back to the strict YAML subset (round-trips load())."""
+    o = []
+    if header_comment:
+        o += [ln for ln in header_comment.split("\n")]
+    for k, v in cat["meta"].items():
+        o.append(f"{k}: {_q(v)}")
+    for k, items in cat["lists"].items():
+        o.append(f"{k}:")
+        o += [f"  - {_q(i)}" for i in items]
+    o.append("controls:")
+    for c in cat["controls"]:
+        first = True
+        for f in ["id", "name", "type", "enforcement", "component", "objective", "how_it_works", "prevent",
+                  "detect", "respond", "recover", "parameters", "failure_behavior", "false_positives",
+                  "false_negatives", "bypass_scenarios", "residual_risk", "requirements", "threats", "tests",
+                  "evidence", "metrics", "depends_on", "owner_role", "phase", "status", "verify"]:
+            v = c[f]
+            lead = "  - " if first else "    "
+            if isinstance(v, list):
+                if first:
+                    raise CatalogueError("first field must be a scalar")
+                if not v:
+                    o.append(f"    {f}: []")
+                else:
+                    o.append(f"    {f}:")
+                    o += [f"      - {_q(i)}" for i in v]
+            else:
+                o.append(f"{lead}{f}: {_q(v)}")
+            first = False
+    return "\n".join(o) + "\n"
+
+
 def expand_ids(entries):
     """Expand ID entries with ranges, e.g. FR-DRIFT-1..7 or TC-A1..A5, into individual IDs."""
     out = []

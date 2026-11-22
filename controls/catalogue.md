@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set. |
-| Depends on | Plan/functional-spec.md v0.3, Plan/architecture.md v0.2, Plan/threat-model.md v0.2, docs/testing/cases.md v0.2, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.2 |
+| Depends on | Plan/functional-spec.md v0.4, Plan/architecture.md v0.3, Plan/threat-model.md v0.3, docs/testing/cases.md v0.3, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.3 |
 | Satisfies | FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here. |
 
 ## How to read this catalogue
@@ -43,20 +43,22 @@ A control is a platform capability that reduces a named threat. Each entry says 
 | [CTL-11](#ctl-11) | Argument guards, schema validation, execution sandboxing | P | deterministic | Gateway, platform | P2/P4 | Platform security |
 | [CTL-12](#ctl-12) | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | deterministic | Gateway, API | P2 | Security engineering |
 | [CTL-13](#ctl-13) | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | deterministic | Audit service | P1/P2 | Security operations / audit liaison |
-| [CTL-14](#ctl-14) | Security monitoring and alerting; platform observability | D | advisory | Analytics, observability | P2/P4 | Security operations |
+| [CTL-14](#ctl-14) | Security monitoring and alerting; platform observability | D | advisory | Analytics, observability | P1/P2/P4 | Security operations |
 | [CTL-15](#ctl-15) | Incident detection, containment, evidence preservation, reporting | R, V | human | Incident manager | P2/P3/P4 | Incident commander / security operations |
 | [CTL-16](#ctl-16) | Policy lifecycle: source control and review, signed bundles, shadow mode | P | hybrid | PDP, CI | P1/P3 | Security engineering |
-| [CTL-17](#ctl-17) | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | deterministic | CI, scanner, admission | P3/P4 | Platform security |
-| [CTL-18](#ctl-18) | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | deterministic | Gateway | P2 | Security engineering |
+| [CTL-17](#ctl-17) | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | deterministic | CI, scanner, admission | P2/P3/P4 | Platform security |
+| [CTL-18](#ctl-18) | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | deterministic | Gateway | P1/P2 | Security engineering |
 | [CTL-19](#ctl-19) | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | hybrid | Memory tools, Inspection | P4 | Security engineering |
 | [CTL-20](#ctl-20) | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | deterministic | Gateway, PDP | P4 | Security engineering |
-| [CTL-21](#ctl-21) | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | deterministic | Registry, Gateway | P3/P4 | AI governance / model owner |
+| [CTL-21](#ctl-21) | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | deterministic | Registry, Gateway | P2/P3/P4 | AI governance / model owner |
 | [CTL-22](#ctl-22) | Multi-tenancy, data residency and retention | P | deterministic | Platform | P2/P5 | Data protection / platform ops |
 | [CTL-23](#ctl-23) | Separation of duties, privileged and break-glass access | P, D | deterministic | API, IdP | P1/P2 | Security administration |
 | [CTL-24](#ctl-24) | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | deterministic | Platform | P1/P5 | Platform operations |
 | [CTL-25](#ctl-25) | Compliance evidence generation and framework mapping governance | D | hybrid | Compliance engine | P3 | Compliance liaison |
 | [CTL-26](#ctl-26) | Discovery and coverage reporting (known gaps) | D | advisory | Discovery | P2/P3 | Security engineering |
 | [CTL-27](#ctl-27) | Secure development and change management for the platform | P | hybrid | CI/CD, process | P1 onward | Engineering management / platform security |
+| [CTL-28](#ctl-28) | Fleet dashboard, approval workflow and notifications | P, D, R | human | Dashboard, API | P1/P2/P3 | Security engineering |
+| [CTL-29](#ctl-29) | Data classification and labelling | P, D | hybrid | Registry, Gateway, DLP | P1/P2 | Data protection / security engineering |
 
 ## CTL-01
 
@@ -151,6 +153,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 5. An optional classifier can only raise severity; it never lowers a deterministic finding and never approves.
 6. A reviewer who is not the owner approves; a Critical finding needs two distinct approvers and a justification with expiry.
 7. On a rule-set update approved tools are re-scanned; a Critical finding quarantines the tool and notifies, lower severities create review items.
+8. The scanner protects itself: input size and complexity caps, per-tenant queue quotas, and timeouts that leave a tool not approved, never approved; an evasion regression set runs on every rule-set or model update.
 
 **Prevent**
 
@@ -185,6 +188,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 - Paraphrased, multilingual or split-across-fields instructions that rules do not match.
 - A tool that is benign at review and changes later (see CTL-03).
+- Evasion between regression updates (homoglyphs, split or nested encodings).
 
 **Bypass scenarios**
 
@@ -193,11 +197,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Novel phrasing evades deterministic rules and the classifier is advisory, so the control reduces but does not remove tool poisoning (threat A). Detector quality budgets are in spec Section 10.
 
-**Requirements:** FR-SCAN-1..4, FR-SCAN-6, FR-SCAN-9, SoD-1, SoD-2
+**Requirements:** FR-SCAN-1..4, FR-SCAN-6, FR-SCAN-9, SoD-1, SoD-2, FR-SCAN-7, FR-SCAN-10
 
-**Threats:** A, X1, X6
+**Threats:** A, X1, X6, X12
 
-**Tests:** TC-A1..A5, TC-E4, TC-Z2
+**Tests:** TC-A1..A5, TC-E4, TC-Z2, TC-X12, TC-Z12
 
 **Depends on controls:** CTL-08, CTL-23
 
@@ -269,7 +273,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Hashing detects change, not malice; unchanged definitions can still behave badly (threat B, X7). Compensating controls are CTL-09 and behaviour baselines.
 
-**Requirements:** FR-DRIFT-1..7
+**Requirements:** FR-DRIFT-1..7, FR-RT-1
 
 **Threats:** A, B, X7
 
@@ -378,6 +382,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 4. Session IDs are unguessable, expire and are bound to the authenticated client; reuse by another client is rejected.
 5. The server certificate or JWKS is checked against the pin in the registry before data is sent.
 6. Logs, traces, errors and the UI redact tokens and secrets.
+7. Client registration is closed by default: dynamic client registration and client-metadata-document registration are enabled only per tenant with approval, allowlisted redirect URIs or metadata hosts, rate limits and an owner; new clients start unapproved.
 
 **Prevent**
 
@@ -416,11 +421,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** In fallback mode a stolen token is usable inside its lifetime (threat G); the test record states the mode used.
 
-**Requirements:** FR-AUTHN-1..6
+**Requirements:** FR-AUTHN-1..6, FR-AUTHN-7
 
-**Threats:** C, F, G
+**Threats:** C, F, G, X13
 
-**Tests:** TC-C2, TC-F2, TC-G1..G5
+**Tests:** TC-C2, TC-F2, TC-G1..G5, TC-X13
 
 **Depends on controls:** CTL-04
 
@@ -436,7 +441,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 - Share of tokens sender-constrained.
 - Secret-in-log findings (target 0).
 
-**Unverified claims.** MCP authorization requirements, DPoP/mTLS support and token exchange are unverified against the current MCP specification and IdP documentation.
+**Unverified claims.** MCP authorization requirements, DPoP/mTLS support and token exchange: search-verified background is in the verification log of docs/tech-evaluation.md (MCP revision 2026-07-28; Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only); section-level details and the production IdP remain unverified.
 
 ## CTL-06
 
@@ -677,6 +682,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 3. Tier 2 and 3 classifiers add advisory signals with confidence.
 4. Policy maps signals to an action: allow with label, redact, block, or quarantine the tool.
 5. Taint rule: after an untrusted read of sensitive data, write, execute and external-send tools are blocked in that session until approved.
+6. Non-text content (images, documents, audio) is labelled untrusted, limited by type and size, extracted for inspection and delivered only if policy allows; content that cannot be inspected is blocked for sessions holding sensitive data. Server error payloads are inspected like any response, and platform errors use fixed catalogue text.
 
 **Prevent**
 
@@ -710,6 +716,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 **False negatives**
 
 - Paraphrased, multilingual, image-embedded or split payloads.
+- Instructions in non-text forms that extraction cannot read.
 
 **Bypass scenarios**
 
@@ -718,13 +725,13 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Detection is probabilistic, so safety rests on CTL-07, CTL-08 and the taint rule (threat D, I). Residual risk is medium to high and cannot be removed.
 
-**Requirements:** FR-RT-4..5, FR-RT-9, FR-RT-11
+**Requirements:** FR-RT-4..5, FR-RT-9, FR-RT-11, FR-RT-12, FR-RT-13
 
-**Threats:** A, D, I
+**Threats:** A, D, I, X10, X11
 
-**Tests:** TC-D1..D5
+**Tests:** TC-D1..D5, TC-X10, TC-X11
 
-**Depends on controls:** CTL-07, CTL-08, CTL-13
+**Depends on controls:** CTL-07, CTL-08, CTL-13, CTL-29
 
 **Evidence required**
 
@@ -754,6 +761,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 2. Per-tenant policy maps matches to redact, block or alert, depending on agent clearance.
 3. Every request, cache entry, log and evidence record carries a tenant ID; database row-level security enforces separation even if application filters fail.
 4. Audit stores digests and redacted excerpts; raw evidence goes to an encrypted vault.
+5. Scan inputs go to an external classifier service only for tenants that opted in, and only tool definition text is sent; a self-hosted option is available (FR-SCAN-8).
 
 **Prevent**
 
@@ -792,13 +800,13 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Low-and-slow and encoded exfiltration remain possible (threat I); free-text PII needs per-tenant tuning.
 
-**Requirements:** FR-RT-6, FR-RT-8, FR-AUD-3
+**Requirements:** FR-RT-6, FR-RT-8, FR-AUD-3, FR-SCAN-8
 
 **Threats:** I
 
-**Tests:** TC-I1..I3, TC-G5
+**Tests:** TC-I1..I3, TC-G5, TC-Z13
 
-**Depends on controls:** CTL-08, CTL-22
+**Depends on controls:** CTL-08, CTL-22, CTL-29
 
 **Evidence required**
 
@@ -1015,11 +1023,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** The chain is tamper-evident, not tamper-proof; anchoring narrows but does not close the window (threat X6, X8).
 
-**Requirements:** FR-AUD-1..7
+**Requirements:** FR-AUD-1..7, NFR-7
 
 **Threats:** X5, X6, X8
 
-**Tests:** TC-Z6, TC-X5
+**Tests:** TC-Z6, TC-X5, TC-Z20, TC-Z22, TC-Z23
 
 **Evidence required**
 
@@ -1040,7 +1048,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Notice abuse and platform problems early through thresholds, baselines and service metrics.
 
-**Enforcement:** advisory · **Type:** D · **Component:** Analytics, observability · **Phase:** P2/P4 · **Owner (role):** Security operations · **Status:** specified
+**Enforcement:** advisory · **Type:** D · **Component:** Analytics, observability · **Phase:** P1/P2/P4 · **Owner (role):** Security operations · **Status:** specified
 
 **How it works**
 
@@ -1263,12 +1271,12 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep malicious or vulnerable packages, images, models and plugins out of the platform and the server fleet.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** CI, scanner, admission · **Phase:** P3/P4 · **Owner (role):** Platform security · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** CI, scanner, admission · **Phase:** P2/P3/P4 · **Owner (role):** Platform security · **Status:** specified
 
 **How it works**
 
 1. CI produces an SBOM for each build and scans dependencies and images for known vulnerabilities and secrets.
-2. Images are signed and referenced by digest; admission policy admits only signed, pinned images to server namespaces.
+2. Images are signed and referenced by digest; admission policy admits only signed, pinned images to the platform namespaces from Phase 2 (FR-SUP-1) and to the MCP server namespaces from Phase 4 (FR-SUP-4).
 3. Package names are checked against allowlists and known popular names for typosquatting.
 4. Third-party servers go through intake: SBOM, owner, licence and vulnerability status, before approval.
 5. Model artifact provenance is reported when supplied.
@@ -1309,11 +1317,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Unknown vulnerabilities and compromised upstream sources remain (threat L).
 
-**Requirements:** FR-SCAN-5, FR-SUP-1..3, FR-MOD-3, NFR-9
+**Requirements:** FR-SCAN-5, FR-SUP-1..4, FR-MOD-3, NFR-9
 
 **Threats:** L
 
-**Tests:** TC-L1..L3
+**Tests:** TC-L1..L3, TC-L4
 
 **Depends on controls:** CTL-27
 
@@ -1337,7 +1345,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Close protocol-level abuse paths that do not depend on tool descriptions.
 
-**Enforcement:** deterministic · **Type:** P · **Component:** Gateway · **Phase:** P2 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P · **Component:** Gateway · **Phase:** P1/P2 · **Owner (role):** Security engineering · **Status:** specified
 
 **How it works**
 
@@ -1488,6 +1496,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 2. Each call carries the delegation chain.
 3. The effective permission of a sub-agent is the intersection with the delegator's permission for that request.
 4. The gateway blocks cycles and chains deeper than the limit.
+5. Agent cards and discovery documents are untrusted input: advertised capabilities, endpoints and keys are verified against registry identity and pins before use, and unverified cards are not routed (FR-ID-8).
 
 **Prevent**
 
@@ -1518,6 +1527,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 **False negatives**
 
 - Cycles that pass through systems outside the gateway.
+- A forged card signed with a compromised genuine key.
 
 **Bypass scenarios**
 
@@ -1525,11 +1535,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Phase 4 capability; agent-to-agent protocols are still evolving (threat M).
 
-**Requirements:** FR-ID-4..6
+**Requirements:** FR-ID-4..6, FR-ID-8
 
-**Threats:** M, F
+**Threats:** M, F, X9
 
-**Tests:** TC-M1, TC-M2
+**Tests:** TC-M1, TC-M2, TC-X9
 
 **Depends on controls:** CTL-04, CTL-06
 
@@ -1551,7 +1561,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Detect or stop use of unapproved models and abuse of model endpoints.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry, Gateway · **Phase:** P3/P4 · **Owner (role):** AI governance / model owner · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry, Gateway · **Phase:** P2/P3/P4 · **Owner (role):** AI governance / model owner · **Status:** specified
 
 **How it works**
 
@@ -1669,7 +1679,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Threats:** I
 
-**Tests:** TC-I3
+**Tests:** TC-I3, TC-Z19
 
 **Depends on controls:** CTL-13
 
@@ -1741,7 +1751,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Threats:** E, X6, X8
 
-**Tests:** TC-E4, TC-X6, TC-X8
+**Tests:** TC-E4, TC-X6, TC-X8, TC-Z24
 
 **Depends on controls:** CTL-13
 
@@ -1809,11 +1819,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Availability impact on business agents; targets are unmeasured proposals.
 
-**Requirements:** FR-AUTHZ-8, FR-AUD-7, NFR-3..4
+**Requirements:** FR-AUTHZ-8, FR-AUD-7, NFR-3..4, NFR-1..2, NFR-5
 
 **Threats:** E, X8
 
-**Tests:** TC-Z5, TC-Z6
+**Tests:** TC-Z5, TC-Z6, TC-Z14, TC-Z15, TC-Z16, TC-Z17, TC-Z18
 
 **Depends on controls:** CTL-13
 
@@ -1980,6 +1990,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 2. Changes are classified as standard, security-relevant or emergency with matching approvals; security-relevant changes roll out via shadow mode and canary.
 3. Data plane and control plane use separate deployments and credentials; the gateway holds no long-lived upstream secrets.
 4. A dedicated penetration test covers the gateway and control plane.
+5. Platform configuration is declarative, validated at load, versioned and audited; invalid configuration is refused (FR-ADM-1).
 
 **Prevent**
 
@@ -2017,11 +2028,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Compromise of the gateway or control plane remains possible (threat X8); impact is limited by short-lived credentials and plane separation.
 
-**Requirements:** NFR-9
+**Requirements:** NFR-9, FR-ADM-1
 
 **Threats:** X8, L
 
-**Tests:** TC-L3, TC-X8
+**Tests:** TC-L3, TC-X8, TC-Z10
 
 **Evidence required**
 
@@ -2032,3 +2043,153 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 - Emergency changes per quarter.
 - Time to patch critical vulnerabilities.
+
+## CTL-28
+
+### Fleet dashboard, approval workflow and notifications
+
+**Objective.** Give people an accurate view of the fleet and a safe workflow for approvals, drift review and incidents, with notifications that do not block containment.
+
+**Enforcement:** human · **Type:** P, D, R · **Component:** Dashboard, API · **Phase:** P1/P2/P3 · **Owner (role):** Security engineering · **Status:** specified
+
+**How it works**
+
+1. The dashboard reads counts and relationships from the registry and audit data: agents, servers, tools, approved and unapproved, quarantined, findings, drift events, authentication failures, blocked operations, leakage attempts and incidents.
+2. Drill-down opens agent, server and tool pages with owner, environment, criticality, version history, scan evidence and permissions; a relationship graph links agent, model, server, tool, data source and enterprise system.
+3. The approval queue shows the diff and evidence for each request; the API enforces that the requester cannot approve, whatever the UI shows.
+4. Excessive-permission and compliance posture views are generated from the same data, with evidence-support wording and mandatory, guidance and voluntary items shown separately.
+5. Notifications go to per-tenant channels (email, webhook); delivery failures are retried and reported, and never delay containment actions.
+
+**Prevent**
+
+- Self-approval and approval without seeing the diff and evidence.
+
+**Detect**
+
+- Operational views surface denials, blocked operations and leakage attempts; stale counters are visible by age.
+
+**Respond**
+
+- Reviewers quarantine, reject or approve from the queue; incident links open the incident workflow (CTL-15).
+
+**Recover**
+
+- Re-approval of a corrected version from the same queue.
+
+**Parameters**
+
+- Approval timeout: to be set.
+- Maximum counter staleness shown in the UI: to be set.
+- Notification retry policy: to be set.
+
+**Failure behaviour.** Dashboard or notification failure does not change enforcement; the API and break-glass path remain available for containment.
+
+**False positives**
+
+- Counters that lag the audit data suggest a problem that does not exist.
+
+**False negatives**
+
+- Alerts or approvals that never reach a human because a notification channel failed silently (mitigated by failure reporting).
+
+**Bypass scenarios**
+
+- Approver fatigue and rubber-stamping.
+- Misleading approval summaries.
+
+**Residual risk.** Human approval quality depends on what the approver sees and on attention; approval content and step-up authentication need explicit design (gap H4 in docs/reviewgap.md).
+
+**Requirements:** FR-UI-1..6, FR-ADM-3, NFR-10
+
+**Threats:** E, X6, X2
+
+**Tests:** TC-Z7, TC-Z8, TC-Z9, TC-Z11, TC-Z21
+
+**Depends on controls:** CTL-13, CTL-23, CTL-26
+
+**Evidence required**
+
+- Dashboard test results against seeded data.
+- Approval records with approver identity and displayed diff reference.
+- Notification delivery and failure logs.
+
+**Metrics (KPI/KRI)**
+
+- Median time from drift or request to decision.
+- Notification failures per week.
+- Approvals completed in under 10 seconds (rubber-stamp indicator).
+
+## CTL-29
+
+### Data classification and labelling
+
+**Objective.** Make sensitivity explicit so that DLP, the taint rule and the high-impact definition act on the same labels.
+
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Registry, Gateway, DLP · **Phase:** P1/P2 · **Owner (role):** Data protection / security engineering · **Status:** specified
+
+**How it works**
+
+1. Ordered classification levels are defined per tenant (default Public, Internal, Confidential, Restricted), each with a written meaning.
+2. Owners assign a label to every tool, resource and data source in the registry and the approver confirms it; unlabelled items are treated as Confidential.
+3. At run time the gateway gives each tool output and session the highest label of the data it contains or comes from.
+4. Sensitive (Confidential or above) sessions trigger the taint rule, stricter DLP policy and the high-impact definition for external sends.
+5. Every label and every change is audited; lowering a label needs an approver other than the requester.
+
+**Prevent**
+
+- Unlabelled or mislabelled data does not silently become less restricted; downgrades need a second person.
+
+**Detect**
+
+- Label changes and taint transitions in the audit log; items without owner labels in reports.
+
+**Respond**
+
+- Relabel upward and re-run affected reviews when a leak shows a label was too low.
+
+**Recover**
+
+- Recompute labels for affected sessions and outputs.
+
+**Parameters**
+
+- Default levels: Public, Internal, Confidential, Restricted (proposed, pending approval).
+- Default for unlabelled items: Confidential.
+
+**Failure behaviour.** Missing or unreadable label: treat as Confidential.
+
+**False positives**
+
+- Over-labelled data blocks legitimate sends and raises approval volume.
+
+**False negatives**
+
+- Data labelled too low at the source; derived content that inherits no label.
+
+**Bypass scenarios**
+
+- Owners labelling everything Public to avoid friction; data copied through tools that do not carry labels.
+
+**Residual risk.** Label quality depends on owners and reviews (threat I); DLP content detection remains the backstop.
+
+**Requirements:** FR-DATA-1..4
+
+**Threats:** I, D
+
+**Tests:** TC-Z25, TC-I1, TC-D5
+
+**Depends on controls:** CTL-06, CTL-07, CTL-10, CTL-13
+
+**Evidence required**
+
+- Classification model document and per-tenant configuration.
+- Label assignment and change records.
+- Test results for inheritance and downgrade rules.
+
+**Metrics (KPI/KRI)**
+
+- Share of registry items with an owner-assigned label.
+- Downgrades per month and who approved them.
+- Sends blocked or approved because of labels.
+
+**Unverified claims.** The level names and the Confidential default are proposals pending approval.

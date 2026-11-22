@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (planning draft; estimates are not validated by engineering) |
-| Depends on | `docs/prd.md` v0.2 (Section 8 release plan), `Plan/functional-spec.md` v0.3 (phase tags on every requirement), `Plan/architecture.md` v0.2 (ADRs, Section 12), `controls/catalogue.md` v0.1 (control phases), `docs/testing/cases.md` v0.2 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/tech-evaluation.md` v0.1 (spikes S1..S6) |
+| Version | 0.2 (planning draft; estimates are not validated by engineering) |
+| Depends on | `docs/prd.md` v0.3 (Section 8 release plan), `Plan/functional-spec.md` v0.4 (phase tags on every requirement), `Plan/architecture.md` v0.3 (ADRs, Section 12), `controls/catalogue.md` v0.2 (control phases), `docs/testing/cases.md` v0.3 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.2, `docs/ci-cd-pipeline.md` v0.2, `docs/tech-evaluation.md` v0.2 (spikes S1..S6) |
 | Purpose | Turn the five phases into a plan with deliverables, dependencies, effort, acceptance criteria, risks and go/no-go gates, with requirements, controls and tests allocated to phases. |
 | Honesty note | Durations come from the original design plan and assume 2 to 3 engineers. Nothing has been estimated bottom-up and no team exists yet. Treat all numbers as planning ranges to be re-baselined after Phase 0 spikes and again after Phase 1. |
 
@@ -20,11 +20,11 @@
 | Phase | Theme | Est. duration | Starts when | Requirements by phase tag (M = must) | Controls (first phase) | Test cases by phase |
 |---|---|---|---|---|---|---|
 | 0 | Design completion | 3 to 4 weeks (largely done, not signed off) | Now | n/a | n/a | n/a |
-| 1 | MVP | 8 to 10 weeks | Phase 0 sign-off; ADR-3, ADR-4, ADR-6 decided | 39 FRs, all M | CTL-01..06, 08, 13, 16, 23, 24, 27 (12) | 23 (18 are MVP-gating) |
-| 2 | Runtime protection | 10 to 12 weeks | Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided; spikes S1..S4 done | 40 FRs (26 M) plus 12 MCP lifecycle rows | CTL-07, 09..12, 14, 15, 18, 22, 26 (10) | 31 |
-| 3 | Enterprise governance | about 8 weeks | Phase 2 exit; legal/compliance reviewers named; framework IDs verified | 18 FRs (4 M) | CTL-17, 21, 25 (3) | 3 |
-| 4 | Advanced threat protection | about 12 weeks | Phase 3 exit | 17 FRs (1 M) | CTL-19, 20 (2) | 7 |
-| 5 | Enterprise production | 12+ weeks, open-ended | Phase 4 exit (parts can start earlier, see 3) | 1 FR (FR-ADM-4) plus NFR-3..5, 8 | Completion of CTL-22, 24 | 1 |
+| 1 | MVP | 8 to 10 weeks | Phase 0 sign-off; ADR-3, ADR-4, ADR-6 decided | 41 FRs, all M | CTL-01..06, 08, 13, 14, 16, 18, 23, 24, 27, 28, 29 (16) | 26 (19 are MVP-gating) |
+| 2 | Runtime protection | 10 to 12 weeks | Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided; spikes S1..S4 done | 47 FRs (31 M) plus 12 MCP lifecycle rows | CTL-07, 09..12, 15, 17, 21, 22, 26 (10) | 48 |
+| 3 | Enterprise governance | about 8 weeks | Phase 2 exit; legal/compliance reviewers named; framework IDs verified | 18 FRs (4 M) | CTL-25 (1) | 5 |
+| 4 | Advanced threat protection | about 12 weeks | Phase 3 exit | 18 FRs (1 M) | CTL-19, 20 (2) | 8 |
+| 5 | Enterprise production | 12+ weeks, open-ended | Phase 4 exit (parts can start earlier, see 3) | 1 FR (FR-ADM-4) plus NFR-3..5, 8 | Completion of CTL-22, 24 | 3 |
 
 Totals: Phases 1 to 5 add up to roughly 50 to 54 weeks if run strictly in sequence, before Phase 5's open-ended items and before the Phase 0 spikes. Overlap (Section 3) can shorten the elapsed time at the cost of a larger team.
 
@@ -75,7 +75,7 @@ The spikes S1..S6 total about 8 weeks of effort if run one after another (2+1+1+
 
 ## 5. Phase 0: design completion (in progress)
 
-Done (drafts, unreviewed): functional specification v0.3 and HTML, architecture v0.2, threat model v0.2, test catalogue (65 cases), technology evaluation (mostly unverified), PRD, operational runbook, incident playbooks, compliance matrix, control catalogue, CI/CD pipeline design, deployment architecture, this roadmap; a repository scaffold, consistency checker and generators.
+Done (drafts, unreviewed): functional specification v0.4 and HTML, architecture v0.3, threat model v0.3, test catalogue (90 cases), technology evaluation (partly verified), architecture assessment, data model, API specification, governance templates, review gap register, PRD, operational runbook, incident playbooks, compliance matrix, control catalogue, CI/CD pipeline design, deployment architecture, this roadmap; a repository scaffold, consistency checker and generators.
 
 Remaining exit criteria:
 1. Review by security, architecture and compliance owners, with named owners and dates.
@@ -101,7 +101,8 @@ Remaining exit criteria:
 - SSRF guard library used by registration, import and scanner (FR-SSRF-1..5).
 - Audit chain with verification endpoint/CLI (FR-AUD-1, 2, 6), log redaction (FR-AUTHN-6, FR-OBS-1).
 - Dashboard: counters, drill-down, approval queue, OIDC login with RBAC (FR-UI-1..3, 7).
-- End-to-end test harness and the 18 MVP test cases.
+- End-to-end test harness and the 19 MVP test cases.
+- Data classification labels on registry items with the Confidential default (FR-DATA-1..2).
 
 **Dependencies.** Phase 0 exit; ADR-3, ADR-4, ADR-6; Keycloak (or equivalent) for development; S5 results for scanner design.
 
@@ -109,7 +110,7 @@ Remaining exit criteria:
 
 **Acceptance criteria**
 - AC-1..AC-9 pass (spec Section 11) with the mapped cases.
-- The 18 MVP test cases pass: TC-A1, A2, A3, B1, B2, C1, C3, E1, E4, F1, G5, H1, H2, H3, H4, Z2, Z5, Z6. The other five Phase 1 cases (TC-A4, A5, B3, F2, G2) pass or have recorded exceptions.
+- The 19 MVP test cases pass: TC-A1, A2, A3, B1, B2, C1, C3, E1, E4, F1, G5, H1, H2, H3, H4, Z2, Z5, Z6, Z7. The other seven Phase 1 cases (TC-A4, A5, B3, F2, G2, Z10, Z20) pass or have recorded exceptions.
 - Scanner detection on the benchmark corpus is measured and reported against the 95% recall / 90% precision targets, even if not yet met.
 - CI gates run clean on the repository (no secret findings; dependencies scanned).
 - No Critical or High finding open from the team's own SAST/dependency checks without a recorded waiver.
@@ -129,7 +130,7 @@ Remaining exit criteria:
 **Goal.** The gateway enforces the full interceptor pipeline on real traffic with measured latency, and the platform can be deployed on Kubernetes with the network and identity controls from the deployment architecture.
 
 **Deliverables**
-- Full pipeline (architecture Section 5): authentication hardening, server identity validation, argument guards, limits and loops, response inspection with untrusted labelling and taint rule, DLP, approval gate (FR-AUTHN-2..5, FR-DRIFT-7, FR-RT-2..11, FR-AUTO-1..5).
+- Full pipeline (architecture Section 5): authentication hardening, server identity validation, argument guards, limits and loops, response inspection with untrusted labelling and taint rule, DLP, approval gate (FR-AUTHN-2..5, 7, FR-DRIFT-7, FR-RT-2..13, FR-DATA-3..4, FR-SCAN-10, FR-SUP-1, FR-AUTO-1..5).
 - JIT grants and bound approvals; break-glass (FR-AUTHZ-4..5, FR-ADM-6, FR-ID-3, FR-ID-7).
 - MCP lifecycle controls: version allowlist, sampling and elicitation default-deny, roots, notifications, resources, prompts (spec Section 4.12; CTL-18).
 - Egress proxy and network policy; Kubernetes environments, admission baseline, sandbox pool design (deployment architecture); CI stages 2 to 4 (build, SBOM, scan, sign, promote).
@@ -140,7 +141,7 @@ Remaining exit criteria:
 **Dependencies.** Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided from spikes S1..S4, S6; detector corpora available for shadow mode.
 
 **Acceptance criteria**
-- All 31 Phase 2 test cases pass, in addition to the Phase 1 set (no regression).
+- All 48 Phase 2 test cases pass, in addition to the Phase 1 set (no regression).
 - NFR-1/2 met in the load test on the reference setup (p95 at most 25 ms, p99 at most 60 ms on the deterministic path at 1,000 requests per second per instance; inline classifier at most 150 ms p95 or asynchronous); results published with method.
 - Deployment criteria DA-1..DA-9 pass in staging (DA-5 pending a dedicated test case).
 - Shadow-mode false-block rate at most 0.5% of benign calls for the injection and DLP detectors before enforcement is enabled.
@@ -169,7 +170,7 @@ Remaining exit criteria:
 **Acceptance criteria**
 - An auditor (internal or external) reviews a generated evidence pack for a chosen control and period and records findings; pack hashes verify.
 - Compliance matrix reviewed and released with reviewer names and dates (FR-COMP-5); every mapping is labelled mandatory, guidance or voluntary.
-- Phase 3 test cases pass: TC-L3, N2, X6; the gap cases without dedicated tests (FR-SCAN-9, FR-AUD-7, FR-ADM-6) have cases added and passing.
+- All 5 Phase 3 test cases pass: TC-L3, N2, X6, Z9, Z12.
 - Policy changes in staging pass through shadow mode with a recorded comparison before enforcement.
 
 **Risks and mitigations**
@@ -184,7 +185,7 @@ Remaining exit criteria:
 **Deliverables**
 - Memory and RAG integrity (FR-MEM-1..4) and model endpoint protection (FR-MOD-2..3).
 - Behaviour baselines and anomaly scoring with explanations (FR-BEH-2); response-shape baselines for drift (FR-DRIFT-6).
-- Supply chain: SBOM and vulnerability scanning of server artifacts, signing and admission enforcement for the fleet, typosquat checks (FR-SCAN-5, FR-SUP-1..2).
+- Supply chain: SBOM and vulnerability scanning of server artifacts, signing and admission enforcement for the server fleet, typosquat checks (FR-SCAN-5, FR-SUP-2, FR-SUP-4); agent-card verification (FR-ID-8).
 - Tool execution hardening: sandbox profiles and upload checks (FR-EXEC-1..2).
 - Inter-agent security: authenticated delegation, intersection of permissions, cycle and depth limits (FR-ID-4..6).
 - Playbook automation with approval gates (FR-IR-4).
@@ -192,7 +193,7 @@ Remaining exit criteria:
 **Dependencies.** Phase 3 exit; measured detector data from Phase 2 for baselines; sandbox runtime decision; stable view of agent-to-agent protocols.
 
 **Acceptance criteria**
-- All 7 Phase 4 test cases pass: TC-J1, J2, L1, L2, M1, M2, N1.
+- All 8 Phase 4 test cases pass: TC-J1, J2, L1, L2, M1, M2, N1, X9.
 - Red-team scenarios for memory poisoning, delegation abuse and supply-chain tampering are detected or contained, with results recorded; residual gaps are written into the threat model.
 - Anomaly alert volume at or below the budget (5 reviewed alerts per 100 agents per day) in a pilot population.
 - Automated playbooks run end to end in staging with human approval gates and produce an incident report.
@@ -235,10 +236,10 @@ Remaining exit criteria:
 
 | Phase | Requirement IDs tagged to the phase (spec) |
 |---|---|
-| 1 | FR-INV-1..4; FR-SCAN-1..4, 6; FR-DRIFT-1..5; FR-ID-1..2; FR-AUTHN-1, 6; FR-AUTHZ-1..3, 8; FR-RT-1; FR-SSRF-1..5; FR-POL-1..2; FR-AUD-1, 2, 6; FR-UI-1..3, 7; FR-ADM-1; FR-OBS-1 |
-| 2 | FR-INV-5; FR-SCAN-8; FR-DRIFT-7; FR-ID-3, 7; FR-AUTHN-2..5; FR-AUTHZ-4..5; FR-RT-2..11; FR-AUTO-1..5; FR-AUD-3..5, 7; FR-BEH-1; FR-IR-1..3; FR-UI-4; FR-ADM-2, 3, 5, 6; FR-OBS-2; MCP lifecycle rows (spec 4.12) |
+| 1 | FR-INV-1..4; FR-SCAN-1..4, 6; FR-DRIFT-1..5; FR-ID-1..2; FR-AUTHN-1, 6; FR-AUTHZ-1..3, 8; FR-RT-1; FR-SSRF-1..5; FR-POL-1..2; FR-AUD-1..2, 6; FR-UI-1..3, 7; FR-ADM-1; FR-OBS-1; FR-DATA-1..2 |
+| 2 | FR-INV-5; FR-SCAN-8, 10; FR-DRIFT-7; FR-ID-3, 7; FR-AUTHN-2..5, 7; FR-AUTHZ-4..5; FR-RT-2..13; FR-AUTO-1..5; FR-SUP-1; FR-AUD-3..5, 7; FR-BEH-1; FR-IR-1..3; FR-UI-4; FR-ADM-2..3, 5..6; FR-OBS-2; FR-DATA-3..4; MCP lifecycle rows (spec 4.12) |
 | 3 | FR-INV-6..7; FR-SCAN-7, 9; FR-AUTHZ-6..7; FR-MOD-1; FR-SUP-3; FR-POL-3..4; FR-IR-5; FR-UI-5..6; FR-COMP-1..5 |
-| 4 | FR-SCAN-5; FR-DRIFT-6; FR-ID-4..6; FR-MEM-1..4; FR-MOD-2..3; FR-EXEC-1..2; FR-SUP-1..2; FR-BEH-2; FR-IR-4 |
+| 4 | FR-SCAN-5; FR-DRIFT-6; FR-ID-4..6, 8; FR-MEM-1..4; FR-MOD-2..3; FR-EXEC-1..2; FR-SUP-2, 4; FR-BEH-2; FR-IR-4 |
 | 5 | FR-ADM-4 (plus NFR-3, 4, 5, 8) |
 
 Control phases follow `controls/catalogue.yaml`; several controls span phases (for example CTL-03 P1/P2, CTL-22 P2/P5), and a control is complete only when its last phase is done.
@@ -253,13 +254,13 @@ Re-baselining points: after Phase 0 spikes (before committing Phase 2 dates); af
 
 | # | Finding | Why it matters | Suggested resolution |
 |---|---|---|---|
-| F1 | TC-Z6 (audit tamper detection) is tagged Phase 1 MVP and maps to AC-5, but its steps include detecting a full-chain rewrite against an external anchor, and anchoring (FR-AUD-4) is tagged Phase 2 | The MVP acceptance test cannot pass without anchoring | Either deliver minimal anchoring in Phase 1, or split TC-Z6 into a chain-verification part (P1) and an anchor part (P2) |
-| F2 | Signing and admission of images (FR-SUP-1, TC-L2) are tagged Phase 4, but the CI/CD pipeline and deployment architecture place signing in CI stage 2 and admission verification in Phase 2 environments (DA-3) | Release security would lag the pipeline design by two phases | Decide: retag FR-SUP-1 to Phase 2 for the platform's own images and keep Phase 4 for the server fleet, or accept unsigned images in Phase 2 with a recorded waiver |
+| F1 | TC-Z6 (audit tamper detection) is tagged Phase 1 MVP and maps to AC-5, but its steps include detecting a full-chain rewrite against an external anchor, and anchoring (FR-AUD-4) is tagged Phase 2 | The MVP acceptance test cannot pass without anchoring | Either deliver minimal anchoring in Phase 1, or split TC-Z6 into a chain-verification part (P1) and an anchor part (P2); **resolved in test catalogue v0.3 (TC-Z6 split, TC-Z22 added)** |
+| F2 | Signing and admission of images (FR-SUP-1, TC-L2) are tagged Phase 4, but the CI/CD pipeline and deployment architecture place signing in CI stage 2 and admission verification in Phase 2 environments (DA-3) | Release security would lag the pipeline design by two phases | Decide: retag FR-SUP-1 to Phase 2 for the platform's own images and keep Phase 4 for the server fleet, or accept unsigned images in Phase 2 with a recorded waiver; **resolved in spec v0.4 (FR-SUP-1 retagged to P2, FR-SUP-4 added) and test catalogue v0.3 (TC-L4)** |
 | F3 | Phase 5 has one tagged requirement (FR-ADM-4); multi-cloud adapters, SIEM/SOAR integrations, continuous validation and red-team certification have no requirements or acceptance criteria | Phase 5 cannot be accepted or estimated | Add requirements and certification criteria before Phase 3 exit |
 | F4 | The Phase 0 spikes S1..S6 (about 8 weeks) and verification of `[VERIFY]` items are not in any phase duration | Phase 2 start dates are optimistic | Schedule spikes inside Phase 0/1 and re-baseline Phase 2 afterwards |
 | F5 | ADR-3, ADR-4 and ADR-6 are open but gate Phase 1 | Phase 1 cannot start cleanly | Decide in Phase 0 review |
 | F6 | The e2e harness, hostile fixtures and Compose environment are required by the MVP test cases but do not exist | Hidden effort in Phase 1 | Treat as an explicit Phase 1 deliverable (done in 6.1) |
-| F7 | Requirements without dedicated test cases: FR-SCAN-9, FR-AUD-7, FR-ADM-6 | Acceptance for P2/P3 incomplete | Add cases during the owning phase (listed in 6.2 and 6.3 acceptance) |
+| F7 | Requirements without dedicated test cases: FR-SCAN-9, FR-AUD-7, FR-ADM-6 | Acceptance for P2/P3 incomplete | Add cases during the owning phase (listed in 6.2 and 6.3 acceptance); **resolved in test catalogue v0.3 (TC-Z12, TC-Z23, TC-Z24)** |
 | F8 | Team size, skills and cost are assumptions | All estimates depend on them | Confirm in Phase 0 sign-off |
 
 These findings are recorded here only; the other documents have not been changed.
