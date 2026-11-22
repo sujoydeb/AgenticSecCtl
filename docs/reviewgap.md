@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.5 (adds closure updates for High gaps (Section 9), Medium gaps (Section 10), Low gaps (Section 11) and the remaining Medium gaps (Section 12); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
+| Version | 0.6 (records the first GitHub workflow run in Section 13; adds closure updates for High gaps (Section 9), Medium gaps (Section 10), Low gaps (Section 11) and the remaining Medium gaps (Section 12); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
@@ -341,10 +341,22 @@ Vocabulary as in Section 9. Evidence gathered on 2026-11-22 through a local head
 
 **Summary of the 29 Medium gaps after this update:** 22 closed (the 20 in Section 10 plus E3, G3; E3 pending review), 5 partly closed (D5, E4, E5, E6, H2), 2 open (F3, G4). The remaining items depend on people (legal, customer, owners), on data (measurements, corpus), or on a remote repository.
 
+## 13. Update after the first GitHub workflow run (v0.6)
+
+The repository was pushed to a private GitHub repository on 2026-11-22. Two workflow runs followed. Status wording as in Section 9.
+
+| Gap | Status | What changed | Evidence | Remaining |
+|---|---|---|---|---|
+| E5 | Partly closed | `docs-check` ran on GitHub and every step passed (checkout at the pinned commit, `check_docs.py`, generated-file freshness); the pin of `actions/checkout` resolves; the first Dependabot update run completed and opened no pull request | Runs 45031349199 and 45031355422; `docs/ci-cd-pipeline.md` v0.5 | The product-gate template and its other pinned actions have never run; `docs-check` has not run on a pull request; no workflow linter was used; no Dependabot pull request was seen, so the update review path is untested |
+| G4 | Open (advanced) | A private remote exists and holds the history | `docs/repository-setup.md` v0.2 Section 4 | Branch protection, CODEOWNERS, signed commits, Actions restrictions, environments and secret scanning are not configured; plan availability for private repositories not checked |
+
+Two practical findings: pushing files under `.github/workflows/` over HTTPS needs the `workflow` token scope (the scope refresh did not take effect, so the push used SSH), and the SSH key created for this has no passphrase.
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6 | 2026-11-22 | First GitHub run of `docs-check` recorded (Section 13) |
 | 0.5 | 2026-11-22 | Closure update for the remaining Medium gaps (Section 12) |
 | 0.4 | 2026-11-22 | Closure update for the Low gaps (Section 11) |
 | 0.3 | 2026-11-22 | Closure update for the Medium gaps (Section 10) |

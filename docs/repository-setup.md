@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (procedure draft; advances gap G4 in `docs/reviewgap.md`) |
-| Depends on | `docs/ci-cd-pipeline.md` v0.4 (Sections 5, 6, 12), `docs/governance.md` v0.3, `.github/CODEOWNERS.example`, `.github/workflows/docs-check.yml` |
-| Status | **Nothing in this document has been run.** No remote repository exists and the user declined creating or publishing one on 2026-11-22. The commands are an untested outline for someone with the right rights to adapt. Setting names and endpoints are **[VERIFY]** against current GitHub documentation before use. |
+| Version | 0.2 (procedure draft; advances gap G4 in `docs/reviewgap.md`; v0.2 records which steps were carried out on 2026-11-22) |
+| Depends on | `docs/ci-cd-pipeline.md` v0.5 (Sections 5, 6, 12), `docs/governance.md` v0.3, `.github/CODEOWNERS.example`, `.github/workflows/docs-check.yml` |
+| Status | **Partly executed on 2026-11-22.** Steps 1, 2, 9 and 10 were carried out (see Section 4); steps 3 to 8 were not. The repository was created under a personal account, not an organisation. The commands that were not run are an untested outline for someone with the right rights to adapt. Setting names and endpoints are **[VERIFY]** against current GitHub documentation before use. |
 
 ## 1. Preconditions
 
@@ -25,8 +25,20 @@
 | 7 | Create environments (staging, production) with required reviewers, once product workflows exist | Settings | Deployment job waits for approval |
 | 8 | Turn on secret scanning, push protection and dependency alerts as available **[VERIFY]** | Settings | Test with a dummy token string, never a real one |
 | 9 | Enable Dependabot version updates using `.github/dependabot.yml` | Already in repository | First update PRs arrive and are reviewed, not auto-merged |
-| 10 | Run `docs-check` on a pull request and fix whatever fails (the workflow has never run) | Open a trivial PR | Green check; record the result in the ci-cd document |
+| 10 | Run `docs-check` on a pull request and fix whatever fails (it has run once, on a push, and passed; not yet on a pull request) | Open a trivial PR | Green check; record the result in the ci-cd document |
 
 ## 3. Acceptance
 
 Done only when steps 3 to 6 and 10 are observed working (not just configured), the evidence is attached to the governance review log, and gap G4 is changed accordingly. Until then it stays open.
+
+## 4. What was carried out (2026-11-22)
+
+| Step | Result | Evidence |
+|---|---|---|
+| 1 | Done, with a difference: `gh repo create sujoydeb/AgenticSecCtl --private`, under a personal account instead of an organisation | Repository is private; default branch `main` |
+| 2 | Done, after two problems: the HTTPS push was rejected because the token lacked the `workflow` scope (the push contains files under `.github/workflows/`), and a refresh of the scope did not take effect. An SSH key was generated and added to the account, and the push went over SSH | `main` and three commits on the remote |
+| 9 | Partly: the Dependabot update run completed successfully; it opened no pull request, so the review of update pull requests was not exercised | Run 45031355422 |
+| 10 | Partly: `docs-check` ran on the push (not on a pull request) and every step passed in 6 seconds | Run 45031349199 |
+| 3 to 8 | Not done: no CODEOWNERS file, no branch protection, no signed-commit requirement, no Actions restrictions, no environments, no secret scanning settings. Whether branch protection is available for a private repository on this account's plan was not checked **[VERIFY]** | None |
+
+Acceptance (Section 3) is therefore not met, and gap G4 stays open. The SSH private key has no passphrase and lives in the user's home directory; treat it as a development convenience.

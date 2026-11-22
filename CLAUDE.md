@@ -23,7 +23,7 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.2 |
 | `docs/api-specification.md`, `docs/api/openapi.yaml` | Management API endpoints, roles, SoD, errors; OpenAPI 3.1 outline (unvalidated) | v0.1 |
 | `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.3 |
-| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.5 |
+| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.6 |
 | `docs/index.md` | Reading guide by audience and the map of all design documents; every design document must be listed | v0.1 |
 | `docs/mcp-compatibility.md` | MCP revision 2026-07-28 pin; authorization, transport and client-feature statements mapped to platform responses (pages read; others not) | v0.2 |
 | `docs/authn-authz-design.md` | Flows, policy structure and decision contract, illustrative unexecuted Rego | v0.1 |
@@ -32,11 +32,11 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/parameter-register.md` | Fixed parameters (machine-checked) and open "to be set" parameters with owners and gates | v0.3 |
 | `docs/privacy-assessment.md` | Platform data inventory and privacy risks; legal questions marked [LEGAL] | v0.2 |
 | `docs/cloud-adapter-verification.md` | AWS and Azure adapter facts from documentation chunks; Google Cloud from search summaries only | v0.2 |
-| `docs/repository-setup.md` | Untested outline for remote repository and branch protection; nothing executed | v0.1 |
+| `docs/repository-setup.md` | Outline for remote repository and branch protection; steps 1, 2, 9, 10 carried out on 2026-11-22, protection not configured | v0.2 |
 | `docs/customer-inputs.md` | Blank customer intake form | v0.2 |
 | `docs/testing/performance-test-plan.md`, `docs/testing/fixtures-and-corpora.md` | Proposed load-test environment and workload; fixture and corpus specification (seed corpus under `tests/fixtures/corpus/`) | v0.1 |
 | `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.4 |
-| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.4 |
+| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.5 |
 | `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
 | `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..30): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.4 |
 | `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.4 |
