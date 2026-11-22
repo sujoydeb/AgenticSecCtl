@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.3 (design draft; nothing is deployed or tested) |
-| Depends on | `Plan/architecture.md` v0.5 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.6 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.5, `controls/catalogue.md` v0.4 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.3 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.3, `docs/testing/cases.md` v0.5 |
+| Version | 0.4 (design draft; nothing is deployed or tested) |
+| Depends on | `Plan/architecture.md` v0.5 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.7 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.5, `controls/catalogue.md` v0.4 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.3 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.4, `docs/testing/cases.md` v0.5 |
 | Purpose | Where each component runs, how the network and trust zones are enforced, how data is stored and protected, how the platform stays available and recovers, and how it scales across tenants, regions and clouds. Extends `Plan/architecture.md` Section 8; if the two disagree, resolve the conflict in both. |
 | Unverified | Product, cloud-service and Kubernetes feature statements are from background knowledge and tagged **[VERIFY]**. Sizing, replica counts beyond those in the architecture, and timeouts are placeholders marked "to be set". No figure here has been measured. |
 
@@ -140,6 +140,8 @@ Taints and node selectors keep workloads on their pool; admission policy rejects
 
 ### 4.2 Network policy matrix (target; all other traffic denied)
 
+Default-deny must also allow cluster DNS explicitly: on AKS the documentation states that a default-deny egress policy blocks DNS traffic (read 2026-11-22, see `docs/cloud-adapter-verification.md` Section 4). Treat that as true on every cloud until tested, and add DNS allow rules to the baseline policy and to DA-1.
+
 | From \ To | gateway | OPA (sidecar) | egress proxy | API | audit | Postgres | Redis | MCP servers | Internet/allowlist |
 |---|---|---|---|---|---|---|---|---|---|
 | Agents (ns agents) | allow (443) | — | — | — | — | — | — | deny | deny |
@@ -164,7 +166,7 @@ Rules that must hold regardless of implementation (tests: TC-X2, TC-I4, TC-H1):
 
 | Concern | Design |
 |---|---|
-| Workload identity | Each Deployment has its own Kubernetes service account mapped to a cloud IAM role or secrets-manager identity with least privilege; no shared service accounts; no static cloud keys. On AWS (documentation-verified) EKS Pod Identity issues temporary, automatically rotated credentials per service account and supports a target role in another account; associations are eventually consistent, so change them outside hot paths. Other clouds **[VERIFY]** |
+| Workload identity | Pod identity tokens or federated credentials are for reaching the platform's own cloud resources, not upstream MCP servers; on Azure the exchanged Entra token lasts up to 24 hours (read 2026-11-22), far longer than the 10 min access token target, so the broker never hands such tokens to servers. Each Deployment has its own Kubernetes service account mapped to a cloud IAM role or secrets-manager identity with least privilege; no shared service accounts; no static cloud keys. On AWS (documentation-verified) EKS Pod Identity issues temporary, automatically rotated credentials per service account and supports a target role in another account; associations are eventually consistent, so change them outside hot paths. Other clouds **[VERIFY]** |
 | Secrets | External secrets manager mounted through CSI or fetched at start with short TTL; Kubernetes Secrets only if encrypted at rest with a KMS provider **[VERIFY]**; nothing in Helm values committed to Git |
 | Upstream credentials for servers | Minted by the token broker per call or session, audience-bound; the gateway holds no long-lived upstream secrets (FR-AUTHN-3) |
 | Encryption keys | KMS-held keys; separate keys for database, evidence vault, backups, policy-bundle signing; per-tenant keys in Phase 5 (FR-ADM-2) |
@@ -184,6 +186,7 @@ Rules that must hold regardless of implementation (tests: TC-X2, TC-I4, TC-H1):
 - Object storage with object lock (write-once retention) for anchors and for raw evidence, versioning enabled, encryption with a dedicated key, access limited to the audit service writer identity and named incident/security roles **[VERIFY object-lock availability per cloud]**.
 - Anchors in a different account/project (or at least different credentials) from the database so a database-level actor cannot rewrite both (CTL-13). On AWS (documentation-verified): S3 Object Lock needs a versioned bucket; compliance mode cannot be removed by any user including the account root; legal holds provide indefinite protection until released.
 - Retention classes and legal hold per NFR-6.
+- On every cloud the retention policy must be **locked** (Azure: a locked time-based policy, since unlocked policies give no delete protection; Google Cloud: a locked bucket retention policy, summary only; AWS: compliance mode). A configured but unlocked policy does not meet CTL-13. Azure immutable storage is incompatible with storage-account point-in-time restore, so recovery of evidence relies on separate copies (read 2026-11-22).
 
 ### 6.3 Redis and Kafka (Phase 2)
 - Redis: HA with persistence suited to the revocation list and sessions; loss of Redis must degrade to deny for revocation lookups, not skip them (FR-ID-7); sessions may be re-established. Licence and fork status **[VERIFY]**.

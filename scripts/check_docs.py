@@ -289,6 +289,8 @@ for f, t in texts.items():
         first = next((l.strip() for l in body.split("\n") if l.strip()), "")
         if not re.match(r"^(flowchart|graph|sequenceDiagram|erDiagram|classDiagram|stateDiagram|gantt|journey|pie)", first):
             err(f"{f}: mermaid block starts with unknown diagram type '{first[:30]}'")
+        if first.startswith("sequenceDiagram") and ";" in body:
+            err(f"{f}: mermaid sequence diagram contains ';' (statement separator; breaks parsing)")
         if first.startswith(("flowchart", "graph")):
             if body.count("[") != body.count("]") or body.count("{") != body.count("}"):
                 err(f"{f}: mermaid flowchart has unbalanced brackets")
@@ -413,6 +415,29 @@ for f in DOC_FILES:
     if f.startswith(("Plan/", "docs/", "compliance/", "controls/")) and f != "docs/index.md":
         if f"`{f}`" not in index_text:
             err(f"docs/index.md does not list {f}")
+
+
+# 14. implementation plan: every Phase 1 requirement appears exactly once in its traceability table,
+#     and every Phase 1 test case appears in its test table
+plan_text = texts.get("Plan/implementation-plan.md", "")
+if plan_text:
+    p1_reqs = set()
+    for _ln in spec.split("\n"):
+        _c = [x.strip() for x in _ln.strip().strip("|").split("|")]
+        if _c and re.fullmatch(r"FR-[A-Z]+-\d+", _c[0]) and len(_c) >= 5 and _c[3].startswith("P1"):
+            p1_reqs.add(_c[0])
+    _sec = plan_text.split("## 11. Traceability")[-1].split("\n## 12.")[0]
+    _in_table = re.findall(r"^\| (FR-[A-Z]+-\d+) \|", _sec, re.M)
+    for r in sorted(p1_reqs - set(_in_table)):
+        err(f"Plan/implementation-plan.md: Phase 1 requirement {r} missing from the traceability table")
+    for r in sorted(set(_in_table) - p1_reqs):
+        err(f"Plan/implementation-plan.md: {r} is in the traceability table but is not a Phase 1 requirement")
+    for r in sorted({x for x in _in_table if _in_table.count(x) > 1}):
+        err(f"Plan/implementation-plan.md: {r} appears more than once in the traceability table")
+    _p1_tcs = {m.group(1) for m in re.finditer(r"^### (TC-[A-Z]\d+) .*\n\*Threat [^\n]*· P1(?:/P\d)?(?: · MVP)?\*", cases, re.M)}
+    _tc_rows = set(re.findall(r"^\| (TC-[A-Z]\d+) \|", plan_text, re.M))
+    for r in sorted(_p1_tcs - _tc_rows):
+        err(f"Plan/implementation-plan.md: Phase 1 test case {r} missing from the test table")
 
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}

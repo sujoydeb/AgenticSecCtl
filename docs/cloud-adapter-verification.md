@@ -1,11 +1,11 @@
-# Cloud Adapter Verification: AWS
+# Cloud Adapter Verification: AWS, Azure, Google Cloud
 
 | | |
 |---|---|
-| Version | 0.1 (partial; closes the AWS part of gap E4 in `docs/reviewgap.md`) |
-| Depends on | `docs/deployment-architecture.md` v0.3 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.5 (Section 8), `controls/catalogue.md` v0.4 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.3 |
-| Scope | One cloud (AWS) used as the first example adapter. Azure and Google Cloud are **not verified**. The cloud choice itself is still open (customer input CI-6). |
-| Evidence | AWS documentation search results read on 2026-11-22 through the AWS documentation tools (verbatim page chunks, not the full pages). The chunk quoted or summarised is named in the Source column. Anything not listed as verified remains **[VERIFY]**. |
+| Version | 0.2 (partial; advances gap E4 in `docs/reviewgap.md`: AWS extended, Azure and Google Cloud first pass) |
+| Depends on | `docs/deployment-architecture.md` v0.4 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.5 (Section 8), `controls/catalogue.md` v0.4 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.4 |
+| Scope | AWS (first example adapter, extended in v0.2), Azure (AKS, first pass) and Google Cloud (GKE, first pass, search summaries only). The cloud choice itself is still open (customer input CI-6). |
+| Evidence | AWS and Azure: documentation search result chunks read on 2026-11-22 through the AWS documentation tool and the Microsoft Learn search tool (chunks, not full pages). Google Cloud: web search result summaries only; Google pages were not read directly and one claim rests on a third-party blog. Anything not listed as verified remains **[VERIFY]**. |
 
 ## 1. Verified capabilities and what they mean for the design
 
@@ -20,14 +20,22 @@
 
 ## 2. Not verified for AWS (still **[VERIFY]**)
 
-- Sandboxed runtimes (gVisor, Kata or microVM-based isolation) on EKS node types and their compatibility with the server workloads.
+- Sandboxed runtimes on EKS: see Section 2A (a Nitro Sandbox feature was found; gVisor and Kata not checked); compatibility with the actual server workloads is untested.
 - Admission engines (Kyverno, Gatekeeper) on EKS and signature verification integration.
-- KMS key policies and multi-region keys for per-tenant keys; HSM options.
-- S3 Object Lock with cross-region replication, and access-point or bucket-policy patterns for write-only anchor credentials.
+- KMS key policies for per-tenant keys and HSM options (multi-region keys: see Section 2A).
+- Bucket-policy patterns for write-only anchor credentials (Object Lock with replication: see Section 2A).
 - Egress controls: NAT, egress proxy patterns, DNS firewall, and WAF options for the dashboard.
 - Aurora versus RDS choices for row-level security and audit role separation; cross-region replica lag.
 - Load balancer options for the internal gateway endpoint and global traffic management for failover.
 - Costs and quotas.
+
+## 2A. Additional AWS facts read on 2026-11-22 (v0.2)
+
+| Design need | AWS capability (as stated in the chunk read) | Design implication | Source |
+|---|---|---|---|
+| Sandboxed MCP server pods (CTL-11) | Amazon EKS "isolated and confidential pods" run each pod in its own Nitro Sandbox, selected per pod with `runtimeClassName` (`isolated-sandbox` or `confidential-sandbox`); needs Kubernetes 1.36 or later and supported EC2 instance types; designed to run untrusted container images but not untrusted pod specs (pod spec authorship must be restricted with RBAC and admission control) | A candidate sandbox for the server pool on EKS; the platform must still restrict who can set the runtime class. Compatibility with MCP server workloads and stdio wrappers is untested | EKS user guide, "Sandboxing on Amazon EKS", "Security model" |
+| Per-tenant keys across regions (CTL-30, DR) | KMS multi-Region keys: a primary key and replicas in other Regions of the same partition share key ID, material, rotation status and origin; replicas are independent resources with their own key policy, grants and state; an existing single-Region key cannot be converted | Decide multi-Region at key creation; key policy changes must be applied to every replica (they do not propagate) | AWS Security Blog on multi-Region keys; KMS `ReplicateKey` reference; Identity Center blog note |
+| Evidence and anchors replicated to a second region (CTL-13, DR) | S3 replication copies Object Lock retention and legal-hold state; source and destination buckets must both have Object Lock enabled; the replication role needs `s3:GetObjectRetention` and `s3:GetObjectLegalHold` on the source | Anchor and evidence buckets can be replicated while keeping retention; the replication role is a sensitive identity | S3 user guide, "Object Lock considerations"; "What does Amazon S3 replicate?" |
 
 ## 3. Consequences recorded elsewhere
 
@@ -38,12 +46,39 @@
 | Object Lock needs versioning and compliance mode for anchors | `docs/deployment-architecture.md` Section 6.2 | Added in deployment v0.3 |
 | Pod Identity associations are eventually consistent | `docs/deployment-architecture.md` Section 5 | Added in deployment v0.3 |
 
-## 4. Azure and Google Cloud
+## 4. Azure (AKS) first pass, read 2026-11-22
 
-Not started. For each, repeat the table in Section 1: metadata endpoint hardening, immutable storage, workload identity, default-deny network policy on the managed Kubernetes service, managed PostgreSQL high availability and PITR, private connectivity, sandboxed runtimes, admission control. Use the vendor's own documentation (for Microsoft and Azure, Microsoft Learn).
+| Design need | Azure capability (as stated in the chunk read) | Status | Design implication | Source |
+|---|---|---|---|---|
+| Metadata endpoint hardening (threat H, TC-H1, TC-I4) | All pods can reach IMDS at 169.254.169.254 by default; guidance is a network policy that blocks pod egress to it (needs a network policy engine); a separate **preview** setting blocks IMDS for non-host-network pods, after which workloads must use Entra Workload ID; node reimage is needed to apply it | Read; preview feature not for production | Use the network-policy path, and treat the cluster-level setting as an optional extra once it is generally available | AKS best practices (cluster security), "Block pod access to IMDS (preview)" |
+| Immutable evidence storage (CTL-13, FR-AUD-4) | Blob immutable storage: time-based retention (1 day to 146,000 days) and legal holds, container-level or version-level; unlocked policies give no delete protection, a locked policy gives it; a container-level legal hold needs tags; incompatible with point-in-time restore of the storage account; not supported with NFS 3.0 or SFTP; version-level time-based retention needs versioning | Read | Anchors need a **locked** policy (as with Object Lock compliance mode); no storage-level restore feature, rely on separate copies | Azure Storage immutable storage pages |
+| Workload identity (FR-KEY-2) | Microsoft Entra Workload ID uses projected service account tokens and OIDC federation; the pod gets a federated credential bound to namespace and service account; limit of 20 federated credentials per managed identity (identity bindings address it); default audience `api://AzureADTokenExchange`; Entra tokens last 24 hours | Read | Matches the design; the 24 hour token lifetime exceeds the platform's 10 minute target for access tokens, so the broker must not hand these out as upstream credentials | AKS Workload ID pages |
+| Default-deny network policy (CTL-08, TC-X2) | All pod traffic allowed by default; three engines (Cilium, Azure NPM, Calico); Cilium recommended for Linux, supports L7 and FQDN policy; **Azure NPM is legacy: Windows support ended 2026-09-30, Linux ends 2028-09-30**; a default-deny egress policy also blocks DNS, so DNS must be allowed explicitly | Read | Choose Cilium; add DNS allow rules to the default-deny baseline (the deployment document must say so for every cloud) | AKS network policy pages |
+| Managed PostgreSQL HA and PITR (CTL-24, NFR-3, NFR-4) | Flexible server: zone-redundant HA with synchronous standby, failover in 60 to 120 seconds with no data loss; same-zone option; PITR creates a **new** server, restores HA servers as single instances; retention 7 to 35 days default 7; HA does not protect against logical errors; geo-redundant backup and cross-region replica options (replica RPO up to five minutes) | Read | The platform RPO of 5 minutes holds within a region; cross-region needs geo-restore or a replica with possible data loss. Restore is a new server, so the runbook must include repointing | Azure PostgreSQL HA, backup and business continuity pages |
+| Sandboxed server pods (CTL-11) | Pod sandboxing runs each pod in a Kata-based pod VM with its own guest kernel on Azure Linux node pools (generation 2 VMs, nested virtualisation); a newer variant is preview; no FIPS or Trusted Launch on those pools; Defender for Containers does not assess Kata pods; privileged pods are allowed but isolated; `hostPath` should be blocked by policy; docs say it does not isolate the control plane or cluster admins | Read | Candidate sandbox; note the missing Defender coverage and the single OS restriction | AKS pod sandboxing pages |
+| Private connectivity, admission, per-tenant keys, egress controls, WAF, costs | Not read | **[VERIFY]** | | |
 
-## 5. Next steps
+## 5. Google Cloud (GKE) first pass, from search summaries only (2026-11-22)
 
-- Confirm the first cloud (customer input CI-6) and complete its table.
+| Design need | Capability (as summarised) | Status | Design implication |
+|---|---|---|---|
+| Metadata and workload identity | Workload Identity Federation for GKE runs a metadata server on each node that intercepts credential requests and exchanges a Kubernetes token for short-lived credentials; it replaces metadata concealment; sandbox-enabled nodes block regular pods from cluster metadata by default, and the docs advise a network policy blocking 169.254.169.254 with Workload Identity; a third-party report from an older version says a sandbox did not block metadata as documented | Summary only; pages not read | Add the network-policy block and test it from a sandboxed pod (TC-H1, TC-I4) rather than trusting the documentation |
+| Sandbox | GKE Sandbox (gVisor) exists; scope and limits not read | Summary only | **[VERIFY]** |
+| Immutable storage (CTL-13) | Bucket retention policy with lock: once locked it cannot be removed or shortened (it can be extended), and a bucket with a locked policy cannot be deleted until objects meet retention; object holds; a per-object retention lock; the provider cites an external assessment for SEC 17a-4(f), FINRA and CFTC | Summary only | Locked retention policy is the counterpart of Object Lock compliance mode |
+| Managed PostgreSQL HA and PITR | Cloud SQL regional HA and PITR exist as separate settings; details not found | Not verified | **[VERIFY]** |
+| Default-deny network policy on GKE | Not found (no Dataplane V2 or default-deny statements located) | Not verified | **[VERIFY]** |
+
+## 6. Consequences recorded elsewhere (continued)
+
+| Finding | Where it should be reflected | Status |
+|---|---|---|
+| A default-deny egress policy blocks DNS; allow cluster DNS explicitly | `docs/deployment-architecture.md` Section 4.2 | Added in deployment v0.4 |
+| Pod identity tokens are not upstream credentials (Entra tokens last 24 hours) | `docs/deployment-architecture.md` Section 5 | Added in deployment v0.4 |
+| Locked (not merely configured) immutable retention is required on every cloud | `docs/deployment-architecture.md` Section 6.2 | Added in deployment v0.4 |
+| Restore creates a new database server; the runbook must cover repointing | `docs/runbooks/operational-runbook.md` | Recorded here only; runbook not changed |
+
+## 7. Next steps
+
+- Confirm the first cloud (customer input CI-6) and complete its table; read the Google Cloud pages directly (Section 5 rests on search summaries).
 - Test the metadata-blocking combination and strict network policy on a real EKS cluster before relying on them (TC-H1, TC-I4, TC-X2).
 - Record the verified adapter facts in the deployment document and the parameter register.

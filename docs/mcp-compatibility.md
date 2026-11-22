@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| Version | 0.1 (closes the pinning part of gap E3 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.5 (Section 4.1), `controls/catalogue.md` v0.4 (CTL-05, CTL-18), `docs/testing/cases.md` v0.5 (TC-P1..P4, TC-Z27, TC-Z28) |
+| Version | 0.2 (closes gap E3 in `docs/reviewgap.md` for revision 2026-07-28) |
+| Depends on | `Plan/functional-spec.md` v0.7 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.5 (Section 4.1), `controls/catalogue.md` v0.4 (CTL-05, CTL-18), `docs/testing/cases.md` v0.5 (TC-P1..P4, TC-Z27, TC-Z28) |
 | Reference revision | **2026-07-28** (pinned) |
-| Evidence | The authorization, transport (overview, stdio, Streamable HTTP), sampling, elicitation and roots pages for revision 2026-07-28 were read on 2026-11-22 through a page-fetching assistant (so the quotations are paraphrases, not verbatim copies). Pages not read: client ID metadata document details, dynamic client registration request format, authorization-server-discovery and client-registration sub-pages, tools, resources, prompts and lifecycle pages, and every other revision. Re-read the primary text before relying on any row. |
+| Evidence | The authorization (including client registration, authorization server discovery and security considerations), transport (overview, stdio, Streamable HTTP), sampling, elicitation, roots, tools, resources, prompts, lifecycle and versioning, server discovery pages and the changelog for revision 2026-07-28 were read on 2026-11-22 through a page-fetching assistant (so statements are paraphrases, not verbatim copies). Not read: the stdio shutdown and timeout details beyond what the transport pages state, the subscriptions pattern page, the schema reference, extensions (including tasks), earlier revisions beyond what the changelog states. Re-read the primary text before relying on any row. |
 | Review | Not reviewed by a second person. |
 
 ## 1. How to use this matrix
@@ -53,6 +53,38 @@ The platform pins one protocol revision at a time (FR-MCP-2, FR-MCP-12). On ever
 | Elicitation | Form and URL modes; servers must not request passwords, API keys, tokens or payment credentials in form mode; clients must show which server is asking, show the full URL and obtain consent, must not pre-fetch URLs; servers must bind the elicitation to the user and client; URL mode must not be used for MCP client authorization | MUST / MUST NOT | Denied by default; if enabled, block sensitive form requests; show server and full URL; no pre-fetch; host allowlist | FR-MCP-10; TC-P3, TC-Z28 |
 | Roots | Deprecated as of 2026-07-28; informational, not an access-control mechanism; clients must expose only roots with appropriate permissions, validate against path traversal and implement access controls; roots are `file://` URIs | SHOULD NOT / MUST | Limit and audit roots; never rely on them for access control; path-traversal guards | FR-MCP-11; TC-O3 |
 
+## 3A. Server features and lifecycle (added in v0.2)
+
+| Specification statement | Strength | Platform response | Requirement / test |
+|---|---|---|---|
+| No initialization handshake: each request carries protocol version and client capabilities in `_meta`; servers must implement `server/discover` (returns supported versions, capabilities, optional instructions, `ttlMs`, `cacheScope`) | MUST | Gateway reads version and capabilities per request, applies the version allowlist per request, and may call `server/discover` at registration and refresh | FR-MCP-2, FR-MCP-12; TC-P1 |
+| On an unsupported version the server must return `UnsupportedProtocolVersionError` (code -32022) listing supported versions | MUST | Gateway uses it for version probing and blocks unsupported versions; the code numbering changed from earlier revisions | FR-MCP-12; TC-P1 |
+| `serverInfo` is self-reported and must not drive behaviour or security decisions | SHOULD NOT | Identity comes from the registry and pinned certificate or key, never from `serverInfo` | FR-AUTHN-5; TC-C2 |
+| Extensions are advertised in a capabilities map; a party that does not support an extension must revert to core behaviour or reject | MUST | Unknown extensions flagged; policy decides per tenant | FR-MCP-2 |
+| Tool definition fields: name, title, description, icons, input schema, output schema, annotations; annotations must be treated as untrusted unless the server is trusted | MUST | Matches the design: annotations are hashed but never used for authorization; icons and titles are hashed and scanned as text fields | FR-DRIFT-1, FR-SCAN-1; TC-B3 |
+| Tool names should be unique per server and clients that aggregate servers should disambiguate; `serverInfo.name` is not for disambiguation | SHOULD | Namespaces `namespace__tool` enforced by the registry | FR-INV-2, FR-INV-3; TC-C1 |
+| Servers must return the tools available to the requesting client; the set must not vary per connection or as a side effect of other requests; it may vary by request authorization; deterministic order; results carry `ttlMs` and `cacheScope` | MUST / SHOULD | Hash comparison is per authorization context; the gateway cache TTL (60 s default) is capped by the server's `ttlMs` when smaller; a list that varies between identical requests is a drift signal | FR-DRIFT-2, FR-DRIFT-7; TC-B4 |
+| `notifications/tools/list_changed` is sent only to clients that opened a `subscriptions/listen` stream asking for it; resources use `subscriptions/listen` too (replaces subscribe and unsubscribe) | SHOULD | Gateway opens listen streams per server as needed, rate-limits them, and re-hashes on notification | FR-MCP-8; TC-P4 |
+| If an output schema is present the server must return conforming structured content; clients should validate results | MUST / SHOULD | Gateway validates results against the approved output schema before inspection; mismatch is a drift or integrity signal | FR-DRIFT-1, FR-RT-4; TC-B2 |
+| Servers must validate tool inputs, implement access controls, rate limit and sanitize outputs; clients should confirm sensitive operations and validate results before the model sees them | MUST / SHOULD | The platform does not rely on servers doing this; it enforces its own guards and approvals | FR-RT-2, FR-RT-3, FR-AUTHZ-5 |
+| Tool execution errors come back as results with `isError: true`; protocol errors are JSON-RPC errors | — | Both are untrusted server content and are inspected (error-message injection) | FR-RT-13; TC-X11 |
+| Resources: URIs validated, file paths sanitized against traversal, templates (RFC 6570) listed separately; not-found is error -32602 (changed from -32002) | MUST | URI allowlists, traversal guards, templates treated as arguments | FR-MCP-6; TC-O3 |
+| Prompts: all prompt inputs and outputs must be validated against injection | MUST | Prompts scanned like descriptions, hash-pinned and inspected on use | FR-MCP-7 |
+| Every result carries `resultType` (missing means complete for older servers); `inputSchema` and `outputSchema` accept any JSON Schema 2020-12 keywords with `$ref` bounds | MUST | Gateway enforces `$ref` resolution bounds and schema complexity limits in the importer to avoid bombs | FR-SCAN-6; TC-Z2 |
+
+## 3B. Client registration details (added in v0.2)
+
+| Specification statement | Strength | Platform response | Requirement / test |
+|---|---|---|---|
+| Registration priority: pre-registered client, then client ID metadata document if the authorization server advertises support, then dynamic client registration, then prompt the user | SHOULD | The platform prefers pre-registration; other styles only per tenant approval | FR-AUTHN-7; TC-X13 |
+| Client ID metadata document: HTTPS URL with a path, containing `client_id` (equal to the URL), `client_name`, `redirect_uris`; authorization servers must check the match, validate redirect URIs and JSON structure; should consider SSRF; must show the redirect host during authorization | MUST / SHOULD | Fetching a client metadata document is an outbound connection and goes through the SSRF guard (resolve-then-pin, size and time caps); redirect host shown at consent | FR-SSRF-1..4, FR-AUTHN-7; TC-X13, TC-H3 |
+| Dynamic client registration is deprecated (kept for backward compatibility); `application_type` must be set | MAY / MUST | Off by default per FR-AUTHN-7 | FR-AUTHN-7 |
+| Persisted client credentials must be keyed by the authorization server issuer and not reused with another issuer; metadata `issuer` must equal the issuer used to build the discovery URL | MUST | Client libraries and the dashboard checked in the IdP spike | IdP spike S2 |
+
+## 3C. Changelog highlights versus 2025-11-25 that affect the platform (added in v0.2)
+
+Protocol sessions and `Mcp-Session-Id` removed; `initialize` handshake removed; `server/discover` added; `subscriptions/listen` replaces subscribe, unsubscribe and the GET notification channel; `ping`, `logging/setLevel` and `notifications/roots/list_changed` removed; tasks moved to an extension; server-initiated requests (roots, sampling, elicitation) replaced by input-required results; resumable event streams removed; error codes renumbered (header mismatch -32020, missing capability -32021, unsupported version -32022); `Mcp-Method` and `Mcp-Name` headers required on POST; `x-mcp-header` added (clients must reject invalid values on Streamable HTTP and not list such tools); client credentials bound to the issuing authorization server; `iss` validation added; roots, sampling and logging deprecated; dynamic client registration deprecated.
+
 ## 5. Differences to earlier revisions that matter
 
 | Topic | Earlier revisions | 2026-07-28 | Effect |
@@ -66,7 +98,7 @@ Revision-by-revision differences before 2025-06-18 were not reviewed.
 
 ## 6. Open items
 
-- Read the pages not yet read (tools, resources, prompts, lifecycle, client ID metadata documents, dynamic client registration, authorization server discovery) and extend the rows.
+- Read the pages still not read (subscriptions pattern, schema reference, extensions including tasks, stdio shutdown details) and extend the rows.
 - Decide the support window: which older revisions the gateway allowlists, and for how long (affects FR-MCP-2 and TC-P1).
 - Verify the IdP candidates against Sections 2 rows marked "IdP spike S2" (PKCE S256, `iss` support, discovery formats, resource indicators).
 - Re-run this matrix on the next specification revision; the expected `iss` upgrade from SHOULD to MUST in a future revision should be tracked.

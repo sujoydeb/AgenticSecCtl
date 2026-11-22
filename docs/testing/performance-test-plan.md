@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (proposal; closes gap D6 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6 (NFR-1..5, Section 9 method), `docs/testing/cases.md` v0.5 (TC-Z14, Z15, Z18, Z4, Z17, Z16), `docs/deployment-architecture.md` v0.3 (Section 8), `docs/parameter-register.md` v0.1 |
+| Depends on | `Plan/functional-spec.md` v0.7 (NFR-1..5, Section 9 method), `docs/testing/cases.md` v0.5 (TC-Z14, Z15, Z18, Z4, Z17, Z16), `docs/deployment-architecture.md` v0.4 (Section 8), `docs/parameter-register.md` v0.1 |
 | Status | **Every value below is a proposal**. No hardware class, payload mix or workload has been agreed, and nothing has been measured. The figures define what a first load test should use so results are comparable; they are not claims about the product. |
 
 ## 1. Purpose

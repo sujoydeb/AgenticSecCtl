@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.4 (planning draft; estimates are not validated by engineering) |
-| Depends on | `docs/prd.md` v0.4 (Section 8 release plan), `Plan/functional-spec.md` v0.6 (phase tags on every requirement), `Plan/architecture.md` v0.5 (ADRs, Section 12), `controls/catalogue.md` v0.4 (control phases), `docs/testing/cases.md` v0.5 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.3, `docs/ci-cd-pipeline.md` v0.3, `docs/tech-evaluation.md` v0.2 (spikes S1..S6) |
+| Depends on | `docs/prd.md` v0.4 (Section 8 release plan), `Plan/functional-spec.md` v0.7 (phase tags on every requirement), `Plan/architecture.md` v0.5 (ADRs, Section 12), `controls/catalogue.md` v0.4 (control phases), `docs/testing/cases.md` v0.5 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/tech-evaluation.md` v0.2 (spikes S1..S6) |
 | Purpose | Turn the five phases into a plan with deliverables, dependencies, effort, acceptance criteria, risks and go/no-go gates, with requirements, controls and tests allocated to phases. |
 | Honesty note | Durations come from the original design plan and assume 2 to 3 engineers. Nothing has been estimated bottom-up and no team exists yet. Treat all numbers as planning ranges to be re-baselined after Phase 0 spikes and again after Phase 1. |
 
@@ -105,6 +105,8 @@ Remaining exit criteria:
 ## 6. Phases in detail
 
 ### 6.1 Phase 1: MVP (8 to 10 weeks)
+
+The build-level work breakdown, schedule and test mapping for this phase are in `Plan/implementation-plan.md`.
 
 **Goal.** A working, tested core that proves the central controls: inventory, scanning, pinning and drift quarantine, deny-by-default authorization, SSRF protection and a tamper-evident audit trail, with a small dashboard.
 

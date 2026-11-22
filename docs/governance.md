@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.3 (template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
-| Depends on | `Plan/functional-spec.md` v0.6 (Section 2 roles, Section 12), `Plan/architecture.md` v0.5 (Section 12 ADRs), `controls/catalogue.md` v0.4 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.4, `docs/reviewgap.md` v0.4 |
+| Depends on | `Plan/functional-spec.md` v0.7 (Section 2 roles, Section 12), `Plan/architecture.md` v0.5 (Section 12 ADRs), `controls/catalogue.md` v0.4 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.4, `docs/reviewgap.md` v0.5 |
 | Purpose | Provide the structure needed to close gaps F2 (no named owners) and G1 (no independent review) in `docs/reviewgap.md`: role glossary and RACI, owner assignment table, review and sign-off log, decision log and risk-acceptance register. It does **not** close those gaps by itself: they close when people fill it in. |
 
 ## 1. Role glossary
@@ -75,6 +75,7 @@ One row per document; add rows per review round. A document is "reviewed" only w
 | `Plan/architecture.md` | 0.4 | *(open)* | | | |
 | `Plan/threat-model.md` | 0.4 | *(open)* | | | |
 | `docs/testing/cases.md` | 0.4 | *(open)* | | | |
+| `Plan/implementation-plan.md` | 0.1 | *(open)* | | | |
 | `controls/catalogue.yaml` | 0.3 | *(open; compare YAML source)* | | | |
 | `compliance/compliance-matrix.md` | 0.4 | *(open; legal/compliance required)* | | | |
 | `docs/architecture-assessment.md` | 0.2 | *(open)* | | | |

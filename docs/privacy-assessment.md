@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review by privacy and legal; closes the analysis part of gap H2 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6 (FR-AUD-3, FR-DATA-*, FR-ADM-4, FR-ADM-5, FR-ADM-7, FR-ADM-8, NFR-6), `docs/data-model.md` v0.1, `docs/deployment-architecture.md` v0.3 (Section 6), `docs/cross-cutting-design.md` v0.1, `compliance/compliance-matrix.md` v0.5 (Section 6), `controls/catalogue.md` v0.4 (CTL-10, CTL-22, CTL-29) |
+| Version | 0.2 (draft for review by privacy and legal; advances gaps H2 and D5 in `docs/reviewgap.md`) |
+| Depends on | `Plan/functional-spec.md` v0.7 (FR-AUD-3, FR-DATA-*, FR-ADM-4, FR-ADM-5, FR-ADM-7, FR-ADM-8, NFR-6), `docs/data-model.md` v0.1, `docs/deployment-architecture.md` v0.4 (Section 6), `docs/cross-cutting-design.md` v0.1, `compliance/compliance-matrix.md` v0.5 (Section 6), `controls/catalogue.md` v0.4 (CTL-10, CTL-22, CTL-29) |
 | Not legal advice | Whether the platform's processing needs a formal impact assessment, which legal bases apply, who is controller or processor, and transfer mechanisms are legal determinations; none is made here. Statements about legal duties are questions for legal, tagged **[LEGAL]**. |
 | Status | Analysis of the *design*. Nothing is implemented; data fields may change at schema freeze. |
 
@@ -63,6 +63,20 @@ The platform exists to protect other systems' data, but it also stores informati
 5. Rules for transfers when enabling external classifiers, SIEM exports or cloud services in other regions.
 6. Contract terms for sub-processors (cloud, IdP, SIEM, classifier vendors).
 7. Breach-notification triggers involving platform data.
+
+## 5A. Working design positions pending legal review (added in v0.2)
+
+These are engineering defaults chosen so the design is not blocked. None is a legal conclusion; each is replaced by the answer to the matching question in Section 5.
+
+| Topic | Working position | Why | Replaced by |
+|---|---|---|---|
+| Erasure versus immutable audit | Audit events keep identifiers as pseudonymous subject IDs; the mapping from subject ID to a person lives in a separate table that can be erased or redacted. Hash-chain entries are never rewritten; the redacted excerpt field stores only what the tenant policy allows. | Keeps the chain verifiable while allowing the link to a person to be removed | Legal answer to Section 5 question 4 |
+| Excerpt content | Default is no raw payload in audit events; excerpts are redacted, size-bounded and off for tool classes marked sensitive | Minimises personal data held in a long-retention store | Decision in the Actions table |
+| Retention | The 13 months hot and 7 years cold default stays a placeholder (NFR-6). Per-class and per-tenant periods are configuration, never code constants. | No stated basis yet | DEC-9 and customer input CI-11 |
+| Data subject requests | A procedure is needed for access, rectification and erasure requests that touch platform data: find by subject ID, export or redact, record the action as an audit event, apply legal hold exceptions. Outline only; steps belong in the runbook once written. | Statutory timelines vary by jurisdiction | Runbook section (Phase 2) |
+| Impact assessment | Treat a formal assessment as likely needed for pilots that process staff activity at scale until legal says otherwise | Conservative default | Legal answer to Section 5 question 3 |
+| Operational logs | Operational logs carry no payloads and short retention (`docs/cross-cutting-design.md` Section 3); access limited to platform operators | Reduces secondary copies of personal data | Operations policy |
+| Sub-processors | Any external classifier, SIEM or cloud service is off by default per tenant until contract and transfer terms are confirmed | Avoids silent transfers | Legal answer to Section 5 question 5 and 6 |
 
 ## 6. Actions
 

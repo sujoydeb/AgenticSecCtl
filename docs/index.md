@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (closes gap G7 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `docs/governance.md` v0.3 |
 | Purpose | Tell each reader which documents to read, in what order, and where every document lives. `scripts/check_docs.py` fails if a document is missing from the table in Section 2. |
 | Status | All documents are drafts. Nothing has been independently reviewed (see `docs/governance.md`). Versions are in each document's header table, not repeated here. |
 
@@ -11,7 +11,7 @@
 
 | Audience | Read in this order |
 |---|---|
-| Sponsor, product owner | `docs/prd.md`, `docs/roadmap.md`, `docs/reviewgap.md` (Sections 1, 9, 10, 11), `docs/governance.md`, `docs/customer-inputs.md` |
+| Sponsor, product owner | `docs/prd.md`, `docs/roadmap.md`, `Plan/implementation-plan.md`, `docs/reviewgap.md` (Sections 1, 9, 10, 11), `docs/governance.md`, `docs/customer-inputs.md` |
 | Security architect, reviewer | `docs/architecture-assessment.md`, `Plan/architecture.md`, `Plan/threat-model.md`, `controls/catalogue.md`, `docs/authn-authz-design.md`, `docs/reviewgap.md` |
 | Backend and frontend engineers | `Plan/functional-spec.md` (Section 4), `Plan/architecture.md`, `docs/data-model.md`, `docs/api-specification.md`, `docs/cross-cutting-design.md`, `docs/mcp-compatibility.md`, `docs/ux-outline.md` |
 | Platform and DevSecOps engineers | `docs/deployment-architecture.md`, `docs/cloud-adapter-verification.md`, `docs/ci-cd-pipeline.md`, `docs/runbooks/operational-runbook.md`, `docs/parameter-register.md` |
@@ -27,6 +27,7 @@
 | `Plan/architecture.md` | Components, trust zones, request pipeline, sequences, deployment summary, ADRs | Architects, engineers |
 | `Plan/functional-spec.md` | Requirements (what the platform shall do), roles, acceptance criteria, open decisions | Everyone; source of truth for IDs |
 | `Plan/threat-model.md` | Assets, adversaries, threats, attack trees, exclusions, test index, risk register | Security, architects, test |
+| `docs/repository-setup.md` | Untested outline for creating the remote repository and applying branch protection (nothing executed) | Delivery lead, DevSecOps |
 | `compliance/compliance-matrix.md` | Control-to-framework mapping by source type; findings register; not legally reviewed | Compliance, auditors |
 | `controls/catalogue.md` | Generated readable control catalogue; source is `controls/catalogue.yaml` | Security, auditors, engineers |
 | `docs/api-specification.md` | Management API endpoints, roles, errors, traceability | Backend and frontend engineers |
@@ -46,6 +47,7 @@
 | `docs/privacy-assessment.md` | Platform data inventory and privacy risks | Privacy, legal, security |
 | `docs/reviewgap.md` | Review gap register with closure status | Reviewers, sponsors |
 | `docs/roadmap.md` | Phases 0 to 5: deliverables, effort, acceptance, risks, spikes, gates | Sponsors, delivery |
+| `Plan/implementation-plan.md` | Build-level plan: Phase 1 work packages, schedule, test strategy, definition of done; later phases outlined | Engineers, delivery lead |
 | `docs/runbooks/operational-runbook.md` | Operating procedures, failure responses, break-glass, disaster recovery | Operators, on-call |
 | `docs/tech-evaluation.md` | Reuse-versus-build candidates and verification log | Architects, security |
 | `docs/testing/cases.md` | Security test cases (specifications) | Test engineers, security |

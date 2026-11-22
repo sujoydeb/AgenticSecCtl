@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.4 (adds closure updates for High gaps (Section 9), Medium gaps (Section 10) and Low gaps (Section 11); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
+| Version | 0.5 (adds closure updates for High gaps (Section 9), Medium gaps (Section 10), Low gaps (Section 11) and the remaining Medium gaps (Section 12); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
@@ -323,10 +323,29 @@ Vocabulary as in Section 9. After this update `scripts/check_docs.py` passes (15
 
 **Summary of the 7 Low gaps:** 6 closed (C5, C6, E7, G7 outright; D7 and H5 pending review), 1 open (A8, implementation work). A helper, `scripts/sync_versions.py`, now rewrites version citations after a document is bumped.
 
+## 12. Closure update for the remaining Medium gaps (v0.5)
+
+Vocabulary as in Section 9. Evidence gathered on 2026-11-22 through a local headless browser, a temporary Mermaid CLI install (deleted afterwards), the public GitHub API, MCP specification pages, AWS and Microsoft documentation search tools, and web search summaries. No remote repository was created or published (declined by the user). Nothing was committed.
+
+| Gap | Status | What changed | Where | What remains |
+|---|---|---|---|---|
+| D5 | Partly closed | Working positions for erasure versus immutable audit, excerpt content, retention, data subject requests, impact assessment and sub-processors, each labelled as pending legal review | `docs/privacy-assessment.md` v0.2 Section 5A | Legal answers; retention values stay placeholders (DEC-9) |
+| E3 | Closed, pending review | Compatibility matrix extended with server features, lifecycle, client registration details and a changelog summary for revision 2026-07-28; spec v0.7 updates FR-MCP-2, FR-MCP-8 and FR-SSRF-1 (no initialize handshake, `server/discover`, subscription streams, client metadata documents through the SSRF guard) | `docs/mcp-compatibility.md` v0.2, `Plan/functional-spec.md` v0.7 | Pages summarised by a fetching assistant, not read verbatim; subscriptions pattern, schema reference, extensions and stdio shutdown pages not read; re-read primary text before relying on any row |
+| E4 | Partly closed | AWS extended (sandboxed pods, multi-Region keys, Object Lock with replication); Azure first pass (metadata, immutable storage, workload identity, network policy, PostgreSQL HA and PITR, pod sandboxing); Google Cloud first pass from search summaries only; three consequences added to the deployment document (DNS under default deny, identity token lifetimes, locked retention) | `docs/cloud-adapter-verification.md` v0.2, `docs/deployment-architecture.md` v0.4 | Google Cloud pages not read; admission engines, private connectivity, egress, costs unverified everywhere; nothing tested on a cluster |
+| E5 | Partly closed | Seven further actions in the product-gate template pinned to commits read from the GitHub API (release tags, dates, licences recorded; no `TBD_PIN_SHA` left); template header no longer claims names are unverified | `docs/ci-templates/product-security-gates.yml`, `docs/ci-cd-pipeline.md` v0.4 Section 12 | Tags can move: re-verify before use; one action has a non-standard licence to be read; no action's behaviour tested; no workflow has ever run |
+| E6 | Partly closed | Seed corpus grown from 24 to 42 descriptions and from 16 to 28 responses, adding hard negatives and categories for error-message, resource-template, image-alt-text and agent-card injection (all inert) | `tests/fixtures/corpus/`, `docs/testing/fixtures-and-corpora.md` | Still far too small for recall or precision claims; no measurement of latency or effort was made, so estimates and targets remain unvalidated proposals |
+| F3 | Open | Working assumptions for all 15 intake questions, labelled as engineering assumptions and not answers, so design work is not blocked | `docs/customer-inputs.md` v0.2 Section 3 | A customer must answer |
+| G3 | Closed | All 20 Mermaid diagrams rendered with Mermaid CLI and headless Chrome; four sequence diagrams failed (semicolons in message text) and were fixed, and the checker now rejects that pattern; the generated HTML was screenshotted at 1280 and 390 pixel widths in light and dark modes, which found horizontal overflow on phone width that is fixed in the generator | `Plan/architecture.md`, `docs/authn-authz-design.md`, `scripts/check_docs.py`, `scripts/build_spec_html.py` | Only the specification was screenshotted (the other documents have no HTML); diagrams were checked for parsing and one was viewed, not each reviewed for correctness; the workflow run moves to G4 |
+| G4 | Open | Untested outline for creating the repository and applying protection, with a check per step | `docs/repository-setup.md` | Needs a remote repository, real teams and applied settings; the user declined publishing, so nothing was executed |
+| H2 | Partly closed | Same working positions as D5; data subject request outline | `docs/privacy-assessment.md` v0.2 | Legal and privacy review; runbook procedure; no formal impact assessment |
+
+**Summary of the 29 Medium gaps after this update:** 22 closed (the 20 in Section 10 plus E3, G3; E3 pending review), 5 partly closed (D5, E4, E5, E6, H2), 2 open (F3, G4). The remaining items depend on people (legal, customer, owners), on data (measurements, corpus), or on a remote repository.
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5 | 2026-11-22 | Closure update for the remaining Medium gaps (Section 12) |
 | 0.4 | 2026-11-22 | Closure update for the Low gaps (Section 11) |
 | 0.3 | 2026-11-22 | Closure update for the Medium gaps (Section 10) |
 | 0.2 | 2026-11-22 | Closure update for the High gaps (Section 9) |

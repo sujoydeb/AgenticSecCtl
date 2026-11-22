@@ -3,12 +3,18 @@
 
 | | |
 |---|---|
-| Version | 0.6 (draft for review) |
-| Supersedes | 0.5 |
+| Version | 0.7 (draft for review) |
+| Supersedes | 0.6 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
 ## 0. Change log
+
+### v0.6 → v0.7 (remaining Medium gaps)
+
+| # | Change | Where |
+|---|---|---|
+| 1 | Lifecycle requirements updated from the rest of the 2026-07-28 specification: no initialize handshake, `server/discover`, per-request version and capabilities, `subscriptions/listen` notifications, client metadata documents fetched through the SSRF guard (gap E3) | FR-MCP-2, FR-MCP-8, FR-SSRF-1 |
 
 ### v0.5 → v0.6 (closure of Low review gaps)
 
@@ -282,7 +288,7 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 
 | ID | Requirement | Pri | Ph | Threats | Verify |
 |---|---|---|---|---|---|
-| FR-SSRF-1 | Every outbound connection initiated by the platform (registration, import, discovery, health check, proxying) shall pass the SSRF guard. | M | P1 | H | UT, PT |
+| FR-SSRF-1 | Every outbound connection initiated by the platform (registration, import, discovery, health check, proxying, fetching client metadata documents) shall pass the SSRF guard. | M | P1 | H | UT, PT |
 | FR-SSRF-2 | The guard shall resolve DNS, validate every returned address against the blocklist (loopback, link-local including 169.254.169.254, RFC 1918/ULA, multicast, unspecified, IPv4-mapped IPv6, metadata hostnames) and connect to the validated IP (resolve-then-pin) to defeat rebinding. | M | P1 | H | UT, PT |
 | FR-SSRF-3 | Redirects shall be disabled by default; if enabled, each hop shall be re-validated, max 3. | M | P1 | H | UT |
 | FR-SSRF-4 | Alternate encodings (decimal, octal, hex, IPv6 forms, userinfo tricks, unicode hosts) shall be normalized before checks. | M | P1 | H | FZ |
@@ -306,13 +312,13 @@ Revision-specific statements below were checked against the 2026-07-28 specifica
 | ID | MCP phase | Requirement | Pri | Ph |
 |---|---|---|---|---|
 | FR-MCP-1 | Transport | TLS 1.2+ on all hops (target 1.3); no plaintext in production; the gateway shall validate the `Origin` header on HTTP transports and answer an invalid origin with 403 (a protocol MUST); servers on loopback only where local; local stdio servers only through the managed wrapper. | M | P2 |
-| FR-MCP-2 | Initialize / capability negotiation | Only allowlisted protocol versions accepted; capabilities offered to a server limited to those the policy permits; unexpected capabilities flagged. | M | P2 |
+| FR-MCP-2 | Version and capability negotiation | Only allowlisted protocol versions accepted (read per request from `_meta`; earlier revisions at initialize); capabilities offered to a server limited to those the policy permits; unexpected capabilities and extensions flagged; `server/discover` used at registration and refresh where the revision defines it; `serverInfo` never used for security decisions. | M | P2 |
 | FR-MCP-3 | Session management | The platform shall maintain its own sessions, unguessable, bound to the authenticated client (FR-AUTHN-4), expiring and revocable, whether or not the MCP revision defines protocol-level sessions (revision 2026-07-28 has none and servers on it should ignore `Mcp-Session-Id`; older revisions use it). | M | P2 |
 | FR-MCP-4 | Tool discovery | Filtered and hash-checked (FR-RT-1, FR-DRIFT-2). | M | P1 |
 | FR-MCP-5 | Tool invocation | Full pipeline (FR-AUTHZ, FR-RT); the Phase 1 subset is deny-by-default authorization and hash-pinned allow or deny (FR-AUTHZ-1..3, FR-DRIFT-3). | M | P2 |
 | FR-MCP-6 | Resources | Resource URIs validated against allowlists; URI templates treated as arguments; resource content inspected as responses. | M | P2 |
 | FR-MCP-7 | Prompts | Server-supplied prompts scanned like tool descriptions and hash-pinned. | S | P2 |
-| FR-MCP-8 | Notifications | Rate-limited; `list_changed` triggers re-hash; unknown notification types ignored and logged. | M | P2 |
+| FR-MCP-8 | Notifications | Rate-limited; `list_changed` triggers re-hash; where the revision uses `subscriptions/listen` streams, the gateway opens and bounds them per server; unknown notification types ignored and logged. | M | P2 |
 | FR-MCP-9 | Sampling | Sampling is deprecated in revision 2026-07-28. Denied by default; where an older revision or a server needs it and policy enables it, requests shall pass the gateway, be budgeted with iteration limits, be inspected, and require human approval for high-risk prompts. | M | P2 |
 | FR-MCP-10 | Elicitation | Denied by default; if enabled, form-mode requests for passwords, keys, tokens or payment credentials shall be blocked (the specification requires URL mode for such data), the requesting server and the full target URL shall be shown to the user, and the platform shall not pre-fetch URLs. | M | P2 |
 | FR-MCP-11 | Roots | Roots are deprecated and informational, not an access-control mechanism (revision 2026-07-28). Roots exposed to a server shall be limited to approved directories, validated against path traversal, and changes audited; access control shall not depend on them. | S | P2 |

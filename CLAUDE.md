@@ -8,32 +8,34 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 
 | File | Role | Version |
 |---|---|---|
-| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.6 |
+| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.7 |
 | `Plan/architecture.md` | Components, interceptor pipeline, sequences, deployment, ADRs, provisional audit event vocabulary (4.8). Source of truth for *how* | v0.5 |
 | `Plan/threat-model.md` | Assets, adversaries, threats A–P and X1–X13, STRIDE, attack trees, TC index (Section 7), risk register | v0.5 |
-| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.6 |
+| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.7 |
 | `docs/prd.md` | Product requirements: problem, personas, scope, release plan, metrics | v0.4 |
 | `docs/testing/cases.md` | 100 security test cases (specifications, none executed) | v0.5 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.2 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
+| `Plan/implementation-plan.md` | Build-level implementation plan (Phase 1 work packages WP-1.1..13, schedule, tests, definition of done; phases 2-5 outlined; generated traceability table of P1 requirements) | v0.1 |
 | `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.4 |
 | `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.3 |
 | `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.1 |
 | `docs/api-specification.md`, `docs/api/openapi.yaml` | Management API endpoints, roles, SoD, errors; OpenAPI 3.1 outline (unvalidated) | v0.1 |
 | `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.3 |
-| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.4 |
+| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.5 |
 | `docs/index.md` | Reading guide by audience and the map of all design documents; every design document must be listed | v0.1 |
-| `docs/mcp-compatibility.md` | MCP revision 2026-07-28 pin; authorization, transport and client-feature statements mapped to platform responses (pages read; others not) | v0.1 |
+| `docs/mcp-compatibility.md` | MCP revision 2026-07-28 pin; authorization, transport and client-feature statements mapped to platform responses (pages read; others not) | v0.2 |
 | `docs/authn-authz-design.md` | Flows, policy structure and decision contract, illustrative unexecuted Rego | v0.1 |
 | `docs/cross-cutting-design.md` | Logging, error handling and configuration rules | v0.1 |
 | `docs/ux-outline.md` | Dashboard information architecture and flows (no visual design) | v0.1 |
 | `docs/parameter-register.md` | Fixed parameters (machine-checked) and open "to be set" parameters with owners and gates | v0.1 |
-| `docs/privacy-assessment.md` | Platform data inventory and privacy risks; legal questions marked [LEGAL] | v0.1 |
-| `docs/cloud-adapter-verification.md` | AWS adapter facts verified from documentation chunks; Azure and Google Cloud not done | v0.1 |
-| `docs/customer-inputs.md` | Blank customer intake form | v0.1 |
+| `docs/privacy-assessment.md` | Platform data inventory and privacy risks; legal questions marked [LEGAL] | v0.2 |
+| `docs/cloud-adapter-verification.md` | AWS and Azure adapter facts from documentation chunks; Google Cloud from search summaries only | v0.2 |
+| `docs/repository-setup.md` | Untested outline for remote repository and branch protection; nothing executed | v0.1 |
+| `docs/customer-inputs.md` | Blank customer intake form | v0.2 |
 | `docs/testing/performance-test-plan.md`, `docs/testing/fixtures-and-corpora.md` | Proposed load-test environment and workload; fixture and corpus specification (seed corpus under `tests/fixtures/corpus/`) | v0.1 |
-| `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.3 |
-| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.3 |
+| `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.4 |
+| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.4 |
 | `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
 | `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..30): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.4 |
 | `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.4 |

@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| Version | 0.3 (design draft; the product pipeline is a template, only the document checks are wired up) |
-| Depends on | `Plan/functional-spec.md` v0.6 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.5 (Sections 8, 10), `Plan/threat-model.md` v0.5 (threats L, X8), `docs/testing/cases.md` v0.5 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.3 (Section 6 change management), `controls/catalogue.md` v0.4 (CTL-16, CTL-17, CTL-27) |
+| Version | 0.4 (design draft; the product pipeline is a template, only the document checks are wired up) |
+| Depends on | `Plan/functional-spec.md` v0.7 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.5 (Sections 8, 10), `Plan/threat-model.md` v0.5 (threats L, X8), `docs/testing/cases.md` v0.5 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.3 (Section 6 change management), `controls/catalogue.md` v0.4 (CTL-16, CTL-17, CTL-27) |
 | Platform | GitHub Actions (decision recorded in this document; no remote repository is configured yet) |
-| Status | Untested on GitHub: no workflow in this repository has run (no remote). Syntax of the workflow, Dependabot and template files was validated with PyYAML, and the template's job shape was checked (`scripts/validate_yaml.py`, 2026-11-22). The `actions/checkout` pin was read from the public GitHub API (release v7.0.1 and the commit its tag points to) via a page-fetching assistant and must be re-verified before the first run. All other third-party action names, versions and commit SHAs remain **not verified** (placeholders `TBD_PIN_SHA` in the template). |
+| Status | Untested on GitHub: no workflow in this repository has run (no remote; creating one was declined). YAML syntax of the workflow, Dependabot, template, OpenAPI and catalogue files was validated with PyYAML (`scripts/validate_yaml.py`, 2026-11-22). Release tags and commit SHAs for the actions in the template (and `actions/checkout`) were read from the public GitHub API through a page-fetching assistant on 2026-11-22 (Section 12); they must be re-verified before first use. No action has been executed and no action's behaviour has been tested. |
 
 ## 1. Purpose and scope
 
@@ -189,9 +189,26 @@ The template for the product gates is `docs/ci-templates/product-security-gates.
 
 ## 11. Open items and unverified claims
 
-- Verify and pin every third-party action (names, versions, commit SHAs, permissions), plus tool licences (**[VERIFY]**).
+- Re-verify the pins in Section 12 immediately before use, read each action's permissions and terms, and verify tool licences (**[VERIFY]**).
 - Decide thresholds: vulnerability severities that fail builds, SAST severity threshold, patch deadlines (CTL-27 parameter "to be set").
 - Decide signing approach (keyless vs KMS key) and registry; confirm availability of artifact attestations and signed-commit enforcement for the chosen hosting plan **[VERIFY]**.
 - Name the code owners and reviewer teams; configure branch protection and environments (requires a remote repository).
 - Reproducible builds are a goal; achievability depends on the build toolchain.
 - None of the workflows has been run; the pipeline self-check only validates pins and permissions with a text check, not workflow semantics (use a workflow linter once available **[VERIFY]**).
+
+## 12. Verified action pins (looked up 2026-11-22, not executed)
+
+Source: public GitHub REST API (repository metadata, latest release, tag to commit), read through a page-fetching assistant. A SHA is the commit that the release tag pointed to at lookup time. Tags can be moved, so verify again before use and keep Dependabot proposals reviewed.
+
+| Action | Release tag | Published | Commit SHA | Licence and notes |
+|---|---|---|---|---|
+| `gitleaks/gitleaks-action` | v3.0.0 | 2026-05-30 | `e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e` | NOASSERTION ("Other"; read the terms before use) |
+| `actions/dependency-review-action` | v5.0.1 | 2026-11-17 | `bbc44d14a204704ccc493733616cd1e93a0321ec` | MIT; input fail-on-severity takes low, moderate, high, critical |
+| `anchore/sbom-action` | v0.24.3 | 2026-10-02 | `66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c` | Apache-2.0 (annotated tag, resolved to commit) |
+| `aquasecurity/trivy-action` | v0.36.0 | 2026-04-22 | `ed142fd0673e97e23eac54620cfb913e5ce36c25` | Apache-2.0; inputs severity and exit-code (exit-code default 0); annotated tag resolved to commit |
+| `sigstore/cosign-installer` | v4.1.3 | 2026-11-04 | `756fe2d284c7292c4e9b62c8a28f1e5629c59532` | Apache-2.0 |
+| `actions/attest-build-provenance` | v4.2.2 | 2026-08-06 | `4d101475d8b20a2381f78447822ac1eab6504dd8` | MIT; v4 wraps actions/attest per its release notes |
+| `open-policy-agent/setup-opa` | v2.4.0 | 2026-04-21 | `b2b258e089860efaadaaf71bf6e3aecb4a3eeff1` | Apache-2.0 |
+| `actions/checkout` | v7.0.1 | 2026-07-20 | `3d3c42e5aac5ba805825da76410c181273ba90b1` | not rechecked here; from the earlier lookup |
+
+Not verified: the behaviour of any of these actions, their permissions, their inputs beyond those noted, and the licence terms of `gitleaks/gitleaks-action` (reported as a non-SPDX licence). `github/codeql-action` returned a bundle tag as its latest release, so it is not pinned in the template. The template remains inactive.

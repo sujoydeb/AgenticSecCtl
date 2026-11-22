@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.5 (draft; **not reviewed by legal or compliance**) |
-| Depends on | `Plan/functional-spec.md` v0.6, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/testing/cases.md` v0.5, `docs/runbooks/operational-runbook.md` v0.3, `docs/playbooks/incident-response-playbooks.md` v0.2, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.4 |
+| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/testing/cases.md` v0.5, `docs/runbooks/operational-runbook.md` v0.3, `docs/playbooks/incident-response-playbooks.md` v0.2, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.4 |
 | Satisfies | FR-COMP-2..3 (mandatory/guidance/voluntary labelling, per-finding record). The control catalogue of FR-COMP-1 is in `controls/catalogue.md`. FR-COMP-5 (legal review before release) is **not yet satisfied**. |
 | Review status | Review date: none. Reviewer: none. Release as an authoritative mapping is blocked until reviewed. |
 

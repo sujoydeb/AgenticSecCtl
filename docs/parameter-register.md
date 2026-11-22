@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (closes gaps D4 and G6 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6, `controls/catalogue.md` v0.4, `docs/ci-cd-pipeline.md` v0.3, `docs/deployment-architecture.md` v0.3, `docs/runbooks/operational-runbook.md` v0.3, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `controls/catalogue.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/runbooks/operational-runbook.md` v0.3, `docs/governance.md` v0.3 |
 | Purpose | One list of every tunable value: those already fixed (with a machine check that every document still states the same value) and those still open (with an owner and a decision gate). A value that is "to be set" anywhere in the documentation must have a row in Section 2. |
 | Status | Proposals only; no owner has accepted any row. Owner roles use the glossary in `docs/governance.md`. |
 

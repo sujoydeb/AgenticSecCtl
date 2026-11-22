@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | Version | 0.1 (specification; closes gap G5 and the corpus part of E6 in `docs/reviewgap.md`) |
-| Depends on | `docs/testing/cases.md` v0.5 (Section 1 fixtures), `Plan/functional-spec.md` v0.6 (Section 10 detector budgets, FR-SCAN-10), `docs/deployment-architecture.md` v0.3 (Section 13 Compose topology), `docs/roadmap.md` v0.4 (Phase 1 harness) |
-| Status | Specification plus a **seed corpus** in `tests/fixtures/corpus/` (24 tool descriptions, 16 responses). The fixture servers and the harness are not implemented. The seed corpus is too small to measure precision or recall. |
+| Depends on | `docs/testing/cases.md` v0.5 (Section 1 fixtures), `Plan/functional-spec.md` v0.7 (Section 10 detector budgets, FR-SCAN-10), `docs/deployment-architecture.md` v0.4 (Section 13 Compose topology), `docs/roadmap.md` v0.4 (Phase 1 harness) |
+| Status | Specification plus a **seed corpus** in `tests/fixtures/corpus/` (42 tool descriptions, 28 responses). The fixture servers and the harness are not implemented. The seed corpus is too small to measure precision or recall. |
 
 ## 1. Fixture servers
 
@@ -82,7 +82,7 @@ Development set (rules may be tuned on it) and held-out test set (never used for
 Per category and overall: true positives, false positives, false negatives, precision, recall, and for responses the false-block rate on benign traffic in shadow mode. Report confidence intervals; a result on fewer than 100 samples per class is reported as indicative only.
 
 ### 3.6 Size targets (proposal)
-Seed (today): 24 descriptions, 16 responses. Phase 1: at least 200 descriptions (at least 100 benign enterprise-style) and 100 responses. Phase 2: at least 500 descriptions, 300 responses and a DLP corpus per entity type before detector budgets are enforced. These counts are proposals.
+Seed (today): 42 descriptions, 28 responses (includes hard negatives and categories for error-message, resource-template, image-alt-text and agent-card injection). Phase 1: at least 200 descriptions (at least 100 benign enterprise-style) and 100 responses. Phase 2: at least 500 descriptions, 300 responses and a DLP corpus per entity type before detector budgets are enforced. These counts are proposals.
 
 ## 4. Ownership and process
 

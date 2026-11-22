@@ -1,12 +1,13 @@
 # TEMPLATE, NOT AN ACTIVE WORKFLOW.
 # Lives outside .github/workflows/ on purpose. Do not copy into place until:
-#   1. every `uses:` below has been verified (action exists, current maintainer, permissions)
-#      and pinned to a full 40-character commit SHA (replace each TBD_PIN_SHA);
+#   1. every `uses:` below has been re-verified (action exists, maintainer, permissions, licence terms)
+#      and its SHA re-checked (pins below were looked up once and may be stale);
 #   2. thresholds marked TBD are decided (docs/ci-cd-pipeline.md Section 11);
 #   3. the repository has code to scan (services/, web/, policy/, deploy/ are empty today);
 #   4. a workflow linter has checked the file.
-# Design and rationale: docs/ci-cd-pipeline.md. Action names below are from background
-# knowledge and are UNVERIFIED [VERIFY].
+# Design and rationale: docs/ci-cd-pipeline.md. The pinned commit SHAs were read from the public GitHub
+# API on 2026-11-22 (release tag to commit, see docs/ci-cd-pipeline.md Section 12). Nothing has been run;
+# re-verify each pin and read each action's terms and permissions before copying this into place.
 name: product-security-gates
 
 on:
@@ -28,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@TBD_PIN_SHA
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0              # secret scan needs history for the PR range
@@ -41,7 +42,7 @@ jobs:
         run: |
           echo "TBD: pytest; opa test policy/" && exit 1
       - name: G1.4 secret scan
-        uses: gitleaks/gitleaks-action@TBD_PIN_SHA            # [VERIFY]
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e  # v3.0.0
       - name: G1.5 static analysis
         run: |
           echo "TBD: semgrep / bandit / codeql with severity threshold TBD" && exit 1
@@ -63,10 +64,10 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@TBD_PIN_SHA
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/dependency-review-action@TBD_PIN_SHA     # [VERIFY]
+      - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec  # v5.0.1
         with:
           fail-on-severity: high                                 # TBD threshold decision
 
@@ -84,7 +85,7 @@ jobs:
     outputs:
       image_digest: ${{ steps.build.outputs.digest }}
     steps:
-      - uses: actions/checkout@TBD_PIN_SHA
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Build image (pinned base digest, non-root)
@@ -92,9 +93,9 @@ jobs:
         run: |
           echo "TBD: build and push by digest; export digest output" && exit 1
       - name: G2.2 SBOM
-        uses: anchore/sbom-action@TBD_PIN_SHA                    # [VERIFY]
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c  # v0.24.3
       - name: G2.3 image vulnerability scan
-        uses: aquasecurity/trivy-action@TBD_PIN_SHA              # [VERIFY]
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           severity: CRITICAL,HIGH                                 # TBD threshold
           exit-code: "1"
@@ -112,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@TBD_PIN_SHA
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: G3.1 / G3.2 end-to-end suite with hostile fixtures on isolated network

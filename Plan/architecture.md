@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.5 (draft for review) |
-| Depends on | `functional-spec.md` v0.6 (FR/NFR IDs referenced below) |
+| Depends on | `functional-spec.md` v0.7 (FR/NFR IDs referenced below) |
 | Companion | `threat-model.md` v0.5; `../docs/testing/cases.md` v0.5; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.2 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
@@ -235,7 +235,7 @@ sequenceDiagram
   G->>P: decide(agent, tool, action, resource, args digest, taint)
   P-->>G: allow + obligations
   opt obligation require_approval
-    G->>G: hold; await human approval bound to args hash
+    G->>G: hold, await human approval bound to args hash
   end
   G->>G: arg guards, DLP(request), limits
   G->>B: upstream credential (audience-bound)
@@ -286,7 +286,7 @@ sequenceDiagram
   IM->>B: revoke tokens and credentials
   R-->>G: change events
   G->>G: deny affected sessions (≤ 5 s)
-  IM->>IM: timeline, report; recovery requires reapproval
+  IM->>IM: timeline, report, recovery requires reapproval
 ```
 
 ### 6.5 JIT grant for a high-impact action
@@ -301,7 +301,7 @@ sequenceDiagram
   API->>H: approval task
   H->>API: approve
   API->>P: publish grant with expiry
-  Note over P: grant expires automatically; expiry audited
+  Note over P: grant expires automatically, expiry audited
 ```
 
 ## 7. Data architecture

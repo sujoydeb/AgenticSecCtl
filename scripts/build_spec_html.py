@@ -149,7 +149,7 @@ tbody tr:hover{background:color-mix(in srgb,var(--blue) 5%,transparent)}
 .verify{background:var(--warnbg);color:var(--warn);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
 hr.rule{border:0;border-top:1px solid var(--line);margin:28px 0}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:20px 16px;text-align:center}
-@media (max-width:900px){.layout{grid-template-columns:1fr} nav.toc{position:static;max-height:none;border-left:0;padding-left:0;border-bottom:1px solid var(--line);padding-bottom:12px}}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)} main,nav.toc{min-width:0} .chip{max-width:100%} nav.toc{position:static;max-height:none;border-left:0;padding-left:0;border-bottom:1px solid var(--line);padding-bottom:12px}}
 @media print{nav.toc{display:none} .layout{display:block} .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact} .tw{overflow:visible} table{min-width:0}}
 """
 

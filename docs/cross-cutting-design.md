@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (design draft; closes gap A5 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.6 (FR-AUD-*, FR-OBS-*, FR-ADM-1, FR-RT-13, FR-AUTHN-6, Section 4.21), `Plan/architecture.md` v0.5 (Section 4.8 event vocabulary), `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `controls/catalogue.md` v0.4 (CTL-13, CTL-14, CTL-27) |
+| Depends on | `Plan/functional-spec.md` v0.7 (FR-AUD-*, FR-OBS-*, FR-ADM-1, FR-RT-13, FR-AUTHN-6, Section 4.21), `Plan/architecture.md` v0.5 (Section 4.8 event vocabulary), `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `controls/catalogue.md` v0.4 (CTL-13, CTL-14, CTL-27) |
 | Status | Design draft. Library names and exact field lists are unverified and may change at implementation. |
 
 ## 1. Why one design
