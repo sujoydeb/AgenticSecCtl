@@ -1,0 +1,9 @@
+# Keeps pinned GitHub Actions current via reviewed pull requests (docs/ci-cd-pipeline.md Section 4, stage 5).
+# Configuration syntax not verified against current documentation.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

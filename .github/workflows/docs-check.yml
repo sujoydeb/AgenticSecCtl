@@ -1,0 +1,33 @@
+# Document consistency and generated-file freshness.
+# This is the only active workflow today. It runs repository-owned scripts and needs no secrets.
+# Policy and waivers: docs/ci-cd-pipeline.md (Sections 7 and 8).
+name: docs-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # waiver: W-001 (tag instead of commit SHA; see docs/ci-cd-pipeline.md Section 7)
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Cross-document consistency checks
+        run: python3 -I scripts/check_docs.py
+      - name: Generated files are current
+        run: |
+          python3 -I scripts/build_spec_html.py Plan/functional-spec.md Plan/functional-spec.html
+          python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md
+          git diff --exit-code -- Plan/functional-spec.html controls/catalogue.md

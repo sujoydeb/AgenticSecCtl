@@ -1,0 +1,132 @@
+# TEMPLATE, NOT AN ACTIVE WORKFLOW.
+# Lives outside .github/workflows/ on purpose. Do not copy into place until:
+#   1. every `uses:` below has been verified (action exists, current maintainer, permissions)
+#      and pinned to a full 40-character commit SHA (replace each TBD_PIN_SHA);
+#   2. thresholds marked TBD are decided (docs/ci-cd-pipeline.md Section 11);
+#   3. the repository has code to scan (services/, web/, policy/, deploy/ are empty today);
+#   4. a workflow linter has checked the file.
+# Design and rationale: docs/ci-cd-pipeline.md. Action names below are from background
+# knowledge and are UNVERIFIED [VERIFY].
+name: product-security-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------- Stage 1: pull request gates (no secrets, read-only token) ----------
+  pr-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@TBD_PIN_SHA
+        with:
+          persist-credentials: false
+          fetch-depth: 0              # secret scan needs history for the PR range
+      - name: G1.1 document consistency
+        run: python3 -I scripts/check_docs.py
+      - name: G1.2 lint and type check
+        run: echo "TBD: ruff, mypy, eslint, tsc once code exists" && exit 1
+      - name: G1.3 unit tests and policy tests
+        run: echo "TBD: pytest; opa test policy/" && exit 1
+      - name: G1.4 secret scan
+        uses: gitleaks/gitleaks-action@TBD_PIN_SHA            # [VERIFY]
+      - name: G1.5 static analysis
+        run: echo "TBD: semgrep / bandit / codeql with severity threshold TBD" && exit 1
+      - name: G1.7 IaC and manifest scan
+        run: echo "TBD: trivy config / checkov / kube-linter on deploy/" && exit 1
+      - name: G1.8 Dockerfile lint
+        run: echo "TBD: hadolint on service Dockerfiles" && exit 1
+      - name: G1.9 policy diff review
+        run: echo "TBD: script comparing decisions of base vs PR policy; new allows need security-reviewer acknowledgement" && exit 1
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@TBD_PIN_SHA
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@TBD_PIN_SHA     # [VERIFY]
+        with:
+          fail-on-severity: high                                 # TBD threshold decision
+
+  # ---------- Stage 2: build, SBOM, scan, sign, attest (main and tags only) ----------
+  build-sign:
+    if: github.event_name == 'push'
+    needs: [pr-gates]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write       # TBD: depends on the chosen registry
+      id-token: write       # keyless signing / provenance
+      attestations: write   # artifact attestations [VERIFY availability]
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@TBD_PIN_SHA
+        with:
+          persist-credentials: false
+      - name: Build image (pinned base digest, non-root)
+        id: build
+        run: echo "TBD: build and push by digest; export digest output" && exit 1
+      - name: G2.2 SBOM
+        uses: anchore/sbom-action@TBD_PIN_SHA                    # [VERIFY]
+      - name: G2.3 image vulnerability scan
+        uses: aquasecurity/trivy-action@TBD_PIN_SHA              # [VERIFY]
+        with:
+          severity: CRITICAL,HIGH                                 # TBD threshold
+          exit-code: "1"
+      - name: G2.5 sign image
+        run: echo "TBD: cosign sign (keyless or KMS) by digest" && exit 1
+      - name: G2.6 provenance attestation
+        run: echo "TBD: provenance attestation bound to this workflow identity" && exit 1
+
+  # ---------- Stage 3: integration and adversarial tests ----------
+  e2e:
+    if: github.event_name == 'push'
+    needs: [build-sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@TBD_PIN_SHA
+        with:
+          persist-credentials: false
+      - name: G3.1 / G3.2 end-to-end suite with hostile fixtures on isolated network
+        run: echo "TBD: docker compose -f deploy/compose/... --profile e2e; run MVP cases (docs/testing/cases.md Section 20)" && exit 1
+      - name: G3.4 supply-chain canary (planted vulnerable dependency and fake secret must FAIL the gates)
+        run: echo "TBD: TC-L3 canary branch check" && exit 1
+
+  # ---------- Stage 4: promotion (environment protection and approvals configured in repository settings) ----------
+  promote-staging:
+    if: github.event_name == 'push'
+    needs: [e2e]
+    runs-on: ubuntu-latest
+    environment: staging          # required reviewers; deployer must differ from author (SoD-1)
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: G4.1 verify signature, provenance and expected workflow identity
+        run: echo "TBD: cosign verify by digest with expected identity; verify attestation" && exit 1
+      - name: G4.5 migration safety check
+        run: echo "TBD: expand/contract compatibility check" && exit 1
+      - name: Deploy by digest (admission control verifies again, G4.2)
+        run: echo "TBD: helm upgrade with image digest; policy bundle signed (G4.6) and rolled out in shadow mode first" && exit 1
+      - name: Smoke tests (TC-F1, TC-E1, TC-Z5) and audit chain verification (TC-Z6)
+        run: echo "TBD" && exit 1

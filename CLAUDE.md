@@ -16,6 +16,7 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/testing/cases.md` | 65 security test cases (specifications, none executed) | v0.2 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.1 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
+| `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.1 |
 | `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
 | `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..27): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.1 |
 | `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.1 |
@@ -27,6 +28,7 @@ There are no build, lint or test commands for the product yet. When code is adde
 
 - `python3 -I scripts/check_docs.py` checks cross-document consistency (requirement/AC/ADR/TC references resolve, TC index equals catalogue, `Depends on` version citations match actual versions, HTML parity, section references, stale phrases). Run it after any document edit; it must exit 0.
 - `python3 -I scripts/build_spec_html.py Plan/functional-spec.md Plan/functional-spec.html` regenerates the HTML. Never edit the HTML by hand.
+- Workflows: `.github/workflows/docs-check.yml` is the only active workflow. `check_docs.py` enforces that active workflows declare `permissions`, pin third-party actions to a full commit SHA (or carry a `# waiver: W-nnn` comment recorded in `docs/ci-cd-pipeline.md` Section 7), and never use `pull_request_target`. The product gates live in `docs/ci-templates/product-security-gates.yml`, which is deliberately not a workflow (action pins are TBD); do not move it under `.github/workflows/` before the pins are verified.
 - `python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md` regenerates the catalogue Markdown. `catalogue.yaml` uses a strict YAML subset (see `scripts/catalogue_lib.py`; PyYAML is not installed). `check_docs.py` fails if the Markdown is stale, if requirement, test, threat or control IDs do not resolve, or if the control IDs differ from compliance-matrix Section 3.
 
 ### Code scaffold (empty)
@@ -34,7 +36,7 @@ There are no build, lint or test commands for the product yet. When code is adde
 `README.md` has the full directory-to-design map. In short:
 
 - `services/{common,api,gateway,scanner}/`: separate Python packages (`src/agenticsecctl_<name>`, Python >= 3.12, own `pyproject.toml`, no dependencies declared). Only a `__version__` string exists.
-- `policy/{rego,tests}/`, `web/`, `db/migrations/`, `deploy/{compose,helm,k8s,admission}/`, `.github/workflows/`: empty or placeholder.
+- `policy/{rego,tests}/`, `web/`, `db/migrations/`, `deploy/{compose,helm,k8s,admission}/`, `.github/workflows/` holds only `docs-check.yml`.
 - `tests/{unit,integration,e2e,fuzz,adversarial}/` and `tests/fixtures/{evil_mcp,benign_mcp}/`: empty. Test IDs follow `TC-*` in the threat model.
 - `docs/testing/`, `docs/runbooks/` and `docs/playbooks/` hold the catalogue, runbook and incident playbooks listed above.
 - Keep the data-plane (`gateway`) and control-plane (`api`, `scanner`) packages independent; do not import across them except through `common`.

@@ -11,6 +11,9 @@ Checks:
   5. Every FR ID in the spec appears in the generated HTML, and section counts match.
   6. "Section N" references to spec/architecture/threat model exist.
   7. No stale phrases.
+  8. Control catalogue structure, ID resolution, threat coverage and freshness of the generated file.
+  9. Active GitHub workflows: top-level permissions, actions pinned to commit SHAs (or a recorded
+     waiver), no pull_request_target; the CI template keeps its warning header.
 Exit code 0 on success, 1 on any failure.
 """
 import glob
@@ -90,6 +93,7 @@ short = {
     "incident-response-playbooks.md": "docs/playbooks/incident-response-playbooks.md",
     "compliance-matrix.md": "compliance/compliance-matrix.md",
     "catalogue.md": "controls/catalogue.md",
+    "ci-cd-pipeline.md": "docs/ci-cd-pipeline.md",
 }
 versions = {}
 for name, path in short.items():
@@ -202,6 +206,36 @@ else:
             err("controls/catalogue.md missing (run scripts/build_catalogue_md.py)")
         elif md_path.read_text(encoding="utf-8") != catalogue_lib.render_markdown(cat):
             err("controls/catalogue.md is stale (run scripts/build_catalogue_md.py)")
+
+
+# 9. pipeline rules for active workflows (docs/ci-cd-pipeline.md Sections 7 and 8)
+pipeline_doc = texts.get("docs/ci-cd-pipeline.md", "")
+waivers = set(re.findall(r"^\| (W-\d+) \|", pipeline_doc, re.M))
+for wf in sorted(glob.glob(str(ROOT / ".github" / "workflows" / "*.y*ml"))):
+    rel = str(pathlib.Path(wf).relative_to(ROOT))
+    lines = pathlib.Path(wf).read_text(encoding="utf-8").split("\n")
+    if not re.search(r"^permissions:", "\n".join(lines), re.M):
+        err(f"{rel}: missing top-level permissions block")
+    for i, ln in enumerate(lines):
+        m = re.search(r"uses:\s*([^\s#]+)", ln)
+        if not m:
+            continue
+        ref = m.group(1)
+        if ref.startswith("./") or ref.startswith("docker://"):
+            continue
+        if re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", ref):
+            continue
+        prev = lines[i - 1] if i else ""
+        w = re.search(r"waiver:\s*(W-\d+)", prev + " " + ln)
+        if not w:
+            err(f"{rel}:{i + 1}: action {ref} is not pinned to a commit SHA and has no waiver comment")
+        elif w.group(1) not in waivers:
+            err(f"{rel}:{i + 1}: waiver {w.group(1)} is not recorded in docs/ci-cd-pipeline.md Section 7")
+    if "pull_request_target" in "\n".join(lines):
+        err(f"{rel}: pull_request_target is not allowed (docs/ci-cd-pipeline.md Section 8)")
+tpl = ROOT / "docs" / "ci-templates" / "product-security-gates.yml"
+if tpl.exists() and "TEMPLATE, NOT AN ACTIVE WORKFLOW" not in tpl.read_text(encoding="utf-8"):
+    err("docs/ci-templates/product-security-gates.yml lost its template warning header")
 
 if errors:
     print("FAILED:")
