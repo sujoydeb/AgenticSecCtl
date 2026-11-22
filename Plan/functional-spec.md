@@ -3,12 +3,27 @@
 
 | | |
 |---|---|
-| Version | 0.4 (draft for review) |
-| Supersedes | 0.3 |
+| Version | 0.5 (draft for review) |
+| Supersedes | 0.4 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
 ## 0. Change log
+
+### v0.4 → v0.5 (closure of Medium review gaps)
+
+Changes made to close Medium findings in `docs/reviewgap.md`. New requirements are marked *added in v0.5; review required*.
+
+| # | Change | Where |
+|---|---|---|
+| 1 | MCP lifecycle rows get requirement IDs FR-MCP-1..12 and are updated from the 2026-07-28 specification text: deprecated sampling and roots, no protocol-level sessions, Origin validation, elicitation limits (gaps B6, E3) | Section 4.12 |
+| 2 | Acceptance criteria AC-10..AC-24 for phases 2 to 5 (gap B5) | Section 11 |
+| 3 | Emergency policy defined: FR-AUTO-6 (gap D2) | Section 4.8, glossary |
+| 4 | Legal hold and raw-evidence access: FR-ADM-7, FR-ADM-8 (gap D3) | Section 4.18 |
+| 5 | Retention default marked as a placeholder pending legal input (gap D5) | NFR-6 |
+| 6 | Key management: FR-KEY-1..6 (gap H3) | Section 4.23 |
+| 7 | Approval content, step-up authentication and fatigue limits: FR-AUTHZ-9..11; new threat X14 (gap H4) | Sections 4.6, 5 |
+| 8 | Test-case links extended for thin threats and new requirements (gap B4) | Section 5 |
 
 ### v0.3 → v0.4 (closure of High review gaps)
 
@@ -86,6 +101,7 @@ Review of v0.1 found the following. Each is fixed in v0.2.
 - **Taint**: label marking content from an untrusted origin.
 - **High-impact action**: see FR-AUTHZ-5.
 - **JIT grant**: time-boxed permission issued on request and approval.
+- **Emergency policy**: a tenant-approved, pre-defined policy that lets named people relax only the different-approver rule for resuming a suspended agent or tenant, for a limited time, with high-severity audit; see FR-AUTO-6.
 
 ---
 
@@ -117,7 +133,7 @@ Trust zones, component responsibilities and the interceptor pipeline are defined
 - A2: MCP servers and all content they return are untrusted until registered and pinned; even then, response content stays untrusted.
 - A3: MVP gateway covers Streamable HTTP. Local stdio servers need a wrapper (Phase 2).
 - A4: Detectors are probabilistic. Enforcement of high-impact actions never depends on a single detector or on an LLM classifier.
-- A5: The reference MCP specification revision is 2026-07-28 (search-verified; section-level details still to be checked against the specification text). In that revision authorization is optional for MCP implementations, HTTP transports are expected to follow the authorization specification (OAuth 2.1 based, protected resource metadata per RFC 9728), and dynamic client registration is deprecated in favour of client ID metadata documents.
+- A5: The reference MCP specification revision is 2026-07-28; the authorization, transport, sampling, elicitation and roots pages were read (see `docs/mcp-compatibility.md`). In that revision authorization is optional, HTTP transports SHOULD follow the OAuth 2.1 based authorization specification (resource indicators per RFC 8707, protected resource metadata per RFC 9728), dynamic client registration is deprecated in favour of client ID metadata documents, there are no protocol-level sessions, and sampling and roots are deprecated.
 - A6: Because server-side authorization is optional and stdio transports take credentials from the environment, the platform enforces authentication and authorization at the gateway and never relies on a server doing so.
 
 ---
@@ -208,6 +224,9 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-AUTHZ-6 | The system shall report permissions unused for N days (default 30) and permissions broader than observed use. | S | P3 | E | IT |
 | FR-AUTHZ-7 | The system shall alert on permission changes outside an approved change record (escalation). | S | P3 | E | IT |
 | FR-AUTHZ-8 | If the PDP or its policy bundle is unavailable the gateway shall deny (fail-closed). A tenant may allowlist specific read-only low-risk tools for fail-open with audit; every such decision shall be flagged in the audit log. | M | P1 | E | E2E |
+| FR-AUTHZ-9 | An approval request shall show the approver the requester, tool, action class, resource, classification, current taint state and the exact arguments or a platform-generated redacted rendering of them with their hash; any text supplied by the agent shall be shown only in a labelled untrusted area. *(added in v0.5; review required)* | M | P2 | E, X14 | IT, DM |
+| FR-AUTHZ-10 | High-impact approvals and Critical-finding overrides shall require step-up authentication (fresh multi-factor authentication within a configured window). *(added in v0.5; review required)* | M | P2 | E, X14 | IT |
+| FR-AUTHZ-11 | Bulk approval of high-impact actions shall be disabled; approval rates and very short review times shall be monitored and alerted, and a configurable limit of pending high-impact approvals per approver shall apply. *(added in v0.5; review required)* | S | P2 | E, X14 | IT, RT |
 
 ### 4.7 Runtime inspection and data protection (FR-RT)
 
@@ -235,7 +254,8 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-AUTO-2 | The system shall detect repeating call sequences (loops) and suspend the session. | S | P2 | K | UT |
 | FR-AUTO-3 | Autonomous financial or irreversible transactions shall require approval unless a policy explicitly permits a bounded amount and counterparty. | M | P2 | K | E2E |
 | FR-AUTO-4 | A kill switch shall suspend an agent or all agents of a tenant within 5 s of command. | M | P2 | K | E2E |
-| FR-AUTO-5 | Resuming a suspended agent or tenant shall require an approver other than the person who suspended it (SoD-1), unless an emergency policy states otherwise; both actions shall be audited. *(added from runbook; review required)* | M | P2 | K | E2E |
+| FR-AUTO-5 | Resuming a suspended agent or tenant shall require an approver other than the person who suspended it (SoD-1), unless an emergency policy (FR-AUTO-6) applies; both actions shall be audited. *(added from runbook; review required)* | M | P2 | K | E2E |
+| FR-AUTO-6 | An emergency policy shall name the people who may declare an emergency, state that it may relax only the different-approver rule of FR-AUTO-5 (never authentication, SSRF, audit, high-impact approval or classification rules), set a maximum duration, and notify security and the tenant owner; each use shall raise a high-severity audit event and be reviewed within one business day. *(added in v0.5; review required)* | S | P2 | K, X6 | IT, E2E |
 
 ### 4.9 Memory, retrieval and model controls (FR-MEM, FR-MOD)
 
@@ -272,20 +292,22 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 
 ### 4.12 MCP lifecycle controls (FR-MCP)
 
-| MCP phase | Requirement | Pri | Ph |
-|---|---|---|---|
-| Transport | TLS 1.2+ on all hops (target 1.3); no plaintext in production; Origin/Host validation on HTTP transports; local transports only through the managed wrapper. [VERIFY current spec] | M | P2 |
-| Initialize / capability negotiation | Only allowlisted protocol versions accepted; capabilities offered to a server limited to those the policy permits; unexpected capabilities flagged. | M | P2 |
-| Session management | Session IDs unguessable, bound to client (FR-AUTHN-4), expire, and revocable. | M | P2 |
-| Tool discovery | Filtered and hash-checked (FR-RT-1, FR-DRIFT-2). | M | P1 |
-| Tool invocation | Full pipeline (FR-AUTHZ, FR-RT). | M | P1/P2 |
-| Resources | Resource URIs validated against allowlists; URI templates treated as arguments; resource content inspected as responses. | M | P2 |
-| Prompts | Server-supplied prompts scanned like tool descriptions and hash-pinned. | S | P2 |
-| Notifications | Rate-limited; `list_changed` triggers re-hash; unknown notification types ignored and logged. | M | P2 |
-| Sampling | Denied by default; if enabled per server, requests shall pass the gateway, be budgeted, inspected, and require approval for high-risk prompts. | M | P2 |
-| Elicitation | Denied by default; if enabled, requests asking for credentials, tokens or secrets shall be blocked; user-visible source labelling required. | M | P2 |
-| Roots | Roots exposed to a server limited to approved directories; changes audited. | S | P2 |
-| Version compatibility | Gateway shall record protocol version per session and block unsupported versions; compatibility matrix maintained and tested on each MCP spec revision. | M | P2 |
+Revision-specific statements below were checked against the 2026-07-28 specification pages (details and sources: `docs/mcp-compatibility.md`). IDs were added in v0.5. Requirements of the platform go beyond the protocol text where the protocol says SHOULD or leaves a choice.
+
+| ID | MCP phase | Requirement | Pri | Ph |
+|---|---|---|---|---|
+| FR-MCP-1 | Transport | TLS 1.2+ on all hops (target 1.3); no plaintext in production; the gateway shall validate the `Origin` header on HTTP transports and answer an invalid origin with 403 (a protocol MUST); servers on loopback only where local; local stdio servers only through the managed wrapper. | M | P2 |
+| FR-MCP-2 | Initialize / capability negotiation | Only allowlisted protocol versions accepted; capabilities offered to a server limited to those the policy permits; unexpected capabilities flagged. | M | P2 |
+| FR-MCP-3 | Session management | The platform shall maintain its own sessions, unguessable, bound to the authenticated client (FR-AUTHN-4), expiring and revocable, whether or not the MCP revision defines protocol-level sessions (revision 2026-07-28 has none and servers on it should ignore `Mcp-Session-Id`; older revisions use it). | M | P2 |
+| FR-MCP-4 | Tool discovery | Filtered and hash-checked (FR-RT-1, FR-DRIFT-2). | M | P1 |
+| FR-MCP-5 | Tool invocation | Full pipeline (FR-AUTHZ, FR-RT); the Phase 1 subset is deny-by-default authorization and hash-pinned allow or deny (FR-AUTHZ-1..3, FR-DRIFT-3). | M | P2 |
+| FR-MCP-6 | Resources | Resource URIs validated against allowlists; URI templates treated as arguments; resource content inspected as responses. | M | P2 |
+| FR-MCP-7 | Prompts | Server-supplied prompts scanned like tool descriptions and hash-pinned. | S | P2 |
+| FR-MCP-8 | Notifications | Rate-limited; `list_changed` triggers re-hash; unknown notification types ignored and logged. | M | P2 |
+| FR-MCP-9 | Sampling | Sampling is deprecated in revision 2026-07-28. Denied by default; where an older revision or a server needs it and policy enables it, requests shall pass the gateway, be budgeted with iteration limits, be inspected, and require human approval for high-risk prompts. | M | P2 |
+| FR-MCP-10 | Elicitation | Denied by default; if enabled, form-mode requests for passwords, keys, tokens or payment credentials shall be blocked (the specification requires URL mode for such data), the requesting server and the full target URL shall be shown to the user, and the platform shall not pre-fetch URLs. | M | P2 |
+| FR-MCP-11 | Roots | Roots are deprecated and informational, not an access-control mechanism (revision 2026-07-28). Roots exposed to a server shall be limited to approved directories, validated against path traversal, and changes audited; access control shall not depend on them. | S | P2 |
+| FR-MCP-12 | Version compatibility | Gateway shall record protocol version per request or session and block unsupported versions; compatibility matrix (`docs/mcp-compatibility.md`) maintained and tested on each MCP spec revision. | M | P2 |
 
 ### 4.13 Policy (FR-POL)
 
@@ -347,6 +369,8 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-ADM-4 | Data residency: a tenant's data plane shall be pinnable to a region. | S | P5 | DM |
 | FR-ADM-5 | Retention shall be configurable per data class; defaults in Section 9. | M | P2 | IT |
 | FR-ADM-6 | Break-glass administrative accounts shall be sealed, require a ticket and a second person's approval for each use, be session-recorded and rotated after use, and shall be unable to modify audit records or read raw evidence. *(added from runbook; review required)* | S | P2 | DM |
+| FR-ADM-7 | A legal hold shall prevent deletion of the held data classes for a tenant until the compliance role releases it with a recorded reason; retention jobs shall skip held data and report skipped items. *(added in v0.5; review required)* | M | P2 | IT |
+| FR-ADM-8 | Raw evidence shall be readable only by named incident and security roles through the evidence vault; every access shall be recorded with a reason, chain-of-custody records shall list who collected, transferred and accessed each item, and platform operators shall have no access. *(added in v0.5; review required)* | M | P2 | IT, DM |
 
 ### 4.19 Compliance (FR-COMP)
 
@@ -400,6 +424,19 @@ Default levels, lowest to highest: **Public**, **Internal**, **Confidential**, *
 | FR-DATA-3 | Tool outputs and session context shall inherit the highest classification of the data they contain or come from; the gateway shall use that label as the sensitive input to the taint rule (FR-RT-9), DLP policy (FR-RT-6) and the high-impact definition (FR-AUTHZ-5). | M | P2 | I, D | IT, RT |
 | FR-DATA-4 | Classification labels and every change shall be audited; lowering a label shall require an approver other than the requester. | S | P2 | I, X6 | IT |
 
+### 4.23 Key management (FR-KEY)
+
+*(Section added in v0.5; review required.)* Platform keys include the policy-bundle signing key, image-signing identity, audit anchor credentials, token-broker and IdP client credentials, database and evidence-vault encryption keys, and break-glass secrets.
+
+| ID | Requirement | Pri | Ph | Threats | Verify |
+|---|---|---|---|---|---|
+| FR-KEY-1 | The platform shall keep an inventory of all platform keys (class, owner role, location, purpose, rotation interval, last rotation), reviewed at least quarterly. | M | P2 | X8, G | DM |
+| FR-KEY-2 | Keys shall be held in a KMS, HSM or secrets manager (non-exportable where supported); no key material shall appear in repositories, images, logs or tickets. | M | P2 | X8, G | IT, PT |
+| FR-KEY-3 | Keys shall be rotated on a schedule and on suspected compromise with an overlap period; verification keys shall reach gateways before the new signing key is used. | M | P2 | X8, G | IT |
+| FR-KEY-4 | Key use shall be separated by duty: signing keys usable only by the release job, anchor credentials write-only for the audit identity, break-glass secrets sealed (FR-ADM-6); no person shall hold both signing and approval roles for the same release. | M | P2 | X6, X8 | IT, DM |
+| FR-KEY-5 | A written compromise procedure shall exist for each key class, including revocation, re-signing and re-approval steps, and shall be exercised at least annually. | S | P2 | X8 | DM, RT |
+| FR-KEY-6 | The platform shall support a per-tenant key hierarchy and customer-managed keys as an option. | S | P5 | I | IT |
+
 ---
 
 ## 5. Threat traceability
@@ -410,33 +447,34 @@ Default levels, lowest to highest: **Public**, **Internal**, **Confidential**, *
 | B Rug pull / drift | FR-DRIFT-1..7 | P1 | Behavior change without definition change (FR-DRIFT-6, P4) | TC-B1..B4, TC-Z3 |
 | C Shadowing / impersonation | FR-INV-2..4, FR-AUTHN-5, FR-AUTHZ-2 | P1/P2 | Local stdio servers (A3) | TC-C1..C3 |
 | D Response injection | FR-RT-4, 5, 9, 11, 12, 13, FR-DATA-3 | P2 | Probabilistic detection; relies on blast-radius controls | TC-D1..D5, TC-X10, TC-X11 |
-| E Excessive permissions | FR-AUTHZ-1..8 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5 |
+| E Excessive permissions | FR-AUTHZ-1..11 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5, TC-Z33, TC-X14 |
 | F Agent spoofing | FR-ID-1..4, FR-ID-7, FR-ID-8 | P1/P2 | Compromised legitimate agent identity | TC-F1..F2, TC-X9 |
 | G Auth attacks | FR-AUTHN-1..7, FR-ID-7 | P1/P2 | IdP-dependent features [VERIFY] | TC-G1..G5, TC-X13 |
 | H SSRF | FR-SSRF-1..5, FR-SCAN-6, FR-RT-3, 7 | P1/P2 | Misconfigured exceptions | TC-H1..H4 |
 | I Data exfiltration | FR-RT-6..9, FR-AUD-3, FR-DATA-1..4 | P2 | Encoded/steganographic leakage; low-and-slow | TC-I1..I4, TC-Z25 |
 | J Memory poisoning | FR-MEM-1..4 | P4 | Not covered until P4 | TC-J1..J2 |
-| K Autonomy abuse | FR-AUTO-1..5, FR-ID-5, FR-RT-9, 10 | P2 | | TC-K1..K3 |
+| K Autonomy abuse | FR-AUTO-1..6, FR-ID-5, FR-RT-9, 10 | P2 | | TC-K1..K3 |
 | L Supply chain | FR-SCAN-5, FR-SUP-1..4, FR-MOD-3 | P2/P3/P4 | Server-fleet controls not covered until P3/P4 | TC-L1..L4 |
 | M Inter-agent | FR-ID-4..6, FR-MEM-3 | P4 | Not covered until P4 | TC-M1..M2 |
 | N Model/inference | FR-MOD-1..3, FR-RT-10 | P3/P4 | Model-internal attacks out of scope | TC-N1..N2 |
 | O Tool execution | FR-RT-2, 3, FR-EXEC-1..2 | P2/P4 | Server-side bugs outside platform control | TC-O1..O3 |
-| P MCP lifecycle | Section 4.12 | P1/P2 | Spec evolves; compatibility matrix | TC-P1..P4, TC-Z1 |
+| P MCP lifecycle | FR-MCP-1..12 | P1/P2 | Spec evolves; compatibility matrix | TC-P1..P4, TC-Z1, TC-Z27, TC-Z28 |
 | X1 Hidden Unicode/encoding | FR-SCAN-1 | P1 | | TC-A1, TC-A5 |
-| X2 Gateway bypass / unmanaged endpoints | FR-INV-5, 7, FR-RT-7 | P2/P3 | Cannot control unmanaged endpoints | TC-X2 |
-| X3 Sampling abuse | Section 4.12 | P2 | | TC-P2 |
-| X4 Elicitation phishing | Section 4.12 | P2 | | TC-P3 |
-| X5 Log injection | FR-AUD-5 | P2 | | TC-X5 |
-| X6 Insider approving malicious tool | SoD-1, SoD-2, FR-ADM-6 | P1 | Collusion | TC-E4, TC-X6 |
+| X2 Gateway bypass / unmanaged endpoints | FR-INV-5, 7, FR-RT-7 | P2/P3 | Cannot control unmanaged endpoints | TC-X2, TC-Z26 |
+| X3 Sampling abuse | FR-MCP-9 | P2 | | TC-P2, TC-Z27 |
+| X4 Elicitation phishing | FR-MCP-10 | P2 | | TC-P3, TC-Z28 |
+| X5 Log injection | FR-AUD-5 | P2 | | TC-X5, TC-Z29 |
+| X6 Insider approving malicious tool | SoD-1, SoD-2, FR-ADM-6, FR-KEY-4, FR-AUTO-6 | P1 | Collusion | TC-E4, TC-X6 |
 | X7 Check-to-use gap | FR-DRIFT-7 | P2 | | TC-B4, TC-Z3 |
-| X8 Gateway as high-value target | FR-AUTHN-3, FR-AUD-4, FR-ADM-2, FR-ADM-6, FR-AUD-7 | P2 | See NFR-9 | TC-X8 |
+| X8 Gateway as high-value target | FR-AUTHN-3, FR-AUD-4, FR-ADM-2, FR-ADM-6, FR-ADM-8, FR-AUD-7, FR-KEY-1..5 | P2 | See NFR-9 | TC-X8, TC-Z30, TC-Z31, TC-Z32 |
 | X9 Agent-card / discovery document spoofing | FR-ID-8, FR-ID-4 | P4 | Depends on emerging agent-to-agent standards | TC-X9 |
 | X10 Non-text (multimodal) content injection | FR-RT-12 | P2 | Extraction quality limits inspection | TC-X10 |
 | X11 Error-message injection | FR-RT-13 | P2 | | TC-X11 |
 | X12 Scanner and detector evasion or overload | FR-SCAN-10, FR-SCAN-6 | P2 | Novel evasion between regression updates | TC-X12 |
 | X13 Client registration abuse (dynamic or metadata-document) | FR-AUTHN-7 | P2 | IdP-dependent controls [VERIFY] | TC-X13 |
+| X14 Approver deception or fatigue | FR-AUTHZ-9..11 | P2 | Human attention cannot be fully engineered | TC-X14, TC-Z33 |
 
-Test cases are defined in `docs/testing/cases.md` (90 cases; threat-model Section 7 is the index). Every requirement now has a dedicated case or is covered through the control-level test lists in `controls/catalogue.md`; requirements still without a case of their own are listed in Section 21 of the test catalogue.
+Test cases are defined in `docs/testing/cases.md` (99 cases; threat-model Section 7 is the index). Every requirement now has a dedicated case or is covered through the control-level test lists in `controls/catalogue.md`; requirements still without a case of their own are listed in Section 21 of the test catalogue.
 
 ---
 
@@ -467,7 +505,7 @@ Tenant, User/Role, Agent, Model, McpServer, Tool, ToolVersion (immutable), Scan,
 | NFR-3 | Availability (P5) | 99.95% monthly | Synthetic probes across zones; error budget report |
 | NFR-4 | Recovery (P5) | RPO ≤ 5 min, RTO ≤ 30 min | Quarterly DR exercise with timed evidence |
 | NFR-5 | Scale (to validate) | 10,000 concurrent sessions, 5,000 calls/s cluster | Soak and stress tests; results published |
-| NFR-6 | Audit retention | Default 13 months hot, 7 years cold; configurable per tenant/regulation; legal hold overrides | Configuration test; retention job report |
+| NFR-6 | Audit retention | Default 13 months hot, 7 years cold (**placeholder pending legal input**: no legal basis is stated, and storage-limitation duties for personal data in excerpts may require shorter or per-tenant values); configurable per tenant/regulation; legal hold overrides | Configuration test; retention job report |
 | NFR-7 | Reproducibility | 100% of decisions replayable | Replay test over sampled decisions |
 | NFR-8 | Isolation | No cross-tenant data access | Negative penetration tests |
 | NFR-9 | Platform security | Signed images, SBOM, no long-lived upstream secrets in gateway memory, separate admin plane, dependency scan gates in CI | CI gate evidence; penetration test |
@@ -499,9 +537,30 @@ MVP (P1):
 - AC-8 (FR-SCAN-6): Importer rejects an oversized, deeply nested, slow, and redirecting response from a hostile test server.
 - AC-9 (FR-AUTHN-6): Log redaction test finds no token or secret in logs under error conditions. Test case: TC-G5.
 
-Acceptance-criteria-to-test mapping: AC-1 ← TC-A1..A3; AC-2 ← TC-B1, B2; AC-3 ← TC-E1, C3, F1; AC-4 ← TC-H1..H4; AC-5 ← TC-Z6 (chain verification; anchoring is covered by TC-Z22 in Phase 2); AC-6 ← TC-E4, TC-Z7; AC-7 ← TC-Z5; AC-8 ← TC-Z2; AC-9 ← TC-G5.
+Phase 2 (P2) criteria *(added in v0.5)*:
+- AC-10 (NFR-1, NFR-2): Added gateway latency and inline-classifier latency meet the targets in the load test with the method of Section 9 (TC-Z14, TC-Z15).
+- AC-11 (FR-RT-4..13, FR-DATA-3): Injection, taint, DLP and classification scenarios pass and shadow-mode false-block rate stays within the budget before enforcement (TC-D1..D5, TC-I1..I4, TC-X10, TC-X11, TC-Z25).
+- AC-12 (FR-AUTHN-2..5, 7, FR-ID-3, 7): Replay, audience, session and registration abuse are refused in the recorded token-binding mode (TC-G1, TC-G3, TC-G4, TC-X13).
+- AC-13 (FR-AUTHZ-4, 5, 9..11, FR-AUTO-1..6): JIT, bound approvals, step-up, limits, kill switch and emergency policy behave as specified (TC-E3, TC-D4, TC-K1..K3, TC-X14, TC-Z33).
+- AC-14 (FR-RT-7, FR-SUP-1): Servers cannot bypass the gateway or reach unlisted destinations, and only compliant platform images are admitted (TC-I4, TC-X2, TC-Z26, TC-L4).
+- AC-15 (FR-AUD-3..5, 7, FR-ADM-7, 8, FR-KEY-1..5): Anchoring, audit capacity, retention and legal hold, evidence access and key management controls pass (TC-Z22, TC-Z23, TC-Z19, TC-Z30, TC-Z31, TC-Z32, TC-X5).
+- AC-16 (FR-MCP-1..12): Protocol lifecycle controls pass (TC-P1..P4, TC-Z27, TC-Z28).
+- AC-17 (NFR-5): Scale and soak targets hold (TC-Z18).
 
-Phase 2+ acceptance criteria are defined per requirement via the Verify column and the test catalogue.
+Phase 3 (P3) criteria *(added in v0.5)*:
+- AC-18 (FR-COMP-1..5): An evidence pack for a chosen control and period is reviewed by an auditor and mappings carry reviewer names and dates; every mapping states mandatory, guidance or voluntary.
+- AC-19 (FR-SCAN-7, 9, FR-POL-3, 4, FR-UI-5, 6): Re-scans, signed bundles with shadow mode, and the fleet views behave as specified (TC-Z12, TC-X6, TC-Z9).
+
+Phase 4 (P4) criteria *(added in v0.5)*:
+- AC-20 (FR-MEM-1..4, FR-ID-4..6, 8, FR-SUP-2, 4, FR-EXEC-1..2): Memory, delegation, agent-card, server-fleet supply-chain and sandbox controls pass (TC-J1, TC-J2, TC-M1, TC-M2, TC-X9, TC-L1, TC-L2, TC-N1).
+- AC-21 (FR-IR-4): Automated playbooks run with approval gates in staging and produce an incident report.
+
+Phase 5 (P5) criteria *(added in v0.5)*:
+- AC-22 (NFR-3, NFR-4): Measured availability and the timed disaster-recovery exercise meet the targets and the restored audit chain verifies (TC-Z16, TC-Z17).
+- AC-23 (FR-ADM-4, FR-KEY-6, NFR-8): Residency pinning, per-tenant keys and tenant isolation hold in every tenancy model offered (TC-I3).
+- AC-24 (NFR-9): The gateway and control plane survive an external penetration test and a compromise exercise with no long-lived secret or cross-tenant access obtained (TC-X8).
+
+Acceptance-criteria-to-test mapping (MVP): AC-1 ← TC-A1..A3; AC-2 ← TC-B1, B2; AC-3 ← TC-E1, C3, F1; AC-4 ← TC-H1..H4; AC-5 ← TC-Z6 (chain verification; anchoring is covered by TC-Z22 in Phase 2); AC-6 ← TC-E4, TC-Z7; AC-7 ← TC-Z5; AC-8 ← TC-Z2; AC-9 ← TC-G5. The later-phase criteria list their cases inline.
 
 ## 12. Risks, assumptions and open decisions
 

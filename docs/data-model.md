@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (design draft; closes gap A2 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.4 (Section 7 entities, FR-DRIFT-1, FR-AUD-*, FR-DATA-*, FR-ADM-*), `Plan/architecture.md` v0.3 (Sections 4, 7, 12), `docs/deployment-architecture.md` v0.2 (Section 6), `controls/catalogue.md` v0.2 (CTL-03, CTL-13, CTL-22, CTL-29) |
+| Depends on | `Plan/functional-spec.md` v0.5 (Section 7 entities, FR-DRIFT-1, FR-AUD-*, FR-DATA-*, FR-ADM-*), `Plan/architecture.md` v0.4 (Sections 4, 7, 12), `docs/deployment-architecture.md` v0.3 (Section 6), `controls/catalogue.md` v0.3 (CTL-03, CTL-13, CTL-22, CTL-29) |
 | Status | Logical model with illustrative PostgreSQL constraints. **Not validated, not executed**: no SQL has been run and no migration exists. The tenancy assumption is ADR-4 *proposed* (shared multi-tenant with row-level security), pending approval; column and table names may change at schema freeze. |
 
 ## 1. Principles

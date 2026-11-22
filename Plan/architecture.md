@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.3 (draft for review) |
-| Depends on | `functional-spec.md` v0.4 (FR/NFR IDs referenced below) |
-| Companion | `threat-model.md` v0.3; `../docs/testing/cases.md` v0.3; `../docs/runbooks/operational-runbook.md` v0.2; `../docs/tech-evaluation.md` v0.2 |
+| Version | 0.4 (draft for review) |
+| Depends on | `functional-spec.md` v0.5 (FR/NFR IDs referenced below) |
+| Companion | `threat-model.md` v0.4; `../docs/testing/cases.md` v0.4; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.2 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
 ## 1. Architectural principles
@@ -148,7 +148,7 @@ Each component lists responsibility, interfaces, state, failure behavior and the
 - **Responsibility:** receive events from all services via outbox; compute hash chain; store digests and redacted excerpts; send raw evidence to vault; export to SIEM; anchor chain heads.
 - **Chain:** `hash_n = SHA-256(hash_{n-1} || canonical(event_n))`; heads anchored on a schedule to object-lock storage or an external timestamping service (FR-AUD-4). The chain alone is tamper-evident, not tamper-proof; anchoring defends against a privileged DB actor rewriting history.
 - **Implements:** FR-AUD-*, FR-IR-3.
-- **Audit event vocabulary (provisional; single definition, referenced by the test catalogue and runbook):** `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`, `anchor.created`, `audit.buffer_full`, `breakglass.used`, `card.rejected`, `classification.changed`, `client.registered`, `client.denied`, `config.changed`, `content.blocked`, `legalhold.set`, `notification.failed`, `retention.executed`, `scan.timeout`. Names are confirmed when the audit schema is built; changes must be mirrored in `docs/testing/cases.md` and the runbook.
+- **Audit event vocabulary (provisional; single definition, referenced by the test catalogue and runbook):** `register.denied`, `import.failed`, `scan.completed`, `finding.created`, `tool.approved`, `tool.rejected`, `tool.quarantined`, `override.requested`, `override.approved`, `authn.fail`, `authz.allow`, `authz.deny`, `approval.requested`, `approval.granted`, `approval.denied`, `ssrf.blocked`, `dlp.match`, `inject.signal`, `limit.exceeded`, `session.suspended`, `delegation.denied`, `grant.created`, `grant.expired`, `policy.changed`, `incident.opened`, `audit.verify.failed`, `egress.blocked`, `discovery.asset`, `anchor.created`, `audit.buffer_full`, `breakglass.used`, `card.rejected`, `classification.changed`, `client.registered`, `client.denied`, `config.changed`, `content.blocked`, `legalhold.set`, `notification.failed`, `retention.executed`, `scan.timeout`, `key.rotated`, `evidence.accessed`, `emergency.declared`. Names are confirmed when the audit schema is built; changes must be mirrored in `docs/testing/cases.md` and the runbook.
 
 ### 4.9 Behavior analytics and incident manager
 - MVP/Phase 2: threshold rules over audit stream (FR-BEH-1). Phase 4: per-agent baselines (FR-BEH-2).
@@ -395,12 +395,12 @@ Controls:
 
 | Component | Primary requirements |
 |---|---|
-| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-RT-1..13, FR-AUTO-1..4, FR-ID-7, FR-ID-8, FR-DATA-3, FR-AUD-7, Section 4.12 |
+| Gateway | FR-AUTHN-1..5, FR-AUTHZ-1/2/8, FR-DRIFT-2/3/7, FR-MCP-1..12, FR-RT-1..13, FR-AUTO-1..4, FR-ID-7, FR-ID-8, FR-DATA-3, FR-AUD-7, Section 4.12 |
 | PDP | FR-AUTHZ-1..5, FR-POL-* |
 | Egress/SSRF | FR-SSRF-1..5, FR-RT-7 |
-| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-* (incl. FR-ADM-6 break-glass), FR-AUTO-5, FR-DATA-1/2/4, FR-UI-* |
+| Registry/API | FR-INV-*, FR-ID-*, FR-DRIFT-1/4/5, FR-ADM-* (incl. FR-ADM-6 break-glass, FR-ADM-7 legal hold, FR-ADM-8 evidence access), FR-AUTHZ-9..11, FR-AUTO-5, FR-AUTO-6, FR-DATA-1/2/4, FR-UI-* |
 | Scanner | FR-SCAN-* (incl. FR-SCAN-9, FR-SCAN-10), FR-SUP-2 |
-| Broker | FR-AUTHN-2/3/6/7, FR-ID-3, FR-ID-7 |
+| Broker | FR-AUTHN-2/3/6/7, FR-ID-3, FR-ID-7, FR-KEY-1..6 (with the secrets manager and KMS) |
 | Inspection | FR-RT-4..6, FR-RT-11..13, FR-DATA-3, FR-MEM-2 |
 | Audit/evidence | FR-AUD-* (incl. FR-AUD-7), FR-IR-3, FR-COMP-4 |
 | Incident/analytics | FR-BEH-*, FR-IR-* |

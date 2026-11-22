@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.3 (draft for review) |
-| Depends on | `architecture.md` v0.3, `functional-spec.md` v0.4 |
-| Companions | `../docs/testing/cases.md` v0.3 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.2 |
+| Version | 0.4 (draft for review) |
+| Depends on | `architecture.md` v0.4, `functional-spec.md` v0.5 |
+| Companions | `../docs/testing/cases.md` v0.4 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.3 |
 | Method | STRIDE per boundary crossing, plus agent-specific abuse cases; MITRE ATLAS and OWASP LLM/MCP guidance used as vocabulary **[VERIFY current versions and IDs before mapping in the compliance matrix]** |
 | Scope | (1) the protected estate: agents, MCP servers, tools, data; (2) the platform itself as an attack target |
 
@@ -217,6 +217,7 @@ FR references are to `functional-spec.md` v0.2. Test IDs are defined in Section 
 | X11 | Error-message injection: error payloads from servers carry instructions; platform errors echo untrusted text | Server errors inspected like responses; platform errors use fixed catalogue text (FR-RT-13) | Low-Medium | TC-X11 |
 | X12 | Scanner or detector evasion and overload: crafted input to evade rules or exhaust scanner and classifier capacity | Size and complexity caps, quotas, timeouts that never approve, evasion regression set (FR-SCAN-10, FR-SCAN-6) | Medium | TC-X12 |
 | X13 | Client registration abuse: open dynamic client registration or metadata-document registration used to obtain trusted-looking clients | Registration disabled unless approved per tenant, allowlisted redirect URIs/hosts, rate limits, owner, unapproved start (FR-AUTHN-7) | Low-Medium | TC-X13 |
+| X14 | Approver deception or fatigue: a misleading agent-supplied summary, bulk or rapid approvals, or an approver without fresh authentication gets a high-impact action approved | Platform-rendered arguments with hash, agent text labelled untrusted, step-up authentication, no bulk approval, rate and review-time alerts (FR-AUTHZ-9..11) | Medium (human attention cannot be fully engineered) | TC-X14, TC-Z33 |
 
 ## 5. STRIDE on the platform itself
 
@@ -303,7 +304,7 @@ flowchart TD
 
 ## 7. Test case index (seed for the ≥30-case catalogue)
 
-Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) are written in `docs/testing/cases.md`. IDs below are the traceability anchors. Total: 90 (above the 30-case minimum; the MVP subset is in that document's Section 20).
+Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) are written in `docs/testing/cases.md`. IDs below are the traceability anchors. Total: 99 (above the 30-case minimum; the MVP subset is in that document's Section 20).
 
 | Threat | IDs |
 |---|---|
@@ -323,8 +324,8 @@ Full cases (objective, prerequisites, steps, expected detection/prevention, logs
 | N | TC-N1 extraction-like query volume; TC-N2 model substitution |
 | O | TC-O1 command injection; TC-O2 SQL injection; TC-O3 path traversal |
 | P | TC-P1 unsupported protocol version; TC-P2 sampling request; TC-P3 elicitation for credentials; TC-P4 notification flood |
-| X | TC-X2 direct path bypass; TC-X5 log injection; TC-X6 policy edit without review; TC-X8 gateway compromise exercise; TC-X9 agent-card spoofing; TC-X10 non-text content injection; TC-X11 error-message injection; TC-X12 scanner and detector evasion or overload; TC-X13 client registration abuse |
-| Cross-cutting | TC-Z1 fuzz JSON-RPC framing; TC-Z2 fuzz schema/importer; TC-Z3 race: approve vs invoke; TC-Z4 oversized/slow response DoS; TC-Z5 PDP down (fail-closed); TC-Z6 audit tamper detection; TC-Z7 dashboard counters and approval queue; TC-Z8 operational views; TC-Z9 relationship graph and posture views; TC-Z10 configuration validation; TC-Z11 notification channels; TC-Z12 scheduled re-scan and finding lifecycle; TC-Z13 external classifier opt-in; TC-Z14 gateway latency and throughput; TC-Z15 inline classifier latency; TC-Z16 availability measurement; TC-Z17 disaster recovery exercise; TC-Z18 scale and soak; TC-Z19 retention and legal hold; TC-Z20 decision replay; TC-Z21 accessibility audit; TC-Z22 anchoring and chain rewrite; TC-Z23 audit buffer full; TC-Z24 break-glass controls; TC-Z25 data classification labelling and inheritance |
+| X | TC-X2 direct path bypass; TC-X5 log injection; TC-X6 policy edit without review; TC-X8 gateway compromise exercise; TC-X9 agent-card spoofing; TC-X10 non-text content injection; TC-X11 error-message injection; TC-X12 scanner and detector evasion or overload; TC-X13 client registration abuse; TC-X14 approver deception and fatigue |
+| Cross-cutting | TC-Z1 fuzz JSON-RPC framing; TC-Z2 fuzz schema/importer; TC-Z3 race: approve vs invoke; TC-Z4 oversized/slow response DoS; TC-Z5 PDP down (fail-closed); TC-Z6 audit tamper detection; TC-Z7 dashboard counters and approval queue; TC-Z8 operational views; TC-Z9 relationship graph and posture views; TC-Z10 configuration validation; TC-Z11 notification channels; TC-Z12 scheduled re-scan and finding lifecycle; TC-Z13 external classifier opt-in; TC-Z14 gateway latency and throughput; TC-Z15 inline classifier latency; TC-Z16 availability measurement; TC-Z17 disaster recovery exercise; TC-Z18 scale and soak; TC-Z19 retention and legal hold; TC-Z20 decision replay; TC-Z21 accessibility audit; TC-Z22 anchoring and chain rewrite; TC-Z23 audit buffer full; TC-Z24 break-glass controls; TC-Z25 data classification labelling and inheritance; TC-Z26 unmanaged stdio discovery; TC-Z27 sampling budget; TC-Z28 elicitation limits; TC-Z29 log injection through export and UI; TC-Z30 evidence access and custody; TC-Z31 key inventory and rotation; TC-Z32 key compromise exercise; TC-Z33 step-up and approval content |
 
 ## 8. Risk register (top items)
 

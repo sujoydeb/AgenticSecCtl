@@ -1,8 +1,8 @@
 # Control catalogue source. Strict YAML subset: see scripts/catalogue_lib.py.
 # Generated view: controls/catalogue.md (python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md)
-version: "0.2"
+version: "0.3"
 status_note: "Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set."
-depends_on_docs: "Plan/functional-spec.md v0.4, Plan/architecture.md v0.3, Plan/threat-model.md v0.3, docs/testing/cases.md v0.3, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.3"
+depends_on_docs: "Plan/functional-spec.md v0.5, Plan/architecture.md v0.4, Plan/threat-model.md v0.4, docs/testing/cases.md v0.4, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.4, docs/governance.md v0.2"
 satisfies: "FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here."
 intro: "A control is a platform capability that reduces a named threat. Each entry says how the control works step by step, what it contributes to prevention, detection, response and recovery, how it fails, where it produces false positives and false negatives, how it can be bypassed, and what risk remains. Owners are roles, not people. Status is specified for every control."
 enforcement_classes:
@@ -60,6 +60,7 @@ controls:
       - "TC-C1"
       - "TC-C3"
       - "TC-F1"
+      - "TC-Z26"
     evidence:
       - "Inventory export with owners and criticality."
       - "Registration approvals showing requester and approver."
@@ -71,7 +72,7 @@ controls:
     depends_on:
       - "CTL-08"
       - "CTL-23"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1"
     status: "specified"
     verify: ""
@@ -144,7 +145,7 @@ controls:
     depends_on:
       - "CTL-08"
       - "CTL-23"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1"
     status: "specified"
     verify: "External MCP scanners as advisory signals or corpus sources are unverified (docs/tech-evaluation.md)."
@@ -200,7 +201,7 @@ controls:
       - "Quarantines per week and share resolved as benign."
     depends_on:
       - "CTL-13"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1/P2"
     status: "specified"
     verify: ""
@@ -253,7 +254,7 @@ controls:
       - "Credentials older than the rotation interval."
     depends_on:
       - "CTL-23"
-    owner_role: "Identity and access team"
+    owner_role: "Security engineer"
     phase: "P1/P2"
     status: "specified"
     verify: "Support for DPoP, mTLS binding and token exchange depends on the chosen IdP and is unverified."
@@ -313,7 +314,7 @@ controls:
       - "Secret-in-log findings (target 0)."
     depends_on:
       - "CTL-04"
-    owner_role: "Identity and access team"
+    owner_role: "Security engineer"
     phase: "P1/P2"
     status: "specified"
     verify: "MCP authorization requirements, DPoP/mTLS support and token exchange: search-verified background is in the verification log of docs/tech-evaluation.md (MCP revision 2026-07-28; Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only); section-level details and the production IdP remain unverified."
@@ -371,7 +372,7 @@ controls:
     depends_on:
       - "CTL-13"
       - "CTL-16"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1/P2/P3"
     status: "specified"
     verify: "OPA performance with realistic policy data is unmeasured (spike S3)."
@@ -386,6 +387,7 @@ controls:
       - "Policy marks high-impact actions: any delete; write or execute on resources tagged critical; sending confidential data outside; financial transactions; actions after untrusted content followed a sensitive read."
       - "For a high-impact call the PDP returns an approval obligation; the gateway holds the call and creates a task showing the exact arguments."
       - "Approval is bound to the hash of those arguments; a changed argument needs a new approval; timeout means deny."
+      - "The approval view shows the platform-rendered arguments with their hash, the requester, classification and taint state; agent-supplied text is shown only in a labelled untrusted area; step-up authentication is required; bulk approval is unavailable and rapid approvals raise alerts (FR-AUTHZ-9..11)."
     prevent:
       - "High-impact actions without a matching approval are denied."
     detect:
@@ -402,6 +404,7 @@ controls:
       - "Approvals required for actions the business considers routine."
     false_negatives:
       - "Harmful actions not classified as high-impact are not gated."
+      - "An attentive approver deceived by a plausible but harmful request."
     bypass_scenarios:
       - "Approver fatigue and rubber-stamping."
       - "Many small actions under a threshold."
@@ -409,14 +412,18 @@ controls:
     requirements:
       - "FR-AUTHZ-4..5"
       - "FR-AUTO-3"
+      - "FR-AUTHZ-9..11"
     threats:
       - "D"
       - "E"
       - "K"
+      - "X14"
     tests:
       - "TC-E3"
       - "TC-D4"
       - "TC-K3"
+      - "TC-X14"
+      - "TC-Z33"
     evidence:
       - "Grant and approval records with approver and arguments hash."
       - "Timeout and denial records."
@@ -428,7 +435,7 @@ controls:
       - "CTL-06"
       - "CTL-13"
       - "CTL-23"
-    owner_role: "Business owner and approver pool"
+    owner_role: "Approver"
     phase: "P2"
     status: "specified"
     verify: ""
@@ -484,7 +491,7 @@ controls:
       - "Direct connections that bypassed the gateway (target 0)."
     depends_on:
       - "CTL-13"
-    owner_role: "Platform security"
+    owner_role: "Security engineer"
     phase: "P1/P2"
     status: "specified"
     verify: "Cloud-specific metadata hardening (IMDSv2 enforcement, pod-level blocking) is unverified per cloud."
@@ -553,7 +560,7 @@ controls:
       - "CTL-08"
       - "CTL-13"
       - "CTL-29"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P2"
     status: "specified"
     verify: "Candidate classifiers and their licences are unverified (docs/tech-evaluation.md)."
@@ -611,7 +618,7 @@ controls:
       - "CTL-08"
       - "CTL-22"
       - "CTL-29"
-    owner_role: "Data protection / security engineering"
+    owner_role: "Compliance liaison"
     phase: "P2"
     status: "specified"
     verify: "Presidio-style engines and their licences and performance are unverified (docs/tech-evaluation.md)."
@@ -663,7 +670,7 @@ controls:
     depends_on:
       - "CTL-03"
       - "CTL-08"
-    owner_role: "Platform security"
+    owner_role: "Security engineer"
     phase: "P2/P4"
     status: "specified"
     verify: "Sandboxed runtimes (gVisor, Kata) availability and compatibility per cloud are unverified."
@@ -679,6 +686,7 @@ controls:
       - "Financial or irreversible transactions need approval unless policy allows a bounded amount to an allowlisted counterparty."
       - "A kill switch suspends an agent or all agents of a tenant within 5 s."
       - "Resuming needs an approver other than the person who suspended, unless an emergency policy applies; both actions are audited."
+      - "An emergency policy (FR-AUTO-6) may relax only the different-approver rule for resuming, only for named people, for a limited time, with a high-severity audit event and review within one business day."
     prevent:
       - "Calls beyond limits are denied."
     detect:
@@ -701,7 +709,7 @@ controls:
       - "Spreading load across agents or tenants."
     residual_risk: "Distributed or slow abuse stays under per-agent limits (threat K); per-tenant caps and analytics reduce but do not remove it."
     requirements:
-      - "FR-AUTO-1..5"
+      - "FR-AUTO-1..6"
       - "FR-ID-5"
       - "FR-RT-10"
     threats:
@@ -721,7 +729,7 @@ controls:
     depends_on:
       - "CTL-13"
       - "CTL-23"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P2"
     status: "specified"
     verify: ""
@@ -771,6 +779,7 @@ controls:
       - "TC-Z20"
       - "TC-Z22"
       - "TC-Z23"
+      - "TC-Z29"
     evidence:
       - "Chain verification reports and the latest anchor."
       - "Sample decision replays from policy hash and input digest."
@@ -779,7 +788,7 @@ controls:
       - "Time since last successful verification and anchor."
       - "Gaps found (target 0)."
     depends_on: []
-    owner_role: "Security operations / audit liaison"
+    owner_role: "Security on-call"
     phase: "P1/P2"
     status: "specified"
     verify: "Object-lock support and external timestamping options per cloud are unverified."
@@ -832,7 +841,7 @@ controls:
       - "Share of alerts leading to action."
     depends_on:
       - "CTL-13"
-    owner_role: "Security operations"
+    owner_role: "Security on-call"
     phase: "P1/P2/P4"
     status: "specified"
     verify: "OpenTelemetry GenAI semantic convention maturity is unverified."
@@ -848,6 +857,7 @@ controls:
       - "At containment an evidence snapshot is taken: definitions and hashes, decisions, redacted traffic, scan results, registry state."
       - "Playbooks guide investigation, eradication and recovery; recovery requires reapproval by non-owners."
       - "A report with timeline, impact, actions and evidence index is exported."
+      - "Raw evidence is readable only by named incident and security roles through the vault, each access needs a reason and is recorded, and chain-of-custody records list collection, transfer and access (FR-ADM-8); platform operators have no access."
     prevent:
       - "Limits spread of an ongoing compromise."
     detect:
@@ -869,6 +879,7 @@ controls:
     residual_risk: "Response quality depends on practice; playbooks are untested until exercised."
     requirements:
       - "FR-IR-1..5"
+      - "FR-ADM-8"
     threats:
       - "A"
       - "B"
@@ -879,6 +890,7 @@ controls:
     tests:
       - "TC-X8"
       - "TC-Z6"
+      - "TC-Z30"
     evidence:
       - "Incident records and timelines."
       - "Evidence index with chain of custody."
@@ -892,7 +904,7 @@ controls:
       - "CTL-03"
       - "CTL-13"
       - "CTL-23"
-    owner_role: "Incident commander / security operations"
+    owner_role: "Incident commander"
     phase: "P2/P3/P4"
     status: "specified"
     verify: "SOAR integration options are unverified."
@@ -945,7 +957,7 @@ controls:
     depends_on:
       - "CTL-13"
       - "CTL-23"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1/P3"
     status: "specified"
     verify: "OPA bundle signing details and Cedar as an alternative are unverified."
@@ -999,7 +1011,7 @@ controls:
       - "Servers lacking an intake record."
     depends_on:
       - "CTL-27"
-    owner_role: "Platform security"
+    owner_role: "Security engineer"
     phase: "P2/P3/P4"
     status: "specified"
     verify: "Tooling (Syft, Grype, Trivy, cosign, SLSA) features, licences and offline behaviour are unverified."
@@ -1038,12 +1050,15 @@ controls:
       - "FR-AUTHN-5"
       - "FR-DRIFT-2"
       - "FR-RT-10"
+      - "FR-MCP-1..12"
     threats:
       - "P"
       - "X3"
       - "X4"
     tests:
       - "TC-P1..P4"
+      - "TC-Z27"
+      - "TC-Z28"
     evidence:
       - "Protocol configuration and compatibility matrix."
       - "Deny and flood-handling logs."
@@ -1053,10 +1068,10 @@ controls:
     depends_on:
       - "CTL-05"
       - "CTL-03"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1/P2"
     status: "specified"
-    verify: "Current MCP specification wording on transports, sampling, elicitation and roots is unverified; see spec Section 4.12."
+    verify: "Protocol statements were checked against the 2026-07-28 pages (see docs/mcp-compatibility.md); behaviour of earlier revisions and later revisions must be re-checked on each revision."
   - id: "CTL-19"
     name: "Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback"
     type: "P, D, V"
@@ -1104,7 +1119,7 @@ controls:
     depends_on:
       - "CTL-09"
       - "CTL-06"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P4"
     status: "specified"
     verify: ""
@@ -1159,7 +1174,7 @@ controls:
     depends_on:
       - "CTL-04"
       - "CTL-06"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P4"
     status: "specified"
     verify: "Agent-to-agent protocol standards and their security models are unverified."
@@ -1208,7 +1223,7 @@ controls:
       - "Substitution alerts."
     depends_on:
       - "CTL-01"
-    owner_role: "AI governance / model owner"
+    owner_role: "Product owner"
     phase: "P2/P3/P4"
     status: "specified"
     verify: ""
@@ -1223,6 +1238,7 @@ controls:
       - "Per-tenant policy bundles; per-tenant encryption keys in Phase 5."
       - "A tenant data plane can be pinned to a region."
       - "Retention classes control deletion by data class; legal hold overrides deletion."
+      - "A legal hold stops deletion of held data classes until the compliance role releases it with a recorded reason; retention jobs skip and report held items (FR-ADM-7)."
     prevent:
       - "Cross-tenant access; storage outside the pinned region; premature deletion under hold."
     detect:
@@ -1247,6 +1263,7 @@ controls:
       - "FR-RT-8"
       - "NFR-6"
       - "NFR-8"
+      - "FR-ADM-7"
     threats:
       - "I"
     tests:
@@ -1261,7 +1278,7 @@ controls:
       - "Retention job exceptions."
     depends_on:
       - "CTL-13"
-    owner_role: "Data protection / platform ops"
+    owner_role: "Compliance liaison"
     phase: "P2/P5"
     status: "specified"
     verify: ""
@@ -1320,7 +1337,7 @@ controls:
       - "Accounts with privileged roles."
     depends_on:
       - "CTL-13"
-    owner_role: "Security administration"
+    owner_role: "Security admin"
     phase: "P1/P2"
     status: "specified"
     verify: ""
@@ -1381,7 +1398,7 @@ controls:
       - "Time to restore in exercises."
     depends_on:
       - "CTL-13"
-    owner_role: "Platform operations"
+    owner_role: "Platform operator"
     phase: "P1/P5"
     status: "specified"
     verify: ""
@@ -1467,6 +1484,7 @@ controls:
       - "C"
     tests:
       - "TC-X2"
+      - "TC-Z26"
     evidence:
       - "Discovery results and coverage-gap reports."
     metrics:
@@ -1474,7 +1492,7 @@ controls:
       - "Coverage gaps open."
     depends_on:
       - "CTL-01"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P2/P3"
     status: "specified"
     verify: ""
@@ -1525,7 +1543,7 @@ controls:
       - "Emergency changes per quarter."
       - "Time to patch critical vulnerabilities."
     depends_on: []
-    owner_role: "Engineering management / platform security"
+    owner_role: "Delivery lead"
     phase: "P1 onward"
     status: "specified"
     verify: ""
@@ -1566,16 +1584,19 @@ controls:
       - "FR-UI-1..6"
       - "FR-ADM-3"
       - "NFR-10"
+      - "FR-AUTHZ-9"
     threats:
       - "E"
       - "X6"
       - "X2"
+      - "X14"
     tests:
       - "TC-Z7"
       - "TC-Z8"
       - "TC-Z9"
       - "TC-Z11"
       - "TC-Z21"
+      - "TC-Z33"
     evidence:
       - "Dashboard test results against seeded data."
       - "Approval records with approver identity and displayed diff reference."
@@ -1588,7 +1609,7 @@ controls:
       - "CTL-13"
       - "CTL-23"
       - "CTL-26"
-    owner_role: "Security engineering"
+    owner_role: "Security engineer"
     phase: "P1/P2/P3"
     status: "specified"
     verify: ""
@@ -1645,7 +1666,68 @@ controls:
       - "CTL-07"
       - "CTL-10"
       - "CTL-13"
-    owner_role: "Data protection / security engineering"
+    owner_role: "Compliance liaison"
     phase: "P1/P2"
     status: "specified"
     verify: "The level names and the Confidential default are proposals pending approval."
+  - id: "CTL-30"
+    name: "Platform key management"
+    type: "P, D, R"
+    enforcement: "hybrid"
+    component: "Secrets manager, KMS, CI/CD, broker"
+    objective: "Keep the keys that anchor trust (policy signing, image signing, audit anchors, tenant and database encryption, break-glass) inventoried, protected, rotated and recoverable after compromise."
+    how_it_works:
+      - "A key inventory lists every platform key with class, owner role, location, purpose, rotation interval and last rotation, and is reviewed at least quarterly."
+      - "Keys live in a KMS, HSM or secrets manager, non-exportable where supported; secret scanning of repositories, images and logs checks that no key material leaks."
+      - "Rotation runs on schedule and on suspected compromise; verification keys reach every gateway before the new signing key is used, with an overlap period."
+      - "Use is separated by duty: only the release job can sign policy bundles and images, the audit identity can only write anchors, break-glass secrets stay sealed, and nobody holds both signing and approval roles for the same release."
+      - "A written compromise procedure per key class covers revocation, re-signing and re-approval and is exercised at least yearly."
+    prevent:
+      - "Unauthorised signing; key material outside managed stores."
+    detect:
+      - "Inventory drift, key-use anomalies, secret-scan findings, failed bundle verification on gateways."
+    respond:
+      - "Revoke and rotate the affected key; re-sign bundles; open an incident (playbooks PB-05, PB-11)."
+    recover:
+      - "Re-approve tools or policies signed under a compromised key; verify the audit chain and anchors."
+    parameters:
+      - "Inventory review: quarterly."
+      - "Compromise exercise: at least annually."
+      - "Rotation interval per key class: to be set."
+      - "Overlap period: to be set."
+    failure_behavior: "A bundle or image signed by an unknown or revoked key is rejected; if no valid verification key is available the gateway denies."
+    false_positives:
+      - "Rotation overlap rejects a bundle signed just before the verification key reached a gateway."
+    false_negatives:
+      - "Compromise inside the rotation interval; keys outside the inventory."
+    bypass_scenarios:
+      - "A person with both signing and approval authority; backups containing key material."
+    residual_risk: "A compromised key is usable until detection and revocation (threat X8); per-tenant and customer-managed keys come in Phase 5."
+    requirements:
+      - "FR-KEY-1..6"
+      - "FR-ADM-2"
+    threats:
+      - "X8"
+      - "G"
+      - "X6"
+    tests:
+      - "TC-Z31"
+      - "TC-Z32"
+      - "TC-X8"
+    evidence:
+      - "Key inventory with review dates."
+      - "Rotation and compromise-exercise records."
+      - "Secret-scan results and signing-identity configuration."
+    metrics:
+      - "Keys past rotation interval."
+      - "Keys missing from the inventory (target 0)."
+      - "Time to rotate after a compromise exercise."
+    depends_on:
+      - "CTL-13"
+      - "CTL-16"
+      - "CTL-23"
+      - "CTL-27"
+    owner_role: "Security engineer"
+    phase: "P2/P5"
+    status: "specified"
+    verify: "KMS, HSM and secrets-manager features differ per cloud; see docs/cloud-adapter-verification.md for the verified AWS adapter."

@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.2 (design draft; nothing is deployed or tested) |
-| Depends on | `Plan/architecture.md` v0.3 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.4 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.3, `controls/catalogue.md` v0.2 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.2 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.2, `docs/testing/cases.md` v0.3 |
+| Version | 0.3 (design draft; nothing is deployed or tested) |
+| Depends on | `Plan/architecture.md` v0.4 (Sections 2, 4, 8, 9, 12), `Plan/functional-spec.md` v0.5 (NFR-1..10, FR-ADM-*, FR-SSRF-*, FR-SUP-*), `Plan/threat-model.md` v0.4, `controls/catalogue.md` v0.3 (CTL-08, CTL-22, CTL-24, CTL-27), `docs/runbooks/operational-runbook.md` v0.3 (Sections 6, 7, 11), `docs/ci-cd-pipeline.md` v0.3, `docs/testing/cases.md` v0.4 |
 | Purpose | Where each component runs, how the network and trust zones are enforced, how data is stored and protected, how the platform stays available and recovers, and how it scales across tenants, regions and clouds. Extends `Plan/architecture.md` Section 8; if the two disagree, resolve the conflict in both. |
 | Unverified | Product, cloud-service and Kubernetes feature statements are from background knowledge and tagged **[VERIFY]**. Sizing, replica counts beyond those in the architecture, and timeouts are placeholders marked "to be set". No figure here has been measured. |
 
@@ -153,7 +153,7 @@ Rules that must hold regardless of implementation (tests: TC-X2, TC-I4, TC-H1):
 - Agent pods cannot connect to MCP server pods directly.
 - MCP server pods cannot connect to each other, to the control plane, to Postgres, or to cloud metadata endpoints (169.254.169.254 and cloud equivalents).
 - Only the egress proxy has a route out; DNS is served by an internal resolver that applies the same policy and logs queries.
-- Cloud instance metadata is blocked at node and pod level (IMDSv2 enforcement with hop limit where available, or equivalent) **[VERIFY per cloud]**.
+- Cloud instance metadata is blocked at node and pod level **[VERIFY per cloud]**. On AWS (documentation-verified, see `docs/cloud-adapter-verification.md`): requiring IMDSv2 alone is not enough, because the recommended hop limit of 2 for containers lets pods reach the service, so pod access must be blocked by network policy or equivalent and workloads must use workload identity instead of node credentials. Default deny needs the network policy engine in a mode that denies from pod start (on EKS the VPC CNI "strict" mode; in the default "standard" mode pods start with allow-all until policies apply), with explicit DNS allow rules and no reliance on policies for host-network pods.
 
 ### 4.3 Service-to-service identity and encryption
 - In-cluster traffic uses mutual TLS with workload certificates, either from a service mesh or from a certificate manager with sidecar-less TLS libraries. **Decision needed** (mesh versus cert-manager) because a mesh adds proxies on the hot path and affects NFR-1 **[VERIFY overhead]**.
@@ -164,7 +164,7 @@ Rules that must hold regardless of implementation (tests: TC-X2, TC-I4, TC-H1):
 
 | Concern | Design |
 |---|---|
-| Workload identity | Each Deployment has its own Kubernetes service account mapped to a cloud IAM role or secrets-manager identity with least privilege; no shared service accounts; no static cloud keys **[VERIFY per cloud]** |
+| Workload identity | Each Deployment has its own Kubernetes service account mapped to a cloud IAM role or secrets-manager identity with least privilege; no shared service accounts; no static cloud keys. On AWS (documentation-verified) EKS Pod Identity issues temporary, automatically rotated credentials per service account and supports a target role in another account; associations are eventually consistent, so change them outside hot paths. Other clouds **[VERIFY]** |
 | Secrets | External secrets manager mounted through CSI or fetched at start with short TTL; Kubernetes Secrets only if encrypted at rest with a KMS provider **[VERIFY]**; nothing in Helm values committed to Git |
 | Upstream credentials for servers | Minted by the token broker per call or session, audience-bound; the gateway holds no long-lived upstream secrets (FR-AUTHN-3) |
 | Encryption keys | KMS-held keys; separate keys for database, evidence vault, backups, policy-bundle signing; per-tenant keys in Phase 5 (FR-ADM-2) |
@@ -182,7 +182,7 @@ Rules that must hold regardless of implementation (tests: TC-X2, TC-I4, TC-H1):
 
 ### 6.2 Evidence vault and anchor store
 - Object storage with object lock (write-once retention) for anchors and for raw evidence, versioning enabled, encryption with a dedicated key, access limited to the audit service writer identity and named incident/security roles **[VERIFY object-lock availability per cloud]**.
-- Anchors in a different account/project (or at least different credentials) from the database so a database-level actor cannot rewrite both (CTL-13).
+- Anchors in a different account/project (or at least different credentials) from the database so a database-level actor cannot rewrite both (CTL-13). On AWS (documentation-verified): S3 Object Lock needs a versioned bucket; compliance mode cannot be removed by any user including the account root; legal holds provide indefinite protection until released.
 - Retention classes and legal hold per NFR-6.
 
 ### 6.3 Redis and Kafka (Phase 2)

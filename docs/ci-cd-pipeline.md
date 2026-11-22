@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| Version | 0.2 (design draft; the product pipeline is a template, only the document checks are wired up) |
-| Depends on | `Plan/functional-spec.md` v0.4 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.3 (Sections 8, 10), `Plan/threat-model.md` v0.3 (threats L, X8), `docs/testing/cases.md` v0.3 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.2 (Section 6 change management), `controls/catalogue.md` v0.2 (CTL-16, CTL-17, CTL-27) |
+| Version | 0.3 (design draft; the product pipeline is a template, only the document checks are wired up) |
+| Depends on | `Plan/functional-spec.md` v0.5 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.4 (Sections 8, 10), `Plan/threat-model.md` v0.4 (threats L, X8), `docs/testing/cases.md` v0.4 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.3 (Section 6 change management), `controls/catalogue.md` v0.3 (CTL-16, CTL-17, CTL-27) |
 | Platform | GitHub Actions (decision recorded in this document; no remote repository is configured yet) |
-| Status | Untested. No workflow in this repository has run on GitHub. Third-party action names, versions and commit SHAs are **not verified** (web research was blocked); they are tagged **[VERIFY]** or left as `TBD` placeholders. |
+| Status | Untested on GitHub: no workflow in this repository has run (no remote). Syntax of the workflow, Dependabot and template files was validated with PyYAML, and the template's job shape was checked (`scripts/validate_yaml.py`, 2026-11-22). The `actions/checkout` pin was read from the public GitHub API (release v7.0.1 and the commit its tag points to) via a page-fetching assistant and must be re-verified before the first run. All other third-party action names, versions and commit SHAs remain **not verified** (placeholders `TBD_PIN_SHA` in the template). |
 
 ## 1. Purpose and scope
 
@@ -137,11 +137,11 @@ Exceptions are rare, recorded and expire.
 | Never allowed | Skipping signing, skipping secret scanning, disabling admission control, reusing production secrets in non-production |
 | Review | Expired waivers fail the pipeline; monthly review of open waivers |
 
-Active waivers:
+Waivers (none active):
 
 | ID | Item | Reason | Compensating control | Expires |
 |---|---|---|---|---|
-| W-001 | `actions/checkout` referenced by major version tag in `.github/workflows/docs-check.yml` | Commit SHA could not be verified while web research was unavailable | Job has `permissions: contents: read`, no secrets, runs only repository-owned scripts | Before the first push to a remote repository |
+| W-001 | `actions/checkout` referenced by version tag | Commit SHA could not be verified | — | **Retired 2026-11-22:** workflow now pins the commit SHA of release v7.0.1 |
 
 ## 8. Threats to the pipeline itself
 

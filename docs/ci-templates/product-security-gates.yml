@@ -35,19 +35,25 @@ jobs:
       - name: G1.1 document consistency
         run: python3 -I scripts/check_docs.py
       - name: G1.2 lint and type check
-        run: echo "TBD: ruff, mypy, eslint, tsc once code exists" && exit 1
+        run: |
+          echo "TBD: ruff, mypy, eslint, tsc once code exists" && exit 1
       - name: G1.3 unit tests and policy tests
-        run: echo "TBD: pytest; opa test policy/" && exit 1
+        run: |
+          echo "TBD: pytest; opa test policy/" && exit 1
       - name: G1.4 secret scan
         uses: gitleaks/gitleaks-action@TBD_PIN_SHA            # [VERIFY]
       - name: G1.5 static analysis
-        run: echo "TBD: semgrep / bandit / codeql with severity threshold TBD" && exit 1
+        run: |
+          echo "TBD: semgrep / bandit / codeql with severity threshold TBD" && exit 1
       - name: G1.7 IaC and manifest scan
-        run: echo "TBD: trivy config / checkov / kube-linter on deploy/" && exit 1
+        run: |
+          echo "TBD: trivy config / checkov / kube-linter on deploy/" && exit 1
       - name: G1.8 Dockerfile lint
-        run: echo "TBD: hadolint on service Dockerfiles" && exit 1
+        run: |
+          echo "TBD: hadolint on service Dockerfiles" && exit 1
       - name: G1.9 policy diff review
-        run: echo "TBD: script comparing decisions of base vs PR policy; new allows need security-reviewer acknowledgement" && exit 1
+        run: |
+          echo "TBD: script comparing decisions of base vs PR policy; new allows need security-reviewer acknowledgement" && exit 1
 
   dependency-review:
     if: github.event_name == 'pull_request'
@@ -83,7 +89,8 @@ jobs:
           persist-credentials: false
       - name: Build image (pinned base digest, non-root)
         id: build
-        run: echo "TBD: build and push by digest; export digest output" && exit 1
+        run: |
+          echo "TBD: build and push by digest; export digest output" && exit 1
       - name: G2.2 SBOM
         uses: anchore/sbom-action@TBD_PIN_SHA                    # [VERIFY]
       - name: G2.3 image vulnerability scan
@@ -92,9 +99,11 @@ jobs:
           severity: CRITICAL,HIGH                                 # TBD threshold
           exit-code: "1"
       - name: G2.5 sign image
-        run: echo "TBD: cosign sign (keyless or KMS) by digest" && exit 1
+        run: |
+          echo "TBD: cosign sign (keyless or KMS) by digest" && exit 1
       - name: G2.6 provenance attestation
-        run: echo "TBD: provenance attestation bound to this workflow identity" && exit 1
+        run: |
+          echo "TBD: provenance attestation bound to this workflow identity" && exit 1
 
   # ---------- Stage 3: integration and adversarial tests ----------
   e2e:
@@ -107,9 +116,11 @@ jobs:
         with:
           persist-credentials: false
       - name: G3.1 / G3.2 end-to-end suite with hostile fixtures on isolated network
-        run: echo "TBD: docker compose -f deploy/compose/... --profile e2e; run MVP cases (docs/testing/cases.md Section 20)" && exit 1
+        run: |
+          echo "TBD: docker compose -f deploy/compose/... --profile e2e; run MVP cases (docs/testing/cases.md Section 20)" && exit 1
       - name: G3.4 supply-chain canary (planted vulnerable dependency and fake secret must FAIL the gates)
-        run: echo "TBD: TC-L3 canary branch check" && exit 1
+        run: |
+          echo "TBD: TC-L3 canary branch check" && exit 1
 
   # ---------- Stage 4: promotion (environment protection and approvals configured in repository settings) ----------
   promote-staging:
@@ -123,10 +134,14 @@ jobs:
       id-token: write
     steps:
       - name: G4.1 verify signature, provenance and expected workflow identity
-        run: echo "TBD: cosign verify by digest with expected identity; verify attestation" && exit 1
+        run: |
+          echo "TBD: cosign verify by digest with expected identity; verify attestation" && exit 1
       - name: G4.5 migration safety check
-        run: echo "TBD: expand/contract compatibility check" && exit 1
+        run: |
+          echo "TBD: expand/contract compatibility check" && exit 1
       - name: Deploy by digest (admission control verifies again, G4.2)
-        run: echo "TBD: helm upgrade with image digest; policy bundle signed (G4.6) and rolled out in shadow mode first" && exit 1
+        run: |
+          echo "TBD: helm upgrade with image digest; policy bundle signed (G4.6) and rolled out in shadow mode first" && exit 1
       - name: Smoke tests (TC-F1, TC-E1, TC-Z5) and audit chain verification (TC-Z6)
-        run: echo "TBD" && exit 1
+        run: |
+          echo "TBD" && exit 1

@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 |
+| Version | 0.3 |
 | Status | Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set. |
-| Depends on | Plan/functional-spec.md v0.4, Plan/architecture.md v0.3, Plan/threat-model.md v0.3, docs/testing/cases.md v0.3, docs/runbooks/operational-runbook.md v0.2, compliance/compliance-matrix.md v0.3 |
+| Depends on | Plan/functional-spec.md v0.5, Plan/architecture.md v0.4, Plan/threat-model.md v0.4, docs/testing/cases.md v0.4, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.4, docs/governance.md v0.2 |
 | Satisfies | FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here. |
 
 ## How to read this catalogue
@@ -30,35 +30,36 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 | ID | Control | Type | Enforcement | Component | Phase | Owner (role) |
 |---|---|---|---|---|---|---|
-| [CTL-01](#ctl-01) | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | deterministic | Registry/API | P1 | Security engineering |
-| [CTL-02](#ctl-02) | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | hybrid | Scanner, Registry | P1 | Security engineering |
-| [CTL-03](#ctl-03) | Definition pinning (canonical hash) and drift quarantine | P, D, R | deterministic | Gateway, Registry | P1/P2 | Security engineering |
-| [CTL-04](#ctl-04) | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | deterministic | Identity/broker | P1/P2 | Identity and access team |
-| [CTL-05](#ctl-05) | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | deterministic | Gateway, broker | P1/P2 | Identity and access team |
-| [CTL-06](#ctl-06) | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | deterministic | PDP, Gateway | P1/P2/P3 | Security engineering |
-| [CTL-07](#ctl-07) | Just-in-time access and human approval for high-impact actions bound to argument hash | P | human | PDP, API | P2 | Business owner and approver pool |
-| [CTL-08](#ctl-08) | SSRF protection and egress allowlisting | P, D | deterministic | Egress proxy, Scanner | P1/P2 | Platform security |
-| [CTL-09](#ctl-09) | Response inspection for injection, untrusted labelling, taint rule | P, D | hybrid | Gateway, Inspection | P2 | Security engineering |
-| [CTL-10](#ctl-10) | Data loss prevention on requests and responses; tenant isolation | P, D | hybrid | Gateway, DLP | P2 | Data protection / security engineering |
-| [CTL-11](#ctl-11) | Argument guards, schema validation, execution sandboxing | P | deterministic | Gateway, platform | P2/P4 | Platform security |
-| [CTL-12](#ctl-12) | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | deterministic | Gateway, API | P2 | Security engineering |
-| [CTL-13](#ctl-13) | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | deterministic | Audit service | P1/P2 | Security operations / audit liaison |
-| [CTL-14](#ctl-14) | Security monitoring and alerting; platform observability | D | advisory | Analytics, observability | P1/P2/P4 | Security operations |
-| [CTL-15](#ctl-15) | Incident detection, containment, evidence preservation, reporting | R, V | human | Incident manager | P2/P3/P4 | Incident commander / security operations |
-| [CTL-16](#ctl-16) | Policy lifecycle: source control and review, signed bundles, shadow mode | P | hybrid | PDP, CI | P1/P3 | Security engineering |
-| [CTL-17](#ctl-17) | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | deterministic | CI, scanner, admission | P2/P3/P4 | Platform security |
-| [CTL-18](#ctl-18) | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | deterministic | Gateway | P1/P2 | Security engineering |
-| [CTL-19](#ctl-19) | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | hybrid | Memory tools, Inspection | P4 | Security engineering |
-| [CTL-20](#ctl-20) | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | deterministic | Gateway, PDP | P4 | Security engineering |
-| [CTL-21](#ctl-21) | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | deterministic | Registry, Gateway | P2/P3/P4 | AI governance / model owner |
-| [CTL-22](#ctl-22) | Multi-tenancy, data residency and retention | P | deterministic | Platform | P2/P5 | Data protection / platform ops |
-| [CTL-23](#ctl-23) | Separation of duties, privileged and break-glass access | P, D | deterministic | API, IdP | P1/P2 | Security administration |
-| [CTL-24](#ctl-24) | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | deterministic | Platform | P1/P5 | Platform operations |
+| [CTL-01](#ctl-01) | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | deterministic | Registry/API | P1 | Security engineer |
+| [CTL-02](#ctl-02) | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | hybrid | Scanner, Registry | P1 | Security engineer |
+| [CTL-03](#ctl-03) | Definition pinning (canonical hash) and drift quarantine | P, D, R | deterministic | Gateway, Registry | P1/P2 | Security engineer |
+| [CTL-04](#ctl-04) | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | deterministic | Identity/broker | P1/P2 | Security engineer |
+| [CTL-05](#ctl-05) | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | deterministic | Gateway, broker | P1/P2 | Security engineer |
+| [CTL-06](#ctl-06) | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | deterministic | PDP, Gateway | P1/P2/P3 | Security engineer |
+| [CTL-07](#ctl-07) | Just-in-time access and human approval for high-impact actions bound to argument hash | P | human | PDP, API | P2 | Approver |
+| [CTL-08](#ctl-08) | SSRF protection and egress allowlisting | P, D | deterministic | Egress proxy, Scanner | P1/P2 | Security engineer |
+| [CTL-09](#ctl-09) | Response inspection for injection, untrusted labelling, taint rule | P, D | hybrid | Gateway, Inspection | P2 | Security engineer |
+| [CTL-10](#ctl-10) | Data loss prevention on requests and responses; tenant isolation | P, D | hybrid | Gateway, DLP | P2 | Compliance liaison |
+| [CTL-11](#ctl-11) | Argument guards, schema validation, execution sandboxing | P | deterministic | Gateway, platform | P2/P4 | Security engineer |
+| [CTL-12](#ctl-12) | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | deterministic | Gateway, API | P2 | Security engineer |
+| [CTL-13](#ctl-13) | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | deterministic | Audit service | P1/P2 | Security on-call |
+| [CTL-14](#ctl-14) | Security monitoring and alerting; platform observability | D | advisory | Analytics, observability | P1/P2/P4 | Security on-call |
+| [CTL-15](#ctl-15) | Incident detection, containment, evidence preservation, reporting | R, V | human | Incident manager | P2/P3/P4 | Incident commander |
+| [CTL-16](#ctl-16) | Policy lifecycle: source control and review, signed bundles, shadow mode | P | hybrid | PDP, CI | P1/P3 | Security engineer |
+| [CTL-17](#ctl-17) | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | deterministic | CI, scanner, admission | P2/P3/P4 | Security engineer |
+| [CTL-18](#ctl-18) | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | deterministic | Gateway | P1/P2 | Security engineer |
+| [CTL-19](#ctl-19) | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | hybrid | Memory tools, Inspection | P4 | Security engineer |
+| [CTL-20](#ctl-20) | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | deterministic | Gateway, PDP | P4 | Security engineer |
+| [CTL-21](#ctl-21) | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | deterministic | Registry, Gateway | P2/P3/P4 | Product owner |
+| [CTL-22](#ctl-22) | Multi-tenancy, data residency and retention | P | deterministic | Platform | P2/P5 | Compliance liaison |
+| [CTL-23](#ctl-23) | Separation of duties, privileged and break-glass access | P, D | deterministic | API, IdP | P1/P2 | Security admin |
+| [CTL-24](#ctl-24) | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | deterministic | Platform | P1/P5 | Platform operator |
 | [CTL-25](#ctl-25) | Compliance evidence generation and framework mapping governance | D | hybrid | Compliance engine | P3 | Compliance liaison |
-| [CTL-26](#ctl-26) | Discovery and coverage reporting (known gaps) | D | advisory | Discovery | P2/P3 | Security engineering |
-| [CTL-27](#ctl-27) | Secure development and change management for the platform | P | hybrid | CI/CD, process | P1 onward | Engineering management / platform security |
-| [CTL-28](#ctl-28) | Fleet dashboard, approval workflow and notifications | P, D, R | human | Dashboard, API | P1/P2/P3 | Security engineering |
-| [CTL-29](#ctl-29) | Data classification and labelling | P, D | hybrid | Registry, Gateway, DLP | P1/P2 | Data protection / security engineering |
+| [CTL-26](#ctl-26) | Discovery and coverage reporting (known gaps) | D | advisory | Discovery | P2/P3 | Security engineer |
+| [CTL-27](#ctl-27) | Secure development and change management for the platform | P | hybrid | CI/CD, process | P1 onward | Delivery lead |
+| [CTL-28](#ctl-28) | Fleet dashboard, approval workflow and notifications | P, D, R | human | Dashboard, API | P1/P2/P3 | Security engineer |
+| [CTL-29](#ctl-29) | Data classification and labelling | P, D | hybrid | Registry, Gateway, DLP | P1/P2 | Compliance liaison |
+| [CTL-30](#ctl-30) | Platform key management | P, D, R | hybrid | Secrets manager, KMS, CI/CD, broker | P2/P5 | Security engineer |
 
 ## CTL-01
 
@@ -66,7 +67,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Ensure every agent, server and tool that can act is known, owned and classified, and that unknown ones are denied.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry/API · **Phase:** P1 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry/API · **Phase:** P1 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -120,7 +121,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Threats:** C, F, X2
 
-**Tests:** TC-C1, TC-C3, TC-F1
+**Tests:** TC-C1, TC-C3, TC-F1, TC-Z26
 
 **Depends on controls:** CTL-08, CTL-23
 
@@ -142,7 +143,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop poisoned or unsafe tool definitions from being approved, with evidence and a reproducible score.
 
-**Enforcement:** hybrid · **Type:** P, D · **Component:** Scanner, Registry · **Phase:** P1 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Scanner, Registry · **Phase:** P1 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -225,7 +226,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Make sure agents only use the exact tool definition that was approved, and block it the moment it changes.
 
-**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, Registry · **Phase:** P1/P2 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, Registry · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -299,7 +300,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Give every agent its own revocable identity so misuse is attributable and containable.
 
-**Enforcement:** deterministic · **Type:** P, R · **Component:** Identity/broker · **Phase:** P1/P2 · **Owner (role):** Identity and access team · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, R · **Component:** Identity/broker · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -372,7 +373,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop stolen, replayed or mis-targeted credentials and confused-deputy use from working.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** Gateway, broker · **Phase:** P1/P2 · **Owner (role):** Identity and access team · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** Gateway, broker · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -449,7 +450,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Limit each agent to the specific tools, action classes and resources it needs, and notice when that drifts.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** PDP, Gateway · **Phase:** P1/P2/P3 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** PDP, Gateway · **Phase:** P1/P2/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -525,7 +526,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Make sure risky actions happen only with a specific, current human decision.
 
-**Enforcement:** human · **Type:** P · **Component:** PDP, API · **Phase:** P2 · **Owner (role):** Business owner and approver pool · **Status:** specified
+**Enforcement:** human · **Type:** P · **Component:** PDP, API · **Phase:** P2 · **Owner (role):** Approver · **Status:** specified
 
 **How it works**
 
@@ -533,6 +534,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 2. Policy marks high-impact actions: any delete; write or execute on resources tagged critical; sending confidential data outside; financial transactions; actions after untrusted content followed a sensitive read.
 3. For a high-impact call the PDP returns an approval obligation; the gateway holds the call and creates a task showing the exact arguments.
 4. Approval is bound to the hash of those arguments; a changed argument needs a new approval; timeout means deny.
+5. The approval view shows the platform-rendered arguments with their hash, the requester, classification and taint state; agent-supplied text is shown only in a labelled untrusted area; step-up authentication is required; bulk approval is unavailable and rapid approvals raise alerts (FR-AUTHZ-9..11).
 
 **Prevent**
 
@@ -564,6 +566,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 **False negatives**
 
 - Harmful actions not classified as high-impact are not gated.
+- An attentive approver deceived by a plausible but harmful request.
 
 **Bypass scenarios**
 
@@ -572,11 +575,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Depends on the quality of the high-impact definition and approver attention (threats D, K, E).
 
-**Requirements:** FR-AUTHZ-4..5, FR-AUTO-3
+**Requirements:** FR-AUTHZ-4..5, FR-AUTO-3, FR-AUTHZ-9..11
 
-**Threats:** D, E, K
+**Threats:** D, E, K, X14
 
-**Tests:** TC-E3, TC-D4, TC-K3
+**Tests:** TC-E3, TC-D4, TC-K3, TC-X14, TC-Z33
 
 **Depends on controls:** CTL-06, CTL-13, CTL-23
 
@@ -597,7 +600,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop the platform and MCP servers from being used to reach metadata services, internal systems or arbitrary hosts.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** Egress proxy, Scanner · **Phase:** P1/P2 · **Owner (role):** Platform security · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** Egress proxy, Scanner · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -673,7 +676,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Prevent instructions hidden in tool responses or retrieved content from causing unapproved actions or data egress.
 
-**Enforcement:** hybrid · **Type:** P, D · **Component:** Gateway, Inspection · **Phase:** P2 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Gateway, Inspection · **Phase:** P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -753,7 +756,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep personal, financial, secret and tenant-private data from leaving through tool traffic or reaching the wrong tenant.
 
-**Enforcement:** hybrid · **Type:** P, D · **Component:** Gateway, DLP · **Phase:** P2 · **Owner (role):** Data protection / security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Gateway, DLP · **Phase:** P2 · **Owner (role):** Compliance liaison · **Status:** specified
 
 **How it works**
 
@@ -828,7 +831,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop malicious arguments from turning tool calls into command, SQL or path attacks, and contain code execution.
 
-**Enforcement:** deterministic · **Type:** P · **Component:** Gateway, platform · **Phase:** P2/P4 · **Owner (role):** Platform security · **Status:** specified
+**Enforcement:** deterministic · **Type:** P · **Component:** Gateway, platform · **Phase:** P2/P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -900,7 +903,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Bound what an agent can do on its own in calls, time, cost and delegation, and allow immediate suspension.
 
-**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, API · **Phase:** P2 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D, R · **Component:** Gateway, API · **Phase:** P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -909,6 +912,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 3. Financial or irreversible transactions need approval unless policy allows a bounded amount to an allowlisted counterparty.
 4. A kill switch suspends an agent or all agents of a tenant within 5 s.
 5. Resuming needs an approver other than the person who suspended, unless an emergency policy applies; both actions are audited.
+6. An emergency policy (FR-AUTO-6) may relax only the different-approver rule for resuming, only for named people, for a limited time, with a high-severity audit event and review within one business day.
 
 **Prevent**
 
@@ -949,7 +953,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Distributed or slow abuse stays under per-agent limits (threat K); per-tenant caps and analytics reduce but do not remove it.
 
-**Requirements:** FR-AUTO-1..5, FR-ID-5, FR-RT-10
+**Requirements:** FR-AUTO-1..6, FR-ID-5, FR-RT-10
 
 **Threats:** K, M
 
@@ -974,7 +978,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Make every decision and administrative action recorded, ordered, reproducible and hard to alter without detection.
 
-**Enforcement:** deterministic · **Type:** D · **Component:** Audit service · **Phase:** P1/P2 · **Owner (role):** Security operations / audit liaison · **Status:** specified
+**Enforcement:** deterministic · **Type:** D · **Component:** Audit service · **Phase:** P1/P2 · **Owner (role):** Security on-call · **Status:** specified
 
 **How it works**
 
@@ -1027,7 +1031,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Threats:** X5, X6, X8
 
-**Tests:** TC-Z6, TC-X5, TC-Z20, TC-Z22, TC-Z23
+**Tests:** TC-Z6, TC-X5, TC-Z20, TC-Z22, TC-Z23, TC-Z29
 
 **Evidence required**
 
@@ -1048,7 +1052,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Notice abuse and platform problems early through thresholds, baselines and service metrics.
 
-**Enforcement:** advisory · **Type:** D · **Component:** Analytics, observability · **Phase:** P1/P2/P4 · **Owner (role):** Security operations · **Status:** specified
+**Enforcement:** advisory · **Type:** D · **Component:** Analytics, observability · **Phase:** P1/P2/P4 · **Owner (role):** Security on-call · **Status:** specified
 
 **How it works**
 
@@ -1122,7 +1126,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Contain compromised tools, agents or platform parts quickly, preserve evidence and recover safely.
 
-**Enforcement:** human · **Type:** R, V · **Component:** Incident manager · **Phase:** P2/P3/P4 · **Owner (role):** Incident commander / security operations · **Status:** specified
+**Enforcement:** human · **Type:** R, V · **Component:** Incident manager · **Phase:** P2/P3/P4 · **Owner (role):** Incident commander · **Status:** specified
 
 **How it works**
 
@@ -1131,6 +1135,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 3. At containment an evidence snapshot is taken: definitions and hashes, decisions, redacted traffic, scan results, registry state.
 4. Playbooks guide investigation, eradication and recovery; recovery requires reapproval by non-owners.
 5. A report with timeline, impact, actions and evidence index is exported.
+6. Raw evidence is readable only by named incident and security roles through the vault, each access needs a reason and is recorded, and chain-of-custody records list collection, transfer and access (FR-ADM-8); platform operators have no access.
 
 **Prevent**
 
@@ -1169,11 +1174,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Response quality depends on practice; playbooks are untested until exercised.
 
-**Requirements:** FR-IR-1..5
+**Requirements:** FR-IR-1..5, FR-ADM-8
 
 **Threats:** A, B, D, G, I, X8
 
-**Tests:** TC-X8, TC-Z6
+**Tests:** TC-X8, TC-Z6, TC-Z30
 
 **Depends on controls:** CTL-04, CTL-03, CTL-13, CTL-23
 
@@ -1197,7 +1202,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Ensure policy changes are reviewed, tested, signed and tried in shadow mode before they enforce.
 
-**Enforcement:** hybrid · **Type:** P · **Component:** PDP, CI · **Phase:** P1/P3 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P · **Component:** PDP, CI · **Phase:** P1/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1271,7 +1276,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep malicious or vulnerable packages, images, models and plugins out of the platform and the server fleet.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** CI, scanner, admission · **Phase:** P2/P3/P4 · **Owner (role):** Platform security · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** CI, scanner, admission · **Phase:** P2/P3/P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1345,7 +1350,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Close protocol-level abuse paths that do not depend on tool descriptions.
 
-**Enforcement:** deterministic · **Type:** P · **Component:** Gateway · **Phase:** P1/P2 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P · **Component:** Gateway · **Phase:** P1/P2 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1392,11 +1397,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** The MCP specification evolves; compatibility must be re-tested on each revision (threat P, X3, X4).
 
-**Requirements:** FR-AUTHN-5, FR-DRIFT-2, FR-RT-10
+**Requirements:** FR-AUTHN-5, FR-DRIFT-2, FR-RT-10, FR-MCP-1..12
 
 **Threats:** P, X3, X4
 
-**Tests:** TC-P1..P4
+**Tests:** TC-P1..P4, TC-Z27, TC-Z28
 
 **Depends on controls:** CTL-05, CTL-03
 
@@ -1410,7 +1415,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 - Sessions by protocol version.
 - Unexpected capability events.
 
-**Unverified claims.** Current MCP specification wording on transports, sampling, elicitation and roots is unverified; see spec Section 4.12.
+**Unverified claims.** Protocol statements were checked against the 2026-07-28 pages (see docs/mcp-compatibility.md); behaviour of earlier revisions and later revisions must be re-checked on each revision.
 
 ## CTL-19
 
@@ -1418,7 +1423,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep poisoned content from becoming persistent instructions for agents.
 
-**Enforcement:** hybrid · **Type:** P, D, V · **Component:** Memory tools, Inspection · **Phase:** P4 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D, V · **Component:** Memory tools, Inspection · **Phase:** P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1488,7 +1493,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Prevent one agent from gaining power or spreading instructions through delegation.
 
-**Enforcement:** deterministic · **Type:** P · **Component:** Gateway, PDP · **Phase:** P4 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** deterministic · **Type:** P · **Component:** Gateway, PDP · **Phase:** P4 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1561,7 +1566,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Detect or stop use of unapproved models and abuse of model endpoints.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry, Gateway · **Phase:** P2/P3/P4 · **Owner (role):** AI governance / model owner · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** Registry, Gateway · **Phase:** P2/P3/P4 · **Owner (role):** Product owner · **Status:** specified
 
 **How it works**
 
@@ -1630,7 +1635,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep tenants separate, keep data in permitted regions, and retain or delete it as policy and law require.
 
-**Enforcement:** deterministic · **Type:** P · **Component:** Platform · **Phase:** P2/P5 · **Owner (role):** Data protection / platform ops · **Status:** specified
+**Enforcement:** deterministic · **Type:** P · **Component:** Platform · **Phase:** P2/P5 · **Owner (role):** Compliance liaison · **Status:** specified
 
 **How it works**
 
@@ -1638,6 +1643,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 2. Per-tenant policy bundles; per-tenant encryption keys in Phase 5.
 3. A tenant data plane can be pinned to a region.
 4. Retention classes control deletion by data class; legal hold overrides deletion.
+5. A legal hold stops deletion of held data classes until the compliance role releases it with a recorded reason; retention jobs skip and report held items (FR-ADM-7).
 
 **Prevent**
 
@@ -1675,7 +1681,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Shared-infrastructure side channels; residency depends on correct deployment (threat I).
 
-**Requirements:** FR-ADM-2, FR-ADM-4..5, FR-RT-8, NFR-6, NFR-8
+**Requirements:** FR-ADM-2, FR-ADM-4..5, FR-RT-8, NFR-6, NFR-8, FR-ADM-7
 
 **Threats:** I
 
@@ -1700,7 +1706,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Ensure no single person can request and approve their own change, and that privileged access is limited and recorded.
 
-**Enforcement:** deterministic · **Type:** P, D · **Component:** API, IdP · **Phase:** P1/P2 · **Owner (role):** Security administration · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, D · **Component:** API, IdP · **Phase:** P1/P2 · **Owner (role):** Security admin · **Status:** specified
 
 **How it works**
 
@@ -1772,7 +1778,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Keep the platform available without ever trading availability for weaker controls, and recover quickly from loss.
 
-**Enforcement:** deterministic · **Type:** P, V · **Component:** Platform · **Phase:** P1/P5 · **Owner (role):** Platform operations · **Status:** specified
+**Enforcement:** deterministic · **Type:** P, V · **Component:** Platform · **Phase:** P1/P5 · **Owner (role):** Platform operator · **Status:** specified
 
 **How it works**
 
@@ -1915,7 +1921,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Find agents and servers outside the gateway and report coverage gaps honestly.
 
-**Enforcement:** advisory · **Type:** D · **Component:** Discovery · **Phase:** P2/P3 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** advisory · **Type:** D · **Component:** Discovery · **Phase:** P2/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -1963,7 +1969,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Threats:** X2, C
 
-**Tests:** TC-X2
+**Tests:** TC-X2, TC-Z26
 
 **Depends on controls:** CTL-01
 
@@ -1982,7 +1988,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Stop the platform itself from becoming the weakest point.
 
-**Enforcement:** hybrid · **Type:** P · **Component:** CI/CD, process · **Phase:** P1 onward · **Owner (role):** Engineering management / platform security · **Status:** specified
+**Enforcement:** hybrid · **Type:** P · **Component:** CI/CD, process · **Phase:** P1 onward · **Owner (role):** Delivery lead · **Status:** specified
 
 **How it works**
 
@@ -2050,7 +2056,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Give people an accurate view of the fleet and a safe workflow for approvals, drift review and incidents, with notifications that do not block containment.
 
-**Enforcement:** human · **Type:** P, D, R · **Component:** Dashboard, API · **Phase:** P1/P2/P3 · **Owner (role):** Security engineering · **Status:** specified
+**Enforcement:** human · **Type:** P, D, R · **Component:** Dashboard, API · **Phase:** P1/P2/P3 · **Owner (role):** Security engineer · **Status:** specified
 
 **How it works**
 
@@ -2099,11 +2105,11 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Residual risk.** Human approval quality depends on what the approver sees and on attention; approval content and step-up authentication need explicit design (gap H4 in docs/reviewgap.md).
 
-**Requirements:** FR-UI-1..6, FR-ADM-3, NFR-10
+**Requirements:** FR-UI-1..6, FR-ADM-3, NFR-10, FR-AUTHZ-9
 
-**Threats:** E, X6, X2
+**Threats:** E, X6, X2, X14
 
-**Tests:** TC-Z7, TC-Z8, TC-Z9, TC-Z11, TC-Z21
+**Tests:** TC-Z7, TC-Z8, TC-Z9, TC-Z11, TC-Z21, TC-Z33
 
 **Depends on controls:** CTL-13, CTL-23, CTL-26
 
@@ -2125,7 +2131,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 **Objective.** Make sensitivity explicit so that DLP, the taint rule and the high-impact definition act on the same labels.
 
-**Enforcement:** hybrid · **Type:** P, D · **Component:** Registry, Gateway, DLP · **Phase:** P1/P2 · **Owner (role):** Data protection / security engineering · **Status:** specified
+**Enforcement:** hybrid · **Type:** P, D · **Component:** Registry, Gateway, DLP · **Phase:** P1/P2 · **Owner (role):** Compliance liaison · **Status:** specified
 
 **How it works**
 
@@ -2193,3 +2199,80 @@ A control is a platform capability that reduces a named threat. Each entry says 
 - Sends blocked or approved because of labels.
 
 **Unverified claims.** The level names and the Confidential default are proposals pending approval.
+
+## CTL-30
+
+### Platform key management
+
+**Objective.** Keep the keys that anchor trust (policy signing, image signing, audit anchors, tenant and database encryption, break-glass) inventoried, protected, rotated and recoverable after compromise.
+
+**Enforcement:** hybrid · **Type:** P, D, R · **Component:** Secrets manager, KMS, CI/CD, broker · **Phase:** P2/P5 · **Owner (role):** Security engineer · **Status:** specified
+
+**How it works**
+
+1. A key inventory lists every platform key with class, owner role, location, purpose, rotation interval and last rotation, and is reviewed at least quarterly.
+2. Keys live in a KMS, HSM or secrets manager, non-exportable where supported; secret scanning of repositories, images and logs checks that no key material leaks.
+3. Rotation runs on schedule and on suspected compromise; verification keys reach every gateway before the new signing key is used, with an overlap period.
+4. Use is separated by duty: only the release job can sign policy bundles and images, the audit identity can only write anchors, break-glass secrets stay sealed, and nobody holds both signing and approval roles for the same release.
+5. A written compromise procedure per key class covers revocation, re-signing and re-approval and is exercised at least yearly.
+
+**Prevent**
+
+- Unauthorised signing; key material outside managed stores.
+
+**Detect**
+
+- Inventory drift, key-use anomalies, secret-scan findings, failed bundle verification on gateways.
+
+**Respond**
+
+- Revoke and rotate the affected key; re-sign bundles; open an incident (playbooks PB-05, PB-11).
+
+**Recover**
+
+- Re-approve tools or policies signed under a compromised key; verify the audit chain and anchors.
+
+**Parameters**
+
+- Inventory review: quarterly.
+- Compromise exercise: at least annually.
+- Rotation interval per key class: to be set.
+- Overlap period: to be set.
+
+**Failure behaviour.** A bundle or image signed by an unknown or revoked key is rejected; if no valid verification key is available the gateway denies.
+
+**False positives**
+
+- Rotation overlap rejects a bundle signed just before the verification key reached a gateway.
+
+**False negatives**
+
+- Compromise inside the rotation interval; keys outside the inventory.
+
+**Bypass scenarios**
+
+- A person with both signing and approval authority; backups containing key material.
+
+**Residual risk.** A compromised key is usable until detection and revocation (threat X8); per-tenant and customer-managed keys come in Phase 5.
+
+**Requirements:** FR-KEY-1..6, FR-ADM-2
+
+**Threats:** X8, G, X6
+
+**Tests:** TC-Z31, TC-Z32, TC-X8
+
+**Depends on controls:** CTL-13, CTL-16, CTL-23, CTL-27
+
+**Evidence required**
+
+- Key inventory with review dates.
+- Rotation and compromise-exercise records.
+- Secret-scan results and signing-identity configuration.
+
+**Metrics (KPI/KRI)**
+
+- Keys past rotation interval.
+- Keys missing from the inventory (target 0).
+- Time to rotate after a compromise exercise.
+
+**Unverified claims.** KMS, HSM and secrets-manager features differ per cloud; see docs/cloud-adapter-verification.md for the verified AWS adapter.

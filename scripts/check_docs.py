@@ -12,6 +12,10 @@ Checks:
   6. "Section N" references to spec/architecture/threat model exist.
   7. No stale phrases.
   8. Control catalogue structure, ID resolution, threat coverage and freshness of the generated file.
+  10. Markdown relative links resolve; tables have consistent column counts; Mermaid blocks are
+     structurally sane; TC references resolve in every document; stated counts match actual counts.
+  11. Parameter register (fixed values still stated by the listed files; every control with a
+     'to be set' parameter appears in the open-parameter table) and corpus files (JSON Lines).
   9. Active GitHub workflows: top-level permissions, actions pinned to commit SHAs (or a recorded
      waiver), no pull_request_target; the CI template keeps its warning header.
 Exit code 0 on success, 1 on any failure.
@@ -101,6 +105,16 @@ short = {
     "api-specification.md": "docs/api-specification.md",
     "governance.md": "docs/governance.md",
     "reviewgap.md": "docs/reviewgap.md",
+    "mcp-compatibility.md": "docs/mcp-compatibility.md",
+    "authn-authz-design.md": "docs/authn-authz-design.md",
+    "cross-cutting-design.md": "docs/cross-cutting-design.md",
+    "ux-outline.md": "docs/ux-outline.md",
+    "parameter-register.md": "docs/parameter-register.md",
+    "performance-test-plan.md": "docs/testing/performance-test-plan.md",
+    "fixtures-and-corpora.md": "docs/testing/fixtures-and-corpora.md",
+    "privacy-assessment.md": "docs/privacy-assessment.md",
+    "customer-inputs.md": "docs/customer-inputs.md",
+    "cloud-adapter-verification.md": "docs/cloud-adapter-verification.md",
 }
 versions = {}
 for name, path in short.items():
@@ -131,7 +145,7 @@ else:
 # 6. section references
 sections = {
     "spec": {str(i) for i in range(0, 13)},
-    "arch": {str(i) for i in range(1, 14)},
+    "arch": {str(i) for i in range(1, 15)},
     "tm": {str(i) for i in range(1, 10)},
 }
 for f, t in texts.items():
@@ -174,7 +188,7 @@ else:
             err(f"catalogue: {pr}")
         ctl_ids = [c["id"] for c in cat["controls"]]
         other_ids = set(ctl_ids)
-        valid_threats = set("ABCDEFGHIJKLMNOP") | {f"X{i}" for i in range(1, 14)}
+        valid_threats = set("ABCDEFGHIJKLMNOP") | {f"X{i}" for i in range(1, 15)}
         sod_defined = set(re.findall(r"\b(SoD-\d+)\b", spec))
         for c in cat["controls"]:
             cid = c["id"]
@@ -243,6 +257,154 @@ for wf in sorted(glob.glob(str(ROOT / ".github" / "workflows" / "*.y*ml"))):
 tpl = ROOT / "docs" / "ci-templates" / "product-security-gates.yml"
 if tpl.exists() and "TEMPLATE, NOT AN ACTIVE WORKFLOW" not in tpl.read_text(encoding="utf-8"):
     err("docs/ci-templates/product-security-gates.yml lost its template warning header")
+
+
+# 10. structure and counts across all documents
+import json  # noqa: E402
+
+tc_all = set(catalogue)
+cat_count = len(cat["controls"]) if cat else 0
+for f, t in texts.items():
+    base = pathlib.Path(f).parent
+    # relative links
+    for lm in re.finditer(r"\[[^\]]*\]\(([^)\s]+)\)", t):
+        target = lm.group(1)
+        if re.match(r"^(https?:|mailto:|#)", target):
+            continue
+        path = (ROOT / base / target.split("#")[0]).resolve()
+        if not path.exists():
+            err(f"{f}: broken relative link {target}")
+    # table column consistency
+    block_rows = []
+    for ln in t.split("\n") + [""]:
+        if ln.startswith("|"):
+            block_rows.append(re.sub(r"`[^`]*`", "", ln).replace("\\|", "").count("|"))
+        else:
+            if block_rows and len(set(block_rows)) > 1:
+                err(f"{f}: table with inconsistent column counts {sorted(set(block_rows))} near '{ln[:40]}'")
+            block_rows = []
+    # mermaid
+    for mb in re.finditer(r"```mermaid\n(.*?)```", t, re.S):
+        body = mb.group(1)
+        first = next((l.strip() for l in body.split("\n") if l.strip()), "")
+        if not re.match(r"^(flowchart|graph|sequenceDiagram|erDiagram|classDiagram|stateDiagram|gantt|journey|pie)", first):
+            err(f"{f}: mermaid block starts with unknown diagram type '{first[:30]}'")
+        if first.startswith(("flowchart", "graph")):
+            if body.count("[") != body.count("]") or body.count("{") != body.count("}"):
+                err(f"{f}: mermaid flowchart has unbalanced brackets")
+            if len(re.findall(r"^\s*subgraph\b", body, re.M)) != len(re.findall(r"^\s*end\s*$", body, re.M)):
+                err(f"{f}: mermaid subgraph/end mismatch")
+    # TC references
+    for ref in set(re.findall(r"\bTC-[A-Z]\d+\b", t)):
+        if ref not in tc_all:
+            err(f"{f}: reference to unknown test case {ref}")
+    for lo, hi_letter, hi in re.findall(r"\b(TC-[A-Z]\d+)\.\.([A-Z]?)(\d+)\b", t):
+        letter = lo[3]
+        a = int(lo[4:])
+        for n in range(a, int(hi) + 1):
+            if f"TC-{letter}{n}" not in tc_all:
+                err(f"{f}: range {lo}..{hi_letter}{hi} includes unknown case TC-{letter}{n}")
+
+# stated counts
+count_checks = [
+    ("README.md", r"cases\.md`, (\d+) cases", len(tc_all), "test cases"),
+    ("README.md", r"(\d+) controls, CTL-01\.\.\d+", cat_count, "controls"),
+    ("CLAUDE.md", r"\| (\d+) security test cases", len(tc_all), "test cases"),
+    ("CLAUDE.md", r"\(CTL-01\.\.(\d+)\)", cat_count, "controls"),
+    ("docs/prd.md", r"\((\d+) TC-\* cases", len(tc_all), "test cases"),
+    ("docs/testing/cases.md", r"\| Cases \| (\d+) ", len(tc_all), "test cases"),
+    ("Plan/threat-model.md", r"Total: (\d+) \(", len(tc_all), "test cases"),
+    ("Plan/functional-spec.md", r"\((\d+) cases; threat-model Section 7", len(tc_all), "test cases"),
+    ("docs/roadmap.md", r"test catalogue \((\d+) cases\)", len(tc_all), "test cases"),
+    ("docs/governance.md", r"CTL-01\.\.(\d+)\)", cat_count, "controls"),
+]
+for f, pat, actual, what in count_checks:
+    for mm in re.finditer(pat, texts.get(f, "")):
+        if int(mm.group(1)) != actual:
+            err(f"{f}: states {mm.group(1)} {what} but actual is {actual}")
+# phase totals sentence in the test catalogue
+ph = {}
+for mm in re.finditer(r"^### (TC-[A-Z]\d+) .*\n\*Threat [^\n]*· (P\d)(?:/P\d)?(?: · (MVP))?\*", cases, re.M):
+    ph.setdefault(mm.group(2), []).append(bool(mm.group(3)))
+ms = re.search(r"Phase 1 has (\d+) cases \((\d+) MVP-gating\), Phase 2 has (\d+), Phase 3 has (\d+), Phase 4 has (\d+), Phase 5 has (\d+) \(total (\d+)\)", cases)
+if ms:
+    want = [len(ph.get("P1", [])), sum(ph.get("P1", [])), len(ph.get("P2", [])), len(ph.get("P3", [])), len(ph.get("P4", [])), len(ph.get("P5", [])), len(tc_all)]
+    if [int(x) for x in ms.groups()] != want:
+        err(f"docs/testing/cases.md: phase totals sentence {ms.groups()} differs from computed {want}")
+else:
+    err("docs/testing/cases.md: phase totals sentence not found")
+
+# 11. parameter register and corpus files
+reg = texts.get("docs/parameter-register.md", "")
+sec1 = reg.split("## 1.")[1].split("## 2.")[0] if "## 1." in reg else ""
+for row in re.findall(r"^\| (PAR-F-\d+) \|(.*)$", sec1, re.M):
+    cells = [c.strip() for c in row[1].strip().strip("|").split("|")]
+    if len(cells) < 4:
+        err(f"parameter register {row[0]}: malformed row")
+        continue
+    pat = cells[2].strip("`")
+    files_ = re.findall(r"`([^`]+)`", cells[3])
+    for fl in files_:
+        fp = ROOT / fl
+        if not fp.exists():
+            err(f"parameter register {row[0]}: file {fl} missing")
+        elif not re.search(pat, fp.read_text(encoding="utf-8")):
+            err(f"parameter register {row[0]}: pattern {pat!r} not found in {fl}")
+sec2 = reg.split("## 2.")[1].split("## 3.")[0] if "## 2." in reg else ""
+if cat:
+    for c in cat["controls"]:
+        if any("to be set" in prm for prm in c["parameters"]) and c["id"] not in sec2:
+            err(f"parameter register: {c['id']} has 'to be set' parameters but is not named in Section 2")
+for jl in sorted((ROOT / "tests" / "fixtures" / "corpus").glob("*.jsonl")):
+    seen_ids = set()
+    for n, line in enumerate(jl.read_text(encoding="utf-8").split("\n"), 1):
+        if not line.strip():
+            continue
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            err(f"{jl.name}:{n}: invalid JSON")
+            continue
+        for key in ("id", "label", "category", "text"):
+            if key not in obj:
+                err(f"{jl.name}:{n}: missing field {key}")
+        if obj.get("id") in seen_ids:
+            err(f"{jl.name}:{n}: duplicate id {obj.get('id')}")
+        seen_ids.add(obj.get("id"))
+        allowed = {"benign", "poisoned"} if jl.name.startswith("tool_descriptions") else {"benign", "injected"}
+        if obj.get("label") not in allowed:
+            err(f"{jl.name}:{n}: label must be one of {sorted(allowed)}")
+
+
+# 12. generated HTML is well-formed (balanced non-void tags)
+from html.parser import HTMLParser  # noqa: E402
+
+class _Balance(HTMLParser):
+    VOID = {"meta", "br", "hr", "img", "input", "link"}
+
+    def __init__(self):
+        super().__init__()
+        self.stack, self.problems = [], []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in self.VOID:
+            self.stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag in self.VOID:
+            return
+        if not self.stack or self.stack[-1] != tag:
+            self.problems.append(f"unexpected </{tag}> (open: {self.stack[-3:]})")
+        else:
+            self.stack.pop()
+
+if html_path.exists():
+    bal = _Balance()
+    bal.feed(html_path.read_text(encoding="utf-8"))
+    for pr in bal.problems[:5]:
+        err(f"Plan/functional-spec.html: {pr}")
+    if bal.stack:
+        err(f"Plan/functional-spec.html: unclosed tags {bal.stack[-5:]}")
 
 if errors:
     print("FAILED:")

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.2 (adds the closure update in Section 9; Sections 1 to 8 still describe the register as first written, at the document versions listed) |
+| Version | 0.3 (adds the High-gap closure update in Section 9 and the Medium-gap closure update in Section 10; Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
@@ -263,9 +263,54 @@ The 14 High gaps were worked on after the register was written. Status vocabular
 - The proposed ADR resolutions and the classification defaults are recommendations only.
 - The Medium and Low gaps in the register are untouched, except where the same change closed them incidentally (for example the role-name issue C4 is helped by the glossary in `docs/governance.md`, but the catalogue still uses the old strings).
 
+## 10. Closure update for the Medium gaps (v0.3)
+
+The 29 Medium gaps were worked on after the High gaps. Vocabulary as in Section 9. Verification status of the whole documentation set after this work: `scripts/check_docs.py` passes (149 requirements, 10 non-functional requirements, 24 acceptance criteria, 99 test cases, 30 controls) with new checks for relative links, table shapes, Mermaid structure, test-case references, stated counts, the parameter register, the seed corpus and HTML well-formedness; `scripts/validate_yaml.py` run in a throwaway virtual environment parsed all five YAML files, confirmed the stdlib catalogue loader agrees with PyYAML, and validated the OpenAPI outline (this found and fixed a real syntax error in the CI template). Counts by status are at the end.
+
+| Gap | Status | What changed | Where | What remains |
+|---|---|---|---|---|
+| A4 | Closed, pending review | Authentication and authorization flows, policy structure, decision contract, illustrative Rego, unit-test design, failure behaviour | `docs/authn-authz-design.md` | Run the policy through OPA (not installed here); IdP capability (spike S2) |
+| A5 | Closed, pending review | One design for audit versus operational logs, redaction, error catalogue and configuration layering | `docs/cross-cutting-design.md` | Library choices; audit event schema fields |
+| A6 | Closed, pending review | Table of 13 architectural choices with benefit, security consequence, residual risk and acceptor | `docs/architecture-assessment.md` Section 7.1 | Review by acceptors |
+| A7 | Closed, pending review | Dashboard information architecture, key flows, principles and states | `docs/ux-outline.md` | Visual design, prototype and usability tests are not done |
+| B4 | Closed, pending review | Second test cases for X2, X3, X4, X5 (TC-Z26..Z29); X14 has two cases. X9..X13 still have one case each | `docs/testing/cases.md` v0.4 | Second cases for X9..X13 at their phase gates |
+| B5 | Closed, pending review | Acceptance criteria AC-10..AC-24 for phases 2 to 5 with linked cases | Spec v0.5 Section 11 | Review; thresholds depend on the parameter register |
+| B6 | Closed | The twelve lifecycle rows have IDs FR-MCP-1..12 and are referenced by the catalogue and traceability | Spec v0.5 Section 4.12 | None |
+| C2 | Closed | Control phases aligned with requirement phases (done with C1); script comparison finds no conflict | Catalogue v0.3 | None |
+| C3 | Closed, pending approval | One incident severity model with operational and security dimensions (higher wins); runbook refers to it | Playbooks v0.2 Section 3, runbook v0.3 Section 3 | Approval (DEC-3); response targets still proposals |
+| C4 | Closed, pending approval | Catalogue owner roles reduced to the glossary roles; glossary and RACI in the governance document | Catalogue v0.3, `docs/governance.md` | Approval (DEC-6) |
+| D2 | Closed, pending review | Emergency policy defined and limited to relaxing the different-approver rule (FR-AUTO-6), with glossary entry and test extension | Spec v0.5, TC-K2 | Approval (DEC-4) |
+| D3 | Closed, pending review | Legal hold (FR-ADM-7), raw-evidence access and chain of custody (FR-ADM-8), tests TC-Z19 and TC-Z30 | Spec v0.5, cases v0.4 | Legal input on hold process |
+| D4 | Closed, pending owner acceptance | Parameter register: 11 fixed parameters checked by script and 25 open parameters with proposed owner role and decision gate | `docs/parameter-register.md` | Owners must accept and decide the values |
+| D5 | Partly closed | Retention default flagged as a placeholder pending legal input; privacy assessment lists the questions | Spec NFR-6, `docs/privacy-assessment.md` | Legal decision per jurisdiction (DEC-9) |
+| D6 | Closed, pending approval | Proposed reference environment, workload model, procedures and pass criteria for the performance cases | `docs/testing/performance-test-plan.md` | Approval (DEC-7); error and memory bounds not set; nothing measured |
+| E3 | Partly closed | Revision 2026-07-28 pinned; authorization, transport, sampling, elicitation and roots pages read; compatibility matrix and spec updates (sampling and roots deprecated, no protocol sessions, Origin validation) | `docs/mcp-compatibility.md`, spec Section 4.12 | Tools, resources, prompts, lifecycle, client ID metadata document and DCR pages not read; older revisions not compared |
+| E4 | Partly closed | AWS adapter: six capabilities verified from documentation chunks, with design consequences (strict network policy mode, IMDS hop-limit tension, Object Lock compliance mode, Pod Identity, Multi-AZ) recorded in the deployment document | `docs/cloud-adapter-verification.md`, deployment v0.3 | Azure and Google Cloud; AWS items listed as not verified; cloud choice (CI-6) |
+| E5 | Partly closed | Workflow, Dependabot and template YAML validated; template syntax error fixed; `actions/checkout` pinned to the commit of release v7.0.1 read from the GitHub API (waiver W-001 retired); CODEOWNERS example added | `.github/`, `docs/ci-cd-pipeline.md` v0.3 | Never run on GitHub; checkout SHA to be re-verified; other actions unpinned and unverified |
+| E6 | Partly closed | Seed corpus (24 descriptions, 16 responses) and corpus specification; estimates unchanged | `tests/fixtures/corpus/`, `docs/testing/fixtures-and-corpora.md` | Corpus too small for any recall or precision claim; estimates and targets remain unmeasured |
+| F3 | Open | Customer intake form with 15 questions, needed-by gates and blank answer columns | `docs/customer-inputs.md` | A customer must answer |
+| F4 | Closed, pending approval | Spike schedule (S1..S6 plus verification) with windows, owners, dependencies and exit evidence | `docs/roadmap.md` Section 4.1 | Approval (DEC-8); needs two engineers and customer answers CI-5, CI-6, CI-8 |
+| G2 | Closed | Checker extended: relative links, table column counts, Mermaid structure, test-case references everywhere, stated counts, phase-total sentence, parameter register patterns, corpus files, HTML well-formedness; negative-tested on a copy | `scripts/check_docs.py` | The "Threats" column of requirement rows is still not cross-checked against the catalogue |
+| G3 | Partly closed | Mermaid structure and HTML tag balance are checked automatically | `scripts/check_docs.py` | Diagrams and HTML have still not been rendered in a browser; workflow never run |
+| G4 | Open | Branch-protection and code-owner settings are specified (CI/CD Section 5) and a CODEOWNERS example exists | `.github/CODEOWNERS.example` | Needs a remote repository, real teams and settings applied |
+| G5 | Closed, pending review | Fixture server specification, harness requirements, corpus format, labelling rules, splits and metrics, seed corpus | `docs/testing/fixtures-and-corpora.md`, `tests/fixtures/corpus/` | Fixtures and harness are not built; corpus growth |
+| G6 | Closed | Parameter register with machine-checked fixed values | `docs/parameter-register.md`, checker | Only 11 parameters are protected; extend as values are decided |
+| H2 | Partly closed | Platform data inventory, ten privacy risks with mitigations, questions for legal | `docs/privacy-assessment.md` | Legal and privacy review; decisions on retention and erasure; no formal impact assessment |
+| H3 | Closed, pending review | Key management requirements FR-KEY-1..6, control CTL-30, tests TC-Z31 and TC-Z32, playbook and runbook links | Spec Section 4.23, catalogue v0.3 | Approval (DEC-5); per-cloud KMS verification |
+| H4 | Closed, pending review | Approval content, step-up authentication and fatigue limits (FR-AUTHZ-9..11), threat X14, tests TC-X14 and TC-Z33, UX flow | Spec v0.5, threat model v0.4, UX outline | Detailed approval view design; IdP step-up mechanics |
+
+**Summary of the 29 Medium gaps:** 20 closed, pending review, approval or owner acceptance (A4, A5, A6, A7, B4, B5, B6, C2, C3, C4, D2, D3, D4, D6, F4, G2, G5, G6, H3, H4; C2, B6, G2 and G6 are closed outright because they are mechanical and checked), 7 partly closed (D5, E3, E4, E5, E6, G3, H2), 2 open (F3, G4). Nothing in this table claims a fact that has not been checked; "closed, pending review" means a draft artefact exists, not that it has been approved.
+
+**New items created by this work**
+- Twenty-four new requirements since the High closure (FR-MCP-1..12 gained IDs; FR-AUTO-6, FR-ADM-7, FR-ADM-8, FR-AUTHZ-9..11, FR-KEY-1..6 are new) and nine new test cases (99 total); all are specifications.
+- New documents are unreviewed; the OpenAPI outline is validated only for syntax and structure.
+- Several statements about the MCP specification and AWS come from page-fetching and documentation search results rather than primary files; the documents say which.
+- Proposals awaiting approval are recorded as DEC-1..DEC-9 in `docs/governance.md`.
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-11-22 | Closure update for the Medium gaps (Section 10) |
 | 0.2 | 2026-11-22 | Closure update for the High gaps (Section 9) |
 | 0.1 | 2026-11-22 | First review of the full documentation set |

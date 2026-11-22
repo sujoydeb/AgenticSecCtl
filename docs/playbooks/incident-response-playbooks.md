@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design-stage draft) |
+| Version | 0.2 (design-stage draft) |
 | Status | Written before any implementation exists. Procedures are manual and describe intended use of platform capabilities (quarantine, revoke, kill switch, evidence snapshot; FR-IR-*, FR-AUTO-4/5). Automation with approval gates is Phase 4 (FR-IR-4). Names of commands, queries and dashboards are placeholders `[TBD]` until built. |
-| Depends on | `Plan/functional-spec.md` v0.4, `Plan/architecture.md` v0.3 (audit event vocabulary, Section 4.8), `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3, `docs/runbooks/operational-runbook.md` v0.2 |
+| Depends on | `Plan/functional-spec.md` v0.5, `Plan/architecture.md` v0.4 (audit event vocabulary, Section 4.8), `Plan/threat-model.md` v0.4, `docs/testing/cases.md` v0.4, `docs/runbooks/operational-runbook.md` v0.3 |
 | Audience | Incident commanders, security on-call, platform on-call, compliance and legal liaisons, agent and server owners |
 | Scope | Security incidents affecting AI agents, MCP servers, tools and the platform itself. Availability and routine operations are in the operational runbook. |
 | Not legal advice | Notification duties (regulators, customers, card brands, supervisory authorities) are decided by legal and compliance. Deadlines and thresholds in any regulation must be checked by them; none are asserted here **[VERIFY with legal]**. |
@@ -33,16 +33,18 @@ Principles: contain first, investigate second; preserve evidence before changing
 
 Separation of duties still applies during incidents: the person who suspends an agent does not resume it (FR-AUTO-5, unless the emergency policy states otherwise); override of Critical findings needs two approvers (SoD-2); break-glass follows FR-ADM-6; operators do not read raw evidence.
 
-## 3. Severity and classification
+## 3. Severity and classification (single incident severity model)
 
-| Severity | Criteria | Examples | Initial response |
-|---|---|---|---|
-| SEV1 | Confirmed or strongly suspected compromise of the platform, confirmed exfiltration of regulated/confidential data, audit integrity failure, execution of an unapproved high-impact action with material impact | PB-11, PB-12, confirmed PB-04 | Page IC, security and platform on-call immediately; ack 5 min |
-| SEV2 | Confirmed malicious tool/server, credential compromise of an agent, blocked-but-credible exfiltration, supply-chain compromise detected before production use | PB-01, PB-02, PB-05, PB-09 | Ack 15 min |
-| SEV3 | Suspicious activity with controls holding, single-agent runaway, rule-triggered findings under review | PB-07, PB-06 (blocked) | Ack 4 h |
-| SEV4 | Informational or false positive | — | Next business day |
+One scale, SEV1 to SEV4, is used for every incident, whether it started as an operational problem or a security event (this section is the canonical definition; the operational runbook Section 3 refers to it). Each incident is rated on two dimensions and its severity is the **higher** of the two. The incident record stores both ratings and the reason, so ratings can be audited.
 
-Targets are proposals `[TBD]`. When unsure, classify one level higher and reduce after triage. Reclassify as facts emerge and record the reason.
+| Severity | Operational impact | Security impact | Examples | Initial response |
+|---|---|---|---|---|
+| SEV1 | Platform-wide outage (fail-closed denial for all or most tenants), loss of audit capability, data-plane or control-plane unavailable beyond the recovery target | Confirmed or strongly suspected compromise of the platform; confirmed exfiltration of regulated or confidential data; audit integrity failure; execution of an unapproved high-impact action with material impact | PB-11, PB-12, confirmed PB-04, total PDP or registry loss | Page incident commander, security and platform on-call immediately; acknowledge in 5 minutes |
+| SEV2 | One tenant or region down; PDP or registry degraded; sustained latency breach; quarantine storm | Confirmed malicious tool or server; credential compromise of an agent; credible blocked exfiltration; supply-chain compromise found before production use | PB-01, PB-02, PB-05, PB-09, runbook 8.9 | Acknowledge in 15 minutes; page the relevant on-call |
+| SEV3 | Single component degraded with no customer impact; backlog growth | Suspicious activity with controls holding; single-agent runaway; rule-triggered findings under review | PB-06 (blocked), PB-07 | Acknowledge in 4 hours; ticket |
+| SEV4 | Cosmetic or informational | Informational or false positive | No action beyond record | Next business day |
+
+Targets are proposals `[TBD]` (parameter register PAR-O-23). Rules: when unsure, classify one level higher and reduce after triage; reclassify as facts emerge and record why; an operational incident that becomes a security incident (for example a quarantine storm that proves to be an attack) takes the higher rating and switches to the matching playbook without opening a second incident; if the two dimensions give different ratings, the incident commander owns the rating and records the reasoning.
 
 **Common triage questions** (answer in the first 15 minutes): What asset (agent, server, tool, tenant, platform component)? Which data classes could be involved? Is the activity ongoing? Did any call succeed or was it denied (check `authz.allow` vs `authz.deny`)? Is any human or customer data affected? Is this a test (red team, game day)?
 
@@ -219,6 +221,7 @@ Each playbook lists: **Trigger / detection**, **Initial severity**, **Contain**,
 - **Investigate:** Initial access vector (image, dependency, exposed endpoint, stolen credential, insider); what the attacker could reach (short-lived credentials only? vault? control plane?; see TC-X8 expectations); whether policy bundles, registry entries, approvals or grants were changed (`policy.changed`, `tool.approved`, `grant.created`); whether audit records were altered; lateral movement; tenant data exposure.
 - **Eradicate and recover:** Redeploy from signed images in a clean namespace; rotate all reachable secrets; re-verify registry and policy against source control and approvals; re-verify audit chain against anchors; re-approve tools whose records are doubtful; staged restoration with heightened monitoring; external security review before declaring closure.
 - **Notifications:** Compliance and legal assess obligations early **[VERIFY with legal]**.
+- **Key compromise:** if signing, anchor, broker or encryption keys are or may be exposed, follow the key compromise procedure for that key class (FR-KEY-5; exercise TC-Z32): revoke, rotate with overlap, re-sign bundles and images, re-verify the audit chain and anchors.
 - **Exit criteria:** Clean redeploy verified; attacker access path closed; all reachable credentials rotated; registry/policy/audit verified or rebuilt; independent review completed.
 - **Related:** Threat X8; TC-X8, TC-Z6; NFR-9; FR-ADM-6.
 

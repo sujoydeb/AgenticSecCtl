@@ -1,0 +1,17 @@
+# EXAMPLE ONLY. GitHub reads CODEOWNERS only from .github/CODEOWNERS (or the repository root or docs/);
+# this file is deliberately named .example so it has no effect until real teams exist.
+# Copy to .github/CODEOWNERS and replace the placeholders with real GitHub teams or users.
+# Rules follow docs/ci-cd-pipeline.md Section 5: two reviewers for security-relevant paths (set the
+# required approval count in branch protection; CODEOWNERS only selects who must review).
+
+# Default
+*                         @ORG/security-engineers
+
+# Policy, migrations, deployment, controls, pipeline, requirements: security architect plus delivery lead
+/policy/                  @ORG/security-architects @ORG/delivery-leads
+/db/migrations/           @ORG/security-architects @ORG/delivery-leads
+/deploy/                  @ORG/security-architects @ORG/platform-operators
+/controls/                @ORG/security-architects @ORG/compliance
+/.github/                 @ORG/security-architects @ORG/delivery-leads
+/Plan/functional-spec.md  @ORG/product-owners @ORG/security-architects
+/compliance/              @ORG/compliance @ORG/security-architects

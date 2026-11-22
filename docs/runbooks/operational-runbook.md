@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (design-stage draft) |
+| Version | 0.3 (design-stage draft) |
 | Status | **Written before any implementation exists.** Procedures describe intended operations. Commands, endpoints, metric names, alert names and thresholds are placeholders marked `[TBD]` and must be replaced with real ones when the services are built, then validated in a game day (Section 14). |
-| Depends on | `Plan/architecture.md` v0.3 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.4 (FR/NFR IDs), `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3 |
+| Depends on | `Plan/architecture.md` v0.4 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.5 (FR/NFR IDs), `Plan/threat-model.md` v0.4, `docs/testing/cases.md` v0.4 |
 | Audience | Platform operators, on-call engineers, security engineers, incident responders |
 | Out of scope | Security incident handling steps beyond first containment: see `docs/playbooks/incident-response-playbooks.md`. Application-level agent debugging. |
 
@@ -46,10 +46,12 @@
 
 Escalation (to be filled with names/rotations when staffed `[TBD]`):
 
-| Severity | Definition | Response target | Page |
+Incident severity uses the single SEV1 to SEV4 model defined in `docs/playbooks/incident-response-playbooks.md` Section 3, with an operational and a security dimension; the higher dimension sets the severity. The table below shows the operational dimension and who is paged; it must not define different levels.
+
+| Severity | Operational criteria (see playbooks for the security dimension) | Response target | Page |
 |---|---|---|---|
-| SEV1 | Platform-wide fail-closed outage, suspected gateway/control-plane compromise, audit integrity failure | Acknowledge 5 min | Platform + Security on-call + IC |
-| SEV2 | Single tenant/region down, PDP/registry degraded, sustained latency breach, quarantine storm | 15 min | Platform on-call |
+| SEV1 | Platform-wide fail-closed outage, loss of audit capability | Acknowledge 5 min | Platform + Security on-call + incident commander |
+| SEV2 | Single tenant or region down, PDP or registry degraded, sustained latency breach, quarantine storm | 15 min | Platform on-call (security on-call if a security cause is possible) |
 | SEV3 | Single component degraded with no customer impact, backlog growth | 4 h | Ticket |
 | SEV4 | Cosmetic, informational | Next business day | Ticket |
 
@@ -153,6 +155,7 @@ Onboarding: create tenant and keys; configure IdP connection and role bindings; 
 Offboarding: disable agent access, revoke tokens, export evidence as requested, apply retention/legal hold rules, schedule key deletion after retention (cryptographic erase), record in audit.
 
 ### 7.5 Certificate, key and secret rotation
+The key inventory, storage, rotation and compromise rules are requirements FR-KEY-1..5; the inventory is reviewed quarterly and the compromise procedure is exercised at least yearly (TC-Z31, TC-Z32).
 - **Gateway/service TLS and server pins:** rotate before the 30-day warning; for pinned server certificates the *server owner* submits the new pin, an approver ≠ owner approves, then operators deploy (TC-C2 semantics).
 - **IdP signing keys (JWKS):** confirm gateways refresh JWKS on key ID change; keep overlap period.
 - **Policy bundle signing key:** rotate with overlap; gateways must trust old and new during window.
@@ -167,7 +170,7 @@ Offboarding: disable agent access, revoke tokens, export evidence as requested, 
 4. Open an incident and hand over to Security on-call; continue with `docs/playbooks/incident-response-playbooks.md` (PB-01..PB-15).
 
 ### 7.7 Kill switch (suspend agent or tenant)
-Use for runaway agents or suspected tenant-wide abuse (FR-AUTO-4): suspend the agent or tenant; confirm calls are denied within 5 s; record reason; notify owner. Resume requires approver ≠ the person who suspended (FR-AUTO-5), unless emergency policy states otherwise.
+Use for runaway agents or suspected tenant-wide abuse (FR-AUTO-4): suspend the agent or tenant; confirm calls are denied within 5 s; record reason; notify owner. Resume requires approver ≠ the person who suspended (FR-AUTO-5; the emergency policy of FR-AUTO-6 is the only exception), unless emergency policy states otherwise.
 
 ### 7.8 Retention, legal hold and evidence requests
 1. Retention jobs run on schedule by data class (spec NFR-6); never delete under legal hold.

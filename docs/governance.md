@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
-| Depends on | `Plan/functional-spec.md` v0.4 (Section 2 roles, Section 12), `Plan/architecture.md` v0.3 (Section 12 ADRs), `controls/catalogue.md` v0.2 (owner roles), `docs/prd.md` v0.3, `docs/roadmap.md` v0.2, `docs/reviewgap.md` v0.2 |
+| Version | 0.2 (template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
+| Depends on | `Plan/functional-spec.md` v0.5 (Section 2 roles, Section 12), `Plan/architecture.md` v0.4 (Section 12 ADRs), `controls/catalogue.md` v0.3 (owner roles), `docs/prd.md` v0.3, `docs/roadmap.md` v0.3, `docs/reviewgap.md` v0.3 |
 | Purpose | Provide the structure needed to close gaps F2 (no named owners) and G1 (no independent review) in `docs/reviewgap.md`: role glossary and RACI, owner assignment table, review and sign-off log, decision log and risk-acceptance register. It does **not** close those gaps by itself: they close when people fill it in. |
 
 ## 1. Role glossary
@@ -16,7 +16,7 @@ Three layers, so documents stop mixing role names.
 | Operational roles (who does what during operations and incidents) | Platform on-call, Security on-call, Incident commander, Scribe, Communications lead, Service owner, Compliance liaison, Legal/privacy | Runbook Section 3; playbooks Section 2 |
 | Governance roles (who owns documents, decisions and risks) | Sponsor, Product owner, Security architect, Delivery lead, Test lead, Control owner (role-based), Risk owner, Independent reviewer | This document |
 
-Mapping of the control-catalogue owner strings to the glossary (for the catalogue to adopt in its next revision):
+Mapping of the old control-catalogue owner strings to the glossary (adopted in catalogue v0.3; the catalogue now uses only the glossary roles on the right, with security specialties such as identity or platform security expressed through the control description, not the role name):
 
 | Catalogue owner string | Glossary role |
 |---|---|
@@ -62,7 +62,7 @@ R responsible, A accountable (one per row), C consulted, I informed.
 | Compliance liaison | Compliance liaison | *(open)* | |
 | Legal and privacy contact | Legal/privacy | *(open)* | |
 | Independent reviewer(s) | Independent reviewer | *(open)* | |
-| Control owners (one per control CTL-01..29) | Control owner | *(open; role names in the catalogue)* | |
+| Control owners (one per control CTL-01..30) | Control owner | *(open; role names in the catalogue)* | |
 | Risk owners (one per residual risk in `Plan/threat-model.md` Section 8) | Risk owner | *(open)* | |
 
 ## 4. Review and sign-off log
@@ -71,22 +71,32 @@ One row per document; add rows per review round. A document is "reviewed" only w
 
 | Document | Version | Reviewer (not the author) | Review date | Outcome (approved, approved with changes, rejected) | Open items |
 |---|---|---|---|---|---|
-| `Plan/functional-spec.md` | 0.4 | *(open)* | | | |
-| `Plan/architecture.md` | 0.3 | *(open)* | | | |
-| `Plan/threat-model.md` | 0.3 | *(open)* | | | |
-| `docs/testing/cases.md` | 0.3 | *(open)* | | | |
-| `controls/catalogue.yaml` | 0.2 | *(open)* | | | |
-| `compliance/compliance-matrix.md` | 0.3 | *(open; legal/compliance required)* | | | |
-| `docs/architecture-assessment.md` | 0.1 | *(open)* | | | |
+| `Plan/functional-spec.md` | 0.5 | *(open)* | | | |
+| `Plan/architecture.md` | 0.4 | *(open)* | | | |
+| `Plan/threat-model.md` | 0.4 | *(open)* | | | |
+| `docs/testing/cases.md` | 0.4 | *(open)* | | | |
+| `controls/catalogue.yaml` | 0.3 | *(open; compare YAML source)* | | | |
+| `compliance/compliance-matrix.md` | 0.4 | *(open; legal/compliance required)* | | | |
+| `docs/architecture-assessment.md` | 0.2 | *(open)* | | | |
 | `docs/data-model.md` | 0.1 | *(open)* | | | |
 | `docs/api-specification.md` and `docs/api/openapi.yaml` | 0.1 | *(open)* | | | |
-| `docs/deployment-architecture.md` | 0.2 | *(open)* | | | |
-| `docs/ci-cd-pipeline.md` | 0.2 | *(open)* | | | |
-| `docs/runbooks/operational-runbook.md` | 0.2 | *(open; operations)* | | | |
-| `docs/playbooks/incident-response-playbooks.md` | 0.1 | *(open; incident commander)* | | | |
+| `docs/authn-authz-design.md` | 0.1 | *(open)* | | | |
+| `docs/cross-cutting-design.md` | 0.1 | *(open)* | | | |
+| `docs/ux-outline.md` | 0.1 | *(open)* | | | |
+| `docs/mcp-compatibility.md` | 0.1 | *(open)* | | | |
+| `docs/privacy-assessment.md` | 0.1 | *(open; privacy and legal required)* | | | |
+| `docs/deployment-architecture.md` | 0.3 | *(open)* | | | |
+| `docs/cloud-adapter-verification.md` | 0.1 | *(open)* | | | |
+| `docs/ci-cd-pipeline.md` | 0.3 | *(open)* | | | |
+| `docs/runbooks/operational-runbook.md` | 0.3 | *(open; operations)* | | | |
+| `docs/playbooks/incident-response-playbooks.md` | 0.2 | *(open; incident commander)* | | | |
 | `docs/tech-evaluation.md` | 0.2 | *(open)* | | | |
-| `docs/prd.md` | 0.2 | *(open)* | | | |
-| `docs/roadmap.md` | 0.2 | *(open)* | | | |
+| `docs/testing/performance-test-plan.md` | 0.1 | *(open)* | | | |
+| `docs/testing/fixtures-and-corpora.md` | 0.1 | *(open)* | | | |
+| `docs/parameter-register.md` | 0.1 | *(open)* | | | |
+| `docs/customer-inputs.md` | 0.1 | *(open; customer)* | | | |
+| `docs/prd.md` | 0.3 | *(open)* | | | |
+| `docs/roadmap.md` | 0.3 | *(open)* | | | |
 
 ## 5. Decision log
 
@@ -101,6 +111,13 @@ One row per document; add rows per review round. A document is "reviewed" only w
 | ADR-7 | Audit anchoring target | Object-lock storage in a separate account | Proposed, pending approval | | |
 | DEC-1 | Data classification default levels | Public, Internal, Confidential, Restricted; unlabelled = Confidential (spec Section 4.22) | Proposed, pending approval | | |
 | DEC-2 | Phase-tag resolutions for review gap C1 | As recorded in spec change log v0.4 and test catalogue v0.3 | Proposed, pending approval | | |
+| DEC-3 | Single incident severity model with operational and security dimensions (higher wins) | Playbooks Section 3; runbook Section 3 refers to it | Proposed, pending approval | | |
+| DEC-4 | Emergency policy scope (FR-AUTO-6) | Relax only the different-approver rule of FR-AUTO-5 | Proposed, pending approval | | |
+| DEC-5 | Key management requirements (FR-KEY-1..6) and control CTL-30 | As in spec Section 4.23 | Proposed, pending approval | | |
+| DEC-6 | Control owner vocabulary | Glossary roles only (catalogue v0.3) | Proposed, pending approval | | |
+| DEC-7 | Reference environment and workload for performance tests | `docs/testing/performance-test-plan.md` | Proposed, pending approval | | |
+| DEC-8 | Spike schedule before Phase 1 | `docs/roadmap.md` Section 4.1 | Proposed, pending approval | | |
+| DEC-9 | Placeholder retention default (13 months hot, 7 years cold) | Replace after legal input (parameter PAR-F-06) | Open, needs legal | | |
 
 ## 6. Risk acceptance register
 

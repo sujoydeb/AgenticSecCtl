@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.3 (draft; **not reviewed by legal or compliance**) |
-| Depends on | `Plan/functional-spec.md` v0.4, `Plan/architecture.md` v0.3, `Plan/threat-model.md` v0.3, `docs/testing/cases.md` v0.3, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.2 |
+| Version | 0.4 (draft; **not reviewed by legal or compliance**) |
+| Depends on | `Plan/functional-spec.md` v0.5, `Plan/architecture.md` v0.4, `Plan/threat-model.md` v0.4, `docs/testing/cases.md` v0.4, `docs/runbooks/operational-runbook.md` v0.3, `docs/playbooks/incident-response-playbooks.md` v0.2, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.3 |
 | Satisfies | FR-COMP-2..3 (mandatory/guidance/voluntary labelling, per-finding record). The control catalogue of FR-COMP-1 is in `controls/catalogue.md`. FR-COMP-5 (legal review before release) is **not yet satisfied**. |
 | Review status | Review date: none. Reviewer: none. Release as an authoritative mapping is blocked until reviewed. |
 
@@ -46,35 +46,36 @@ Control definitions (objective, how each control works, prevent/detect/respond/r
 
 | ID | Control | Type | Component | Owner (role) | Phase |
 |---|---|---|---|---|---|
-| CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | Registry/API | Security engineering | P1 |
-| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | Scanner, Registry | Security engineering | P1 |
-| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P, D, R | Gateway, Registry | Security engineering | P1/P2 |
-| CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | Identity/broker | Identity and access team | P1/P2 |
-| CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | Gateway, broker | Identity and access team | P1/P2 |
-| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | PDP, Gateway | Security engineering | P1/P2/P3 |
-| CTL-07 | Just-in-time access and human approval for high-impact actions bound to argument hash | P | PDP, API | Business owner and approver pool | P2 |
-| CTL-08 | SSRF protection and egress allowlisting | P, D | Egress proxy, Scanner | Platform security | P1/P2 |
-| CTL-09 | Response inspection for injection, untrusted labelling, taint rule | P, D | Gateway, Inspection | Security engineering | P2 |
-| CTL-10 | Data loss prevention on requests and responses; tenant isolation | P, D | Gateway, DLP | Data protection / security engineering | P2 |
-| CTL-11 | Argument guards, schema validation, execution sandboxing | P | Gateway, platform | Platform security | P2/P4 |
-| CTL-12 | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | Gateway, API | Security engineering | P2 |
-| CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | Audit service | Security operations / audit liaison | P1/P2 |
-| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | Security operations | P1/P2/P4 |
-| CTL-15 | Incident detection, containment, evidence preservation, reporting | R, V | Incident manager | Incident commander / security operations | P2/P3/P4 |
-| CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P | PDP, CI | Security engineering | P1/P3 |
-| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | Platform security | P2/P3/P4 |
-| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Security engineering | P1/P2 |
-| CTL-19 | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | Memory tools, Inspection | Security engineering | P4 |
-| CTL-20 | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | Gateway, PDP | Security engineering | P4 |
-| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | AI governance / model owner | P2/P3/P4 |
-| CTL-22 | Multi-tenancy, data residency and retention | P | Platform | Data protection / platform ops | P2/P5 |
-| CTL-23 | Separation of duties, privileged and break-glass access | P, D | API, IdP | Security administration | P1/P2 |
-| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | Platform | Platform operations | P1/P5 |
+| CTL-01 | Inventory and registration of agents, servers and tools with owner, environment, criticality | P, D | Registry/API | Security engineer | P1 |
+| CTL-02 | Tool scanning with reproducible scoring; approval with separation of duties and dual-control override | P, D | Scanner, Registry | Security engineer | P1 |
+| CTL-03 | Definition pinning (canonical hash) and drift quarantine | P, D, R | Gateway, Registry | Security engineer | P1/P2 |
+| CTL-04 | Agent identity and credential lifecycle (unique identity, rotation, revocation, deny on revocation-lookup failure) | P, R | Identity/broker | Security engineer | P1/P2 |
+| CTL-05 | Authentication hardening: audience/scope validation, sender-constrained tokens, no token passthrough, session binding, server identity validation, secret redaction | P, D | Gateway, broker | Security engineer | P1/P2 |
+| CTL-06 | Least-privilege authorization, deny by default, action classes, agent→server allowlists, unused-permission and escalation reporting | P, D | PDP, Gateway | Security engineer | P1/P2/P3 |
+| CTL-07 | Just-in-time access and human approval for high-impact actions bound to argument hash | P | PDP, API | Approver | P2 |
+| CTL-08 | SSRF protection and egress allowlisting | P, D | Egress proxy, Scanner | Security engineer | P1/P2 |
+| CTL-09 | Response inspection for injection, untrusted labelling, taint rule | P, D | Gateway, Inspection | Security engineer | P2 |
+| CTL-10 | Data loss prevention on requests and responses; tenant isolation | P, D | Gateway, DLP | Compliance liaison | P2 |
+| CTL-11 | Argument guards, schema validation, execution sandboxing | P | Gateway, platform | Security engineer | P2/P4 |
+| CTL-12 | Autonomy limits, budgets, loop detection, kill switch with different-approver resume | P, D, R | Gateway, API | Security engineer | P2 |
+| CTL-13 | Tamper-evident audit: hash chain, external anchoring, reproducible decisions, deny-high-impact when audit cannot record | D | Audit service | Security on-call | P1/P2 |
+| CTL-14 | Security monitoring and alerting; platform observability | D | Analytics, observability | Security on-call | P1/P2/P4 |
+| CTL-15 | Incident detection, containment, evidence preservation, reporting | R, V | Incident manager | Incident commander | P2/P3/P4 |
+| CTL-16 | Policy lifecycle: source control and review, signed bundles, shadow mode | P | PDP, CI | Security engineer | P1/P3 |
+| CTL-17 | Supply-chain security: SBOM, vulnerability scanning, signing/provenance, third-party intake | P, D | CI, scanner, admission | Security engineer | P2/P3/P4 |
+| CTL-18 | MCP lifecycle controls: version allowlist, capability limits, sampling/elicitation default-deny, roots, notifications | P | Gateway | Security engineer | P1/P2 |
+| CTL-19 | Memory and RAG integrity: attributed writes, provenance labels, partitions, rollback | P, D, V | Memory tools, Inspection | Security engineer | P4 |
+| CTL-20 | Inter-agent security: authenticated delegation, no privilege amplification, cycle/depth limits | P | Gateway, PDP | Security engineer | P4 |
+| CTL-21 | Model registry and endpoint protection: approved model pinning, substitution detection, quotas | P, D | Registry, Gateway | Product owner | P2/P3/P4 |
+| CTL-22 | Multi-tenancy, data residency and retention | P | Platform | Compliance liaison | P2/P5 |
+| CTL-23 | Separation of duties, privileged and break-glass access | P, D | API, IdP | Security admin | P1/P2 |
+| CTL-24 | Resilience: fail-closed behaviour, HA, backup, DR testing | P, V | Platform | Platform operator | P1/P5 |
 | CTL-25 | Compliance evidence generation and framework mapping governance | D | Compliance engine | Compliance liaison | P3 |
-| CTL-26 | Discovery and coverage reporting (known gaps) | D | Discovery | Security engineering | P2/P3 |
-| CTL-27 | Secure development and change management for the platform | P | CI/CD, process | Engineering management / platform security | P1 onward |
-| CTL-28 | Fleet dashboard, approval workflow and notifications | P, D, R | Dashboard, API | Security engineering | P1/P2/P3 |
-| CTL-29 | Data classification and labelling | P, D | Registry, Gateway, DLP | Data protection / security engineering | P1/P2 |
+| CTL-26 | Discovery and coverage reporting (known gaps) | D | Discovery | Security engineer | P2/P3 |
+| CTL-27 | Secure development and change management for the platform | P | CI/CD, process | Delivery lead | P1 onward |
+| CTL-28 | Fleet dashboard, approval workflow and notifications | P, D, R | Dashboard, API | Security engineer | P1/P2/P3 |
+| CTL-29 | Data classification and labelling | P, D | Registry, Gateway, DLP | Compliance liaison | P1/P2 |
+| CTL-30 | Platform key management | P, D, R | Secrets manager, KMS, CI/CD, broker | Security engineer | P2/P5 |
 
 ## 4. Control-to-framework mapping
 
@@ -113,6 +114,7 @@ Cell entries are *candidate supporting references*. "—" means no meaningful di
 | CTL-27 Secure development/change | Art. 15, 17 | Art. 25, 32 | Art. 9; Art. 16 (simplified framework) | Req. 6 |
 | CTL-28 Dashboard/approval workflow | Art. 14 (human oversight), Art. 26 | Art. 5(2), 24 | Art. 9, 10 | Req. 7, 10 |
 | CTL-29 Data classification | Art. 10 (data governance; where applicable) | Art. 5(1)(c)(f), 25, 32 | Art. 9 | Req. 3, 7 |
+| CTL-30 Key management | Art. 15 | Art. 32 | Art. 9 | Req. 3 |
 
 ### 4.2 Supervisory guidance (F-SR117, F-FFIEC)
 
@@ -147,6 +149,7 @@ Cell entries are *candidate supporting references*. "—" means no meaningful di
 | CTL-27 Secure development/change | Implementation controls; testing before use | Development, Acquisition and Maintenance |
 | CTL-28 Dashboard/approval workflow | Governance reporting and effective challenge | Management; Information Security |
 | CTL-29 Data classification | Data quality and confidentiality of model inputs | Information Security |
+| CTL-30 Key management | — (supporting) | Information Security |
 
 Note: SR 11-7 expects model validation (conceptual soundness, outcomes analysis) by qualified independent staff. **The platform does not perform model validation** (Section 6).
 
@@ -183,6 +186,7 @@ Note: SR 11-7 expects model validation (conceptual soundness, outcomes analysis)
 | CTL-27 | PR.PS | MANAGE | A.8.25..A.8.32 | 42001 life cycle | CC8 |
 | CTL-28 | GV.OV, DE.AE | GOVERN; MANAGE | A.5.3, A.8.16 | 42001 performance evaluation | CC4, CC7 |
 | CTL-29 | ID.AM, PR.DS | MAP; MANAGE; AI 600-1: data privacy | A.5.12, A.5.13 (classification, labelling) | 42001 data for AI systems | C1 |
+| CTL-30 | PR.DS, PR.AA | MANAGE | A.8.24 (cryptography) | — | CC6 |
 
 ### 4.4 Community guidance and knowledge bases by threat
 
@@ -219,6 +223,7 @@ Linked to threats in `Plan/threat-model.md`. The OWASP MCP Top 10 column uses th
 | X11 Error-message injection | LLM05 Improper Output Handling | MCP06 | — | — |
 | X12 Scanner/detector evasion or overload | LLM10 Unbounded Consumption | MCP03 (partial) | — | T1499 Endpoint Denial of Service (analogous) |
 | X13 Client registration abuse | LLM06 Excessive Agency | MCP07; MCP01 | — | T1078 Valid Accounts |
+| X14 Approver deception or fatigue | LLM06 Excessive Agency | MCP07 Insufficient Authentication & Authorization | — | T1078 Valid Accounts (analogous) |
 
 ## 5. Findings register (threat-level)
 
@@ -245,12 +250,13 @@ One record per threat, with the nine fields required by the brief. Risk ratings 
 | FND-X2 | Gateway bypass through unmanaged endpoints and local servers | Discovery, network | CTL-26, 08 | ISO 27001 A.5.9; NIST CSF ID.AM; SR 11-7 complete inventory; EU AI Act Art. 26 (if in scope) | not rated / High (accepted gap) | Discovery, wrapper, egress controls, honest coverage reporting | Discovery results, coverage-gap report, TC-X2 | Security engineering | Design only (P2/P3); residual risk accepted until owners sign off |
 | FND-X5 | Log injection into SIEM | Audit service | CTL-13 | ISO 27001 A.8.15; PCI DSS Req. 10; NIST CSF DE.CM | not rated / Low | Escape control characters, inert UI rendering | TC-X5 results | Security operations | Design only (P2) |
 | FND-X6 | Insider approves a malicious tool or edits policy | Registry, policy store | CTL-23, 16, 13 | ISO 27001 A.5.3/8.2; SOC 2 CC6/CC8; PCI DSS Req. 7; DORA Art. 9 | not rated / Medium | SoD, dual control, source-controlled signed policy, access recertification | Approval records, policy history, TC-E4, TC-X6 | Security administration | Design only (P1/P3) |
-| FND-X8 | Compromise of gateway or control plane | Platform | CTL-27, 13, 23, 15, 24 | DORA Art. 9..11; ISO 27001 A.8.x (hardening, monitoring); PCI DSS Req. 6/10/11; NIST CSF PR/DE/RS | not rated / Medium | Plane separation, no long-lived secrets, sealed break-glass, runtime detection, pen test | Pen-test reports, TC-X8 results, access reviews | Platform security | Design only (P2/P5) |
+| FND-X8 | Compromise of gateway or control plane | Platform | CTL-27, 13, 23, 15, 24, 30 | DORA Art. 9..11; ISO 27001 A.8.x (hardening, monitoring); PCI DSS Req. 6/10/11; NIST CSF PR/DE/RS | not rated / Medium | Plane separation, no long-lived secrets, sealed break-glass, runtime detection, pen test | Pen-test reports, TC-X8 results, access reviews | Platform security | Design only (P2/P5) |
 | FND-X9 | Forged agent card or discovery document attracts delegation or calls | Gateway, registry | CTL-20, 01 | OWASP MCP09/MCP07; ATT&CK T1036; ISO 27001 A.5.16; NIST CSF PR.AA | not rated / Medium | Treat cards as untrusted, verify against registry identity and pins, do not route unverified cards | Card verification logs, TC-X9 | Security engineering | Design only (P4) |
 | FND-X10 | Instructions hidden in images, documents or audio reach the model | Gateway, inspection | CTL-09, 29 | OWASP MCP06; OWASP LLM01; ATLAS AML.T0051 | not rated / Medium | Label untrusted, limit type and size, extract and inspect, block when uninspectable in sensitive sessions | Content-handling policy, signal logs, TC-X10 | Security engineering | Design only (P2) |
 | FND-X11 | Server or platform error messages carry instructions | Gateway | CTL-09 | OWASP MCP06; OWASP LLM05 | not rated / Low-Medium | Inspect server errors; fixed catalogue text for platform errors | Error-handling tests, TC-X11 | Security engineering | Design only (P2) |
 | FND-X12 | Scanner or detector evasion and overload | Scanner, detectors | CTL-02, 14 | OWASP MCP03 (partial); OWASP LLM10; ATT&CK T1499 (analogous) | not rated / Medium | Caps, quotas, timeouts that never approve, evasion regression set | Regression results per rule-set version, TC-X12 | Security engineering | Design only (P2) |
 | FND-X13 | Open client registration produces trusted-looking clients | Identity/broker | CTL-05, 04 | OWASP MCP07, MCP01; ATT&CK T1078; NIST CSF PR.AA | not rated / Low-Medium | Disable by default, allowlists, rate limits, owner, start unapproved | Registration policy and logs, TC-X13 | Identity and access team | Design only (P2) |
+| FND-X14 | Approver deception or fatigue gets a high-impact action approved | Dashboard, approval workflow | CTL-07, 28 | OWASP MCP07; ISO 27001 A.5.3, A.8.5; NIST CSF PR.AA, GV.RR; EU AI Act Art. 14 (if in scope) | not rated / Medium | Platform-rendered arguments, step-up authentication, no bulk approval, rate and review-time alerts | Approval view tests, TC-X14, TC-Z33 | Security engineer | Design only (P2) |
 
 X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-to-use gap) are covered inside FND-A, FND-P and FND-B respectively; they have no separate rows.
 
@@ -281,3 +287,4 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 | 0.1 | 2026-11-22 | First draft; unverified references; not reviewed |
 | 0.2 | 2026-11-22 | Control definitions moved to `controls/catalogue.yaml`; Section 3 reduced to the ID list |
 | 0.3 | 2026-11-22 | OWASP MCP entries filled from the official project; verification status per framework; threats X9..X13 and controls CTL-28, CTL-29 added; control list regenerated from the catalogue |
+| 0.4 | 2026-11-22 | Owner roles aligned to the governance glossary; CTL-30 (key management) and threat X14 added; control list regenerated |

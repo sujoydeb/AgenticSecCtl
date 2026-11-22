@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # waiver: W-001 (tag instead of commit SHA; see docs/ci-cd-pipeline.md Section 7)
-      - uses: actions/checkout@v4
+      # actions/checkout v7.0.1, pinned to the commit its release tag points to (read from the public GitHub API on 2026-11-22; re-verify before first run)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - name: Cross-document consistency checks

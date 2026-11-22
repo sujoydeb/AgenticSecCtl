@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.3 (draft; cases are specifications, none have been executed) |
-| Depends on | `Plan/threat-model.md` v0.3 (case IDs, Section 7), `Plan/functional-spec.md` v0.4 (FR/NFR/AC IDs), `Plan/architecture.md` v0.3 (audit event vocabulary, Section 4.8) |
-| Cases | 90 (threat-model index), all expanded below |
+| Version | 0.4 (draft; cases are specifications, none have been executed) |
+| Depends on | `Plan/threat-model.md` v0.4 (case IDs, Section 7), `Plan/functional-spec.md` v0.5 (FR/NFR/AC IDs), `Plan/architecture.md` v0.4 (audit event vocabulary, Section 4.8) |
+| Cases | 99 (threat-model index), all expanded below |
 | Safety | Every attack runs only in the isolated test environment (Section 1). Payloads are inert test strings that target fixture services; no real credentials, data or external hosts are used. |
 
 ## 1. Test environment and fixtures
@@ -501,10 +501,10 @@
 - **Residual risk:** Slow loops under thresholds.
 
 ### TC-K2 Budget exhaustion
-*Threat K · FR-AUTO-1/4/5, FR-RT-10 · E2E · P2*
+*Threat K · FR-AUTO-1/4/5/6, FR-RT-10 · E2E · P2*
 - **Objective:** Per-agent/session limits on calls, time and cost are enforced.
 - **Prerequisites:** Limits: 100 calls/session, 10 calls/s/agent.
-- **Steps:** Exceed each limit; test many agents each below the per-agent limit against per-tenant cap. Then suspend an agent with the kill switch and attempt to resume it as the same user and as a different approver (FR-AUTO-5).
+- **Steps:** Exceed each limit; test many agents each below the per-agent limit against per-tenant cap. Then suspend an agent with the kill switch and attempt to resume it as the same user and as a different approver (FR-AUTO-5); then declare an emergency policy as an authorised person and as an unauthorised one, and try to use it to relax something other than the different-approver rule (FR-AUTO-6).
 - **Expected detection:** Limit events.
 - **Expected prevention:** Excess calls denied; tenant cap holds; resume by the suspending user is refused (unless an emergency policy applies), resume by a different approver succeeds and both actions are audited.
 - **Logs:** `limit.exceeded`.
@@ -810,6 +810,17 @@
 - **Pass/fail:** Pass if every unauthorised registration is refused and an approved one still cannot call tools before approval.
 - **Residual risk:** Capabilities of the production IdP **[VERIFY]**.
 
+### TC-X14 Approver deception and fatigue
+*Threat X14 · FR-AUTHZ-9/10/11 · RT, IT · P2*
+- **Objective:** Show that a misleading agent-supplied summary, bulk approval or approval fatigue cannot get a high-impact action approved unnoticed.
+- **Prerequisites:** FX-EVIL-driven agent whose request text says "routine cleanup" while the arguments delete production data; ten pending high-impact requests; approver accounts with and without a fresh MFA.
+- **Steps:** Open the approval; try to approve all ten at once; approve ten in rapid succession; approve with an expired MFA window.
+- **Expected detection:** Alerts for rapid approval rates and very short review times.
+- **Expected prevention:** The approval view shows platform-rendered arguments and the agent's text in a labelled untrusted area; bulk approval is unavailable; the pending-per-approver limit applies; step-up is required.
+- **Logs:** `approval.requested`, `approval.granted`, `approval.denied`, `authn.fail`.
+- **Pass/fail:** Pass if the destructive arguments are visible at decision time, bulk approval is impossible, and the rapid-approval pattern raises an alert.
+- **Residual risk:** An attentive but deceived approver still decides; rubber-stamping cannot be eliminated.
+
 ---
 
 ## 19. Cross-cutting tests
@@ -1089,6 +1100,94 @@
 - **Pass/fail:** Pass if outcomes match the rules above and every label change is audited.
 - **Residual risk:** Wrong labels at source.
 
+### TC-Z26 Unmanaged stdio server discovery
+*Threat X2 · FR-INV-5/7 · IT · P2*
+- **Objective:** A stdio server configured in a client outside the managed wrapper is found and reported as a coverage gap.
+- **Prerequisites:** Test client configuration files and a Kubernetes namespace with an unregistered server pod; one managed wrapper server for contrast.
+- **Steps:** Run the discovery collectors; compare findings with the registry.
+- **Expected detection:** `discovery.asset` entries marked unregistered; a coverage-gap item in the dashboard.
+- **Expected prevention:** Unregistered servers cannot be reached through the gateway; the unmanaged path is reported, not blocked (accepted gap).
+- **Logs:** `discovery.asset`.
+- **Pass/fail:** Pass if every planted unmanaged server is listed once and the managed wrapper server is not flagged.
+- **Residual risk:** Endpoints on devices the collectors cannot see.
+
+### TC-Z27 Sampling budget and iteration limits
+*Threat X3 · FR-MCP-9 · E2E · P2*
+- **Objective:** A server that loops sampling requests with tool use cannot consume unbounded model budget.
+- **Prerequisites:** FX-EVIL mode `sampling-loop` requesting sampling repeatedly; sampling enabled for the test server with a budget.
+- **Steps:** Run until the limit; repeat with the revision that deprecates sampling to confirm the default-deny path.
+- **Expected detection:** Budget and iteration events.
+- **Expected prevention:** Requests beyond the iteration or token budget are denied; high-risk prompts require approval; with sampling disabled none reach a model.
+- **Logs:** `limit.exceeded`, `authz.deny`.
+- **Pass/fail:** Pass if model usage stops at the budget and no unapproved high-risk prompt is sent.
+- **Residual risk:** Prompts that pass inspection but still waste budget within limits.
+
+### TC-Z28 Elicitation: sensitive data and URL mode
+*Threat X4 · FR-MCP-10 · E2E · P2*
+- **Objective:** Elicitation cannot be used to collect credentials, and URL-mode requests show their real target.
+- **Prerequisites:** FX-EVIL mode `elicit` sending a form-mode request for an API key, a URL-mode request to an attacker host, and a legitimate form request.
+- **Steps:** Run with elicitation disabled and enabled.
+- **Expected detection:** Credential-request signals; URL host not on the allowlist.
+- **Expected prevention:** Form-mode sensitive requests blocked; URL-mode shows server identity and full URL, is not pre-fetched, and non-allowlisted hosts are blocked by policy; legitimate form allowed when enabled.
+- **Logs:** `inject.signal`, `authz.deny`.
+- **Pass/fail:** Pass if no credential prompt reaches a user and the platform makes no request to the attacker URL.
+- **Residual risk:** Social engineering text that avoids credential keywords.
+
+### TC-Z29 Log injection through audit export and UI rendering
+*Threat X5 · FR-AUD-5 · UT, IT · P2*
+- **Objective:** Hostile text in tool content cannot forge SIEM records or run script in the dashboard when audit data is exported and displayed.
+- **Prerequisites:** Tool descriptions and responses containing newline-injected JSON, ANSI sequences, HTML and markdown links; SIEM sink and dashboard.
+- **Steps:** Generate events from that content; export to the sink; render in the dashboard and in a downloaded report.
+- **Expected detection:** None required.
+- **Expected prevention:** Control characters are escaped on export; the UI and reports render the text inert, without fetching links or images.
+- **Logs:** Normal events only.
+- **Pass/fail:** Pass if the sink contains exactly one record per event, no forged record appears, and no script runs or link is fetched during rendering.
+- **Residual risk:** Downstream SIEM parsers.
+
+### TC-Z30 Evidence vault access and chain of custody
+*Threat I, X8 · FR-ADM-8 · IT, DM · P2*
+- **Objective:** Raw evidence is reachable only by named roles with recorded reasons, and custody is traceable.
+- **Prerequisites:** Evidence items in the vault from a test incident; accounts for incident responder, security engineer, platform operator and auditor.
+- **Steps:** Each account tries to read raw evidence; responder reads with and without a reason; transfer an item between responders; try to delete an item.
+- **Expected detection:** Access events with identity and reason.
+- **Expected prevention:** Operators and unnamed roles are denied; reads need a reason; custody records list collector, transfers and accesses; deletion is denied under hold.
+- **Logs:** `evidence.accessed`, `authz.deny`, `legalhold.set`.
+- **Pass/fail:** Pass if only permitted roles read, every read has a record, and custody history is complete.
+- **Residual risk:** An authorised insider reading with a false reason.
+
+### TC-Z31 Key inventory, storage and rotation
+*Threat X8, G · FR-KEY-1/2/3/4 · IT, DM · P2*
+- **Objective:** Platform keys are inventoried, held outside repositories and images, rotated with overlap, and used only by their duty holders.
+- **Prerequisites:** Key inventory; policy-bundle signing key, anchor credentials, image-signing identity; a secret scanner over repositories, images and logs.
+- **Steps:** Reconcile the inventory with the KMS; scan for key material; rotate the bundle signing key and verify gateways accept old and new during overlap; try to sign from a non-release identity.
+- **Expected detection:** Missing inventory entries; key material found by the scanner.
+- **Expected prevention:** No key material outside the managed store; non-release identities cannot sign; gateways reject bundles signed with an unknown key.
+- **Logs:** `key.rotated`, `policy.changed`, `authz.deny`.
+- **Pass/fail:** Pass if the inventory matches reality, the scan finds nothing, rotation causes no outage and unauthorised signing fails.
+- **Residual risk:** Compromise within the rotation interval.
+
+### TC-Z32 Key compromise exercise
+*Threat X8 · FR-KEY-5 · RT, exercise · P2*
+- **Objective:** The documented compromise procedure for a key class works within the target time.
+- **Prerequisites:** Staging environment; a simulated leak of the bundle signing key and of the anchor credentials.
+- **Steps:** Declare the compromise; revoke and rotate; re-sign bundles; verify gateways reject bundles from the old key; verify the audit chain and anchors.
+- **Expected detection:** Compromise alert and incident record.
+- **Expected prevention:** Old-key bundles are rejected after revocation; the audit chain still verifies.
+- **Logs:** `incident.opened`, `key.rotated`, `policy.changed`, `audit.verify.failed` only if tampering occurred.
+- **Pass/fail:** Pass if the procedure completes in the agreed time and no policy signed with the old key is enforced afterwards.
+- **Residual risk:** Actions taken during the window before detection.
+
+### TC-Z33 Step-up authentication and approval content
+*Threat E, X14 · FR-AUTHZ-9/10 · IT, DM · P2*
+- **Objective:** High-impact approvals and Critical overrides need fresh multi-factor authentication and show the platform-rendered arguments.
+- **Prerequisites:** Approver session older than the MFA window; high-impact request and a Critical override request.
+- **Steps:** Try to approve with the old session; re-authenticate and approve; inspect the approval view and the audit event.
+- **Expected detection:** Step-up challenge events.
+- **Expected prevention:** Approval is refused until step-up succeeds; the view shows arguments and hash; the audit event records the authentication time.
+- **Logs:** `authn.fail`, `approval.granted`.
+- **Pass/fail:** Pass if no approval is recorded without a fresh step-up and the displayed arguments match the executed call's hash.
+- **Residual risk:** Compromised approver device after step-up.
+
 ---
 
 ## 20. Coverage summary
@@ -1111,17 +1210,17 @@
 | N Model | N1–N2 | none (Phase 3/4) |
 | O Tool execution | O1–O3 | none (Phase 2) |
 | P Protocol | P1–P4 | none (Phase 2) |
-| X (added vectors) | X2, X5, X6, X8, X9–X13 | none (X2, X5, X10..X13 Phase 2; X6 Phase 3; X9 Phase 4; X8 Phase 5) |
-| Z (cross-cutting, functional, non-functional) | Z1–Z25 | Z2, Z5, Z6, Z7 (Z10, Z20 are Phase 1 but not MVP-gating) |
+| X (added vectors) | X2, X5, X6, X8, X9–X14 | none (X2, X5, X10..X14 Phase 2; X6 Phase 3; X9 Phase 4; X8 Phase 5) |
+| Z (cross-cutting, functional, non-functional) | Z1–Z33 | Z2, Z5, Z6, Z7 (Z10, Z20 are Phase 1 but not MVP-gating) |
 
-Phase totals: Phase 1 has 26 cases (19 MVP-gating), Phase 2 has 48, Phase 3 has 5, Phase 4 has 8, Phase 5 has 3 (total 90).
+Phase totals: Phase 1 has 26 cases (19 MVP-gating), Phase 2 has 57, Phase 3 has 5, Phase 4 has 8, Phase 5 has 3 (total 99).
 
 Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6 (chain verification; Z22 adds anchoring in Phase 2); AC-6 ← E4, Z7; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← G5.
 
 ## 21. Open items
 - Several cases assume capabilities marked **[VERIFY]** in the spec (DPoP/mTLS binding, token exchange); record the actual IdP mode in every run (TC-G1). Search-verified background: Keycloak supports DPoP from 26.4 and its token exchange V2 is limited to internal-to-internal use (`docs/tech-evaluation.md` verification log).
-- Event names are provisional until the audit schema exists (definition: `Plan/architecture.md` Section 4.8).
-- Requirements covered only through control-level test lists, not by a case of their own, are tracked in `docs/reviewgap.md` (B2).
+- Event names (including `key.rotated` and `evidence.accessed`, added in this version) are provisional until the audit schema exists (definition: `Plan/architecture.md` Section 4.8).
+- Requirements covered only through control-level test lists, not by a case of their own, are tracked in `docs/reviewgap.md` (B2). Detector-quality corpora and fixture specifications are in `docs/testing/fixtures-and-corpora.md`; the reference environment and workload for non-functional cases are in `docs/testing/performance-test-plan.md`.
 - Benchmark corpora for detectors (spec Section 10) are not defined yet; cases A1–A5, D1–D5, X10 and X12 need a labelled corpus for precision/recall, beyond single examples.
-- Non-functional cases Z14..Z21 need the reference environment and workload definition (gap D6 in `docs/reviewgap.md`).
+- Non-functional cases Z14..Z21 use the proposed reference environment and workload in `docs/testing/performance-test-plan.md`, which still needs approval.
 - Execution has not happened: all pass/fail criteria are proposals to be refined once fixtures exist.

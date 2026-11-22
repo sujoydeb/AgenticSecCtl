@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.1 (draft for review; closes gap A1 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.4, `Plan/architecture.md` v0.3, `Plan/threat-model.md` v0.3, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.2, `docs/testing/cases.md` v0.3, `docs/roadmap.md` v0.2 |
+| Version | 0.2 (draft for review; closes gap A1 and, with Section 7.1, gap A6 in `docs/reviewgap.md`) |
+| Depends on | `Plan/functional-spec.md` v0.5, `Plan/architecture.md` v0.4, `Plan/threat-model.md` v0.4, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.3, `docs/testing/cases.md` v0.4, `docs/roadmap.md` v0.3 |
 | Purpose | The assessment the master brief asks for before any implementation: missing attack vectors, weak assumptions, architectural gaps, tools to reuse, controls that need deterministic enforcement versus controls that can use LLM-based analysis, performance bottlenecks, and regulatory and operational risks. Each finding points to where the repository answers it. |
 | Status | Written after the design documents, so it consolidates and cross-checks them; it is not the original planning document. Facts marked *search-verified* come from the verification log in `docs/tech-evaluation.md` (mostly secondary sources); everything else is background knowledge and is tagged **[VERIFY]**. |
 
@@ -120,6 +120,27 @@ The deterministic column is the only class that may enforce a high-impact decisi
 | Audit write amplification | Outbox with batching; chain computed by the audit service; Kafka only when volume demands | TC-Z18 |
 | Hash recomputation on every list and notification | Rate-limited re-hash; cached canonical forms | TC-P4 |
 | Database as the shared bottleneck | Pooling, read replicas, partitioned audit tables | TC-Z18 |
+
+### 7.1 Security implications of architectural choices (trade-offs)
+
+Each row states the choice, what it buys, the security consequence, the residual risk, and who should accept it. "Acceptor" is a governance role (`docs/governance.md`).
+
+| Choice | Benefit | Security consequence | Residual risk | Acceptor |
+|---|---|---|---|---|
+| Fail closed on PDP, registry, bundle, revocation or audit loss | No silent loss of protection | Outages of the platform stop agents (availability cost) | Business disruption during incidents | Product owner |
+| Tenant fail-open allowlist for read-only low-risk tools | Keeps low-risk reads working in an outage | Reads happen without a fresh decision; flagged and reviewed | Misclassified tool in the allowlist | Security architect with tenant owner |
+| 60-second registry and definition cache | Lower latency and database load | Up to 60 seconds of stale state, closed at call time by the hash check; revocation and quarantine propagate within 5 seconds by events | Event delivery failure widens the window to the cache TTL | Security architect |
+| Decision cache keyed on policy hash and input digest | Fewer policy calls | A decision may outlive a grant revocation by the cache TTL unless events invalidate it | Short stale window | Security architect |
+| Deterministic checks inline, classifiers asynchronous or advisory | Meets latency budget | Asynchronous findings cannot block the current call | Missed injections are caught only after the fact; blast-radius controls compensate | Security architect |
+| Shared multi-tenant platform (ADR-4 proposal) | Lower cost and operations | Larger blast radius for a platform or isolation bug | Cross-tenant leakage if row-level security fails; dedicated models are an option | Sponsor, security architect |
+| Custom thin gateway first (ADR-1 proposal) | Fast, controlled MVP | Home-grown proxy code is attack surface and must meet the latency budget | Maintenance and performance risk; decision revisited after spike S1 | Security architect |
+| Managed wrapper for stdio servers (ADR-5 proposal) | Brings local servers inside the pipeline | The wrapper becomes a trusted component holding brokered credentials | Wrapper compromise | Security architect |
+| Hash chain with external anchors | Tamper evidence | Anchor store becomes critical infrastructure; an unanchored window exists | Rewrite before the first anchor | Security architect |
+| Digests and redacted excerpts instead of raw payloads | Privacy and smaller blast radius | Investigations lack full payloads unless the evidence vault holds them | Gaps in forensics for non-incident traffic | Compliance liaison |
+| Human approval for high-impact actions | Strong control on irreversible actions | Approver fatigue and deception become the weakness; latency for the agent | Rubber-stamping (threat X14) | Product owner |
+| Sender-constrained tokens where the IdP allows | Stops stolen-token replay | Depends on IdP support and client libraries; fallback is weaker | Replay window in fallback mode | Security architect |
+| Sandbox pool for untrusted server code | Limits container escape impact | Cost, compatibility and performance overhead | Runtime escape vulnerabilities | Platform operator |
+| Strict default-deny network policy | Blocks lateral movement and bypass | Breakage risk when a needed flow is not allowed; startup ordering | Misconfigured exceptions | Platform operator |
 
 ## 8. Regulatory and operational risks
 
