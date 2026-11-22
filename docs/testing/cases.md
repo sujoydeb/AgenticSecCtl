@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.4 (draft; cases are specifications, none have been executed) |
-| Depends on | `Plan/threat-model.md` v0.4 (case IDs, Section 7), `Plan/functional-spec.md` v0.5 (FR/NFR/AC IDs), `Plan/architecture.md` v0.4 (audit event vocabulary, Section 4.8) |
-| Cases | 99 (threat-model index), all expanded below |
+| Version | 0.5 (draft; cases are specifications, none have been executed) |
+| Depends on | `Plan/threat-model.md` v0.5 (case IDs, Section 7), `Plan/functional-spec.md` v0.6 (FR/NFR/AC IDs), `Plan/architecture.md` v0.5 (audit event vocabulary, Section 4.8) |
+| Cases | 100 (threat-model index), all expanded below |
 | Safety | Every attack runs only in the isolated test environment (Section 1). Payloads are inert test strings that target fixture services; no real credentials, data or external hosts are used. |
 
 ## 1. Test environment and fixtures
@@ -1188,6 +1188,17 @@
 - **Pass/fail:** Pass if no approval is recorded without a fresh step-up and the displayed arguments match the executed call's hash.
 - **Residual risk:** Compromised approver device after step-up.
 
+### TC-Z34 High-impact class and critical-tag governance
+*Threat E, X6 · FR-AUTHZ-12 · IT · P2*
+- **Objective:** Additional high-impact classes and critical resource tags cannot be added, weakened or removed unnoticed.
+- **Prerequisites:** Tenant with built-in classes; security admin, a second approver, a requester without the admin role; a resource owned by a test owner.
+- **Steps:** Add a custom class as the admin alone; add it with a different approver; observe shadow-mode results before enforcement; try to remove a built-in class; tag a resource critical without approver confirmation, then with it; remove the tag as the owner alone.
+- **Expected detection:** `policy.changed` and `classification.changed`-style audit events with actor, approver and reason.
+- **Expected prevention:** Single-person changes are refused; new classes run in shadow mode first; built-in classes cannot be removed; tags need approver confirmation; removal needs the same approvals.
+- **Logs:** `policy.changed`, `approval.requested`, `approval.granted`, `authz.deny`.
+- **Pass/fail:** Pass if each refusal occurs, shadow results are recorded, enforcement starts only after approval, and every change is audited with both identities.
+- **Residual risk:** Collusion between admin and approver.
+
 ---
 
 ## 20. Coverage summary
@@ -1211,9 +1222,9 @@
 | O Tool execution | O1–O3 | none (Phase 2) |
 | P Protocol | P1–P4 | none (Phase 2) |
 | X (added vectors) | X2, X5, X6, X8, X9–X14 | none (X2, X5, X10..X14 Phase 2; X6 Phase 3; X9 Phase 4; X8 Phase 5) |
-| Z (cross-cutting, functional, non-functional) | Z1–Z33 | Z2, Z5, Z6, Z7 (Z10, Z20 are Phase 1 but not MVP-gating) |
+| Z (cross-cutting, functional, non-functional) | Z1–Z34 | Z2, Z5, Z6, Z7 (Z10, Z20 are Phase 1 but not MVP-gating) |
 
-Phase totals: Phase 1 has 26 cases (19 MVP-gating), Phase 2 has 57, Phase 3 has 5, Phase 4 has 8, Phase 5 has 3 (total 99).
+Phase totals: Phase 1 has 26 cases (19 MVP-gating), Phase 2 has 58, Phase 3 has 5, Phase 4 has 8, Phase 5 has 3 (total 100).
 
 Mapping to MVP acceptance criteria: AC-1 ← A1–A3; AC-2 ← B1, B2; AC-3 ← E1, C3, F1; AC-4 ← H1–H4; AC-5 ← Z6 (chain verification; Z22 adds anchoring in Phase 2); AC-6 ← E4, Z7; AC-7 ← Z5; AC-8 ← Z2; AC-9 ← G5.
 

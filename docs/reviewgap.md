@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.3 (adds the High-gap closure update in Section 9 and the Medium-gap closure update in Section 10; Sections 1 to 8 still describe the register as first written, at the document versions listed) |
+| Version | 0.4 (adds closure updates for High gaps (Section 9), Medium gaps (Section 10) and Low gaps (Section 11); Sections 1 to 8 still describe the register as first written, at the document versions listed) |
 | Date | 2026-11-22 |
 | Scope | All hand-written Markdown documents in `Plan/`, `docs/`, `compliance/`, plus `CLAUDE.md`, `README.md`, and `controls/catalogue.yaml` (source of `controls/catalogue.md`) |
 | Documents and versions reviewed | `Plan/functional-spec.md` v0.3, `Plan/architecture.md` v0.2, `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2, `docs/prd.md` v0.2, `docs/runbooks/operational-runbook.md` v0.2, `docs/playbooks/incident-response-playbooks.md` v0.1, `compliance/compliance-matrix.md` v0.2, `controls/catalogue.md` v0.1, `docs/ci-cd-pipeline.md` v0.1, `docs/deployment-architecture.md` v0.1, `docs/roadmap.md` v0.1, `docs/tech-evaluation.md` v0.1 |
@@ -307,10 +307,27 @@ The 29 Medium gaps were worked on after the High gaps. Vocabulary as in Section 
 - Several statements about the MCP specification and AWS come from page-fetching and documentation search results rather than primary files; the documents say which.
 - Proposals awaiting approval are recorded as DEC-1..DEC-9 in `docs/governance.md`.
 
+## 11. Closure update for the Low gaps (v0.4)
+
+Vocabulary as in Section 9. After this update `scripts/check_docs.py` passes (150 requirements, 10 non-functional requirements, 24 acceptance criteria, 100 test cases, 30 controls) and prints a placeholder inventory (counts of unverified-claim and TBD markers) on every run.
+
+| Gap | Status | What changed | Where | What remains |
+|---|---|---|---|---|
+| A8 | Open (by nature) | Nothing to close in documents: the gateway, scanner, policy engine and dashboard code do not exist. Tracked as Phase 1 of the roadmap | `docs/roadmap.md` | Implementation |
+| C5 | Closed | Architecture Section 8 now shows the edge namespace, policy bundle server and node pools, and states that the deployment document governs where they differ | `Plan/architecture.md` v0.5 | None |
+| C6 | Closed | PRD capability row for gateway protection is marked P1/P2 with the Phase 1 subset listed | `docs/prd.md` v0.4 | None |
+| D7 | Closed, pending review | Governance of extra high-impact classes and the critical resource tag defined (FR-AUTHZ-12); glossary entry; test TC-Z34; proposal DEC-10 | Spec v0.6, cases v0.5, catalogue v0.4, governance v0.3 | Approval of DEC-10 |
+| E7 | Closed | Open placeholders are tracked in the parameter register (values) and the verification checklist (claims); the checker prints a placeholder inventory every run so growth is visible | `docs/parameter-register.md`, `scripts/check_docs.py` | The placeholders themselves stay until resolved |
+| G7 | Closed | Audience-based reading guide and document map; the checker fails if a design document is missing from the map | `docs/index.md` | Rendering the other documents to HTML is not done (the converter supports only the subset used by the specification) |
+| H5 | Closed, pending review | Explicit exclusions with reasons, residual platform help and the organisational control needed: system-prompt leakage, memorisation, adversarial inputs, hallucination, bias, server code vulnerabilities, IdP or secrets-manager compromise; shared-responsibility row in the compliance matrix | `Plan/threat-model.md` v0.5 Section 4.1, `compliance/compliance-matrix.md` v0.5 | Review |
+
+**Summary of the 7 Low gaps:** 6 closed (C5, C6, E7, G7 outright; D7 and H5 pending review), 1 open (A8, implementation work). A helper, `scripts/sync_versions.py`, now rewrites version citations after a document is bumped.
+
 ## 8. Change history
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4 | 2026-11-22 | Closure update for the Low gaps (Section 11) |
 | 0.3 | 2026-11-22 | Closure update for the Medium gaps (Section 10) |
 | 0.2 | 2026-11-22 | Closure update for the High gaps (Section 9) |
 | 0.1 | 2026-11-22 | First review of the full documentation set |

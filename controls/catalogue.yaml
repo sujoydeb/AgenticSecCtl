@@ -1,8 +1,8 @@
 # Control catalogue source. Strict YAML subset: see scripts/catalogue_lib.py.
 # Generated view: controls/catalogue.md (python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md)
-version: "0.3"
+version: "0.4"
 status_note: "Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set."
-depends_on_docs: "Plan/functional-spec.md v0.5, Plan/architecture.md v0.4, Plan/threat-model.md v0.4, docs/testing/cases.md v0.4, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.4, docs/governance.md v0.2"
+depends_on_docs: "Plan/functional-spec.md v0.6, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3"
 satisfies: "FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here."
 intro: "A control is a platform capability that reduces a named threat. Each entry says how the control works step by step, what it contributes to prevention, detection, response and recovery, how it fails, where it produces false positives and false negatives, how it can be bypassed, and what risk remains. Owners are roles, not people. Status is specified for every control."
 enforcement_classes:
@@ -388,6 +388,7 @@ controls:
       - "For a high-impact call the PDP returns an approval obligation; the gateway holds the call and creates a task showing the exact arguments."
       - "Approval is bound to the hash of those arguments; a changed argument needs a new approval; timeout means deny."
       - "The approval view shows the platform-rendered arguments with their hash, the requester, classification and taint state; agent-supplied text is shown only in a labelled untrusted area; step-up authentication is required; bulk approval is unavailable and rapid approvals raise alerts (FR-AUTHZ-9..11)."
+      - "Tenants may add high-impact classes and critical resource tags only through audited changes by the security admin role with a different approver, in shadow mode first; built-in classes cannot be removed (FR-AUTHZ-12)."
     prevent:
       - "High-impact actions without a matching approval are denied."
     detect:
@@ -408,11 +409,13 @@ controls:
     bypass_scenarios:
       - "Approver fatigue and rubber-stamping."
       - "Many small actions under a threshold."
+      - "Collusion between the admin and the approver to weaken classes or tags."
     residual_risk: "Depends on the quality of the high-impact definition and approver attention (threats D, K, E)."
     requirements:
       - "FR-AUTHZ-4..5"
       - "FR-AUTO-3"
       - "FR-AUTHZ-9..11"
+      - "FR-AUTHZ-12"
     threats:
       - "D"
       - "E"
@@ -424,6 +427,7 @@ controls:
       - "TC-K3"
       - "TC-X14"
       - "TC-Z33"
+      - "TC-Z34"
     evidence:
       - "Grant and approval records with approver and arguments hash."
       - "Timeout and denial records."

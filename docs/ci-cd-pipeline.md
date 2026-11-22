@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.3 (design draft; the product pipeline is a template, only the document checks are wired up) |
-| Depends on | `Plan/functional-spec.md` v0.5 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.4 (Sections 8, 10), `Plan/threat-model.md` v0.4 (threats L, X8), `docs/testing/cases.md` v0.4 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.3 (Section 6 change management), `controls/catalogue.md` v0.3 (CTL-16, CTL-17, CTL-27) |
+| Depends on | `Plan/functional-spec.md` v0.6 (NFR-9, FR-SCAN-5, FR-SUP-1..4, FR-POL-1..4), `Plan/architecture.md` v0.5 (Sections 8, 10), `Plan/threat-model.md` v0.5 (threats L, X8), `docs/testing/cases.md` v0.5 (TC-L1..L3, TC-X6), `docs/runbooks/operational-runbook.md` v0.3 (Section 6 change management), `controls/catalogue.md` v0.4 (CTL-16, CTL-17, CTL-27) |
 | Platform | GitHub Actions (decision recorded in this document; no remote repository is configured yet) |
 | Status | Untested on GitHub: no workflow in this repository has run (no remote). Syntax of the workflow, Dependabot and template files was validated with PyYAML, and the template's job shape was checked (`scripts/validate_yaml.py`, 2026-11-22). The `actions/checkout` pin was read from the public GitHub API (release v7.0.1 and the commit its tag points to) via a page-fetching assistant and must be re-verified before the first run. All other third-party action names, versions and commit SHAs remain **not verified** (placeholders `TBD_PIN_SHA` in the template). |
 

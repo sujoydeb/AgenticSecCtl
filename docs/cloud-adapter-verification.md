@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (partial; closes the AWS part of gap E4 in `docs/reviewgap.md`) |
-| Depends on | `docs/deployment-architecture.md` v0.3 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.4 (Section 8), `controls/catalogue.md` v0.3 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.3 |
+| Depends on | `docs/deployment-architecture.md` v0.3 (Sections 4, 5, 6, 12), `Plan/architecture.md` v0.5 (Section 8), `controls/catalogue.md` v0.4 (CTL-08, CTL-13, CTL-24, CTL-30), `docs/ci-cd-pipeline.md` v0.3 |
 | Scope | One cloud (AWS) used as the first example adapter. Azure and Google Cloud are **not verified**. The cloud choice itself is still open (customer input CI-6). |
 | Evidence | AWS documentation search results read on 2026-11-22 through the AWS documentation tools (verbatim page chunks, not the full pages). The chunk quoted or summarised is named in the Source column. Anything not listed as verified remains **[VERIFY]**. |
 

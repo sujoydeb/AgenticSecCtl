@@ -8,20 +8,21 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 
 | File | Role | Version |
 |---|---|---|
-| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.5 |
-| `Plan/architecture.md` | Components, interceptor pipeline, sequences, deployment, ADRs, provisional audit event vocabulary (4.8). Source of truth for *how* | v0.4 |
-| `Plan/threat-model.md` | Assets, adversaries, threats A–P and X1–X13, STRIDE, attack trees, TC index (Section 7), risk register | v0.4 |
-| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.5 |
-| `docs/prd.md` | Product requirements: problem, personas, scope, release plan, metrics | v0.3 |
-| `docs/testing/cases.md` | 99 security test cases (specifications, none executed) | v0.4 |
+| `Plan/functional-spec.md` | Requirements (FR-*/NFR-*/AC-* IDs), roles, acceptance criteria, open decisions. Source of truth for *what* | v0.6 |
+| `Plan/architecture.md` | Components, interceptor pipeline, sequences, deployment, ADRs, provisional audit event vocabulary (4.8). Source of truth for *how* | v0.5 |
+| `Plan/threat-model.md` | Assets, adversaries, threats A–P and X1–X13, STRIDE, attack trees, TC index (Section 7), risk register | v0.5 |
+| `Plan/functional-spec.html` | Styled HTML rendering of the functional spec, **generated** by `scripts/build_spec_html.py` | v0.6 |
+| `docs/prd.md` | Product requirements: problem, personas, scope, release plan, metrics | v0.4 |
+| `docs/testing/cases.md` | 100 security test cases (specifications, none executed) | v0.5 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.2 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
-| `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.3 |
-| `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.2 |
+| `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.4 |
+| `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.3 |
 | `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.1 |
 | `docs/api-specification.md`, `docs/api/openapi.yaml` | Management API endpoints, roles, SoD, errors; OpenAPI 3.1 outline (unvalidated) | v0.1 |
-| `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.2 |
-| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.3 |
+| `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.3 |
+| `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.4 |
+| `docs/index.md` | Reading guide by audience and the map of all design documents; every design document must be listed | v0.1 |
 | `docs/mcp-compatibility.md` | MCP revision 2026-07-28 pin; authorization, transport and client-feature statements mapped to platform responses (pages read; others not) | v0.1 |
 | `docs/authn-authz-design.md` | Flows, policy structure and decision contract, illustrative unexecuted Rego | v0.1 |
 | `docs/cross-cutting-design.md` | Logging, error handling and configuration rules | v0.1 |
@@ -34,9 +35,9 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/deployment-architecture.md` | Deployment architecture refining architecture Section 8: topology, network policy matrix, data tier, HA/DR, tenancy models, adapters, DA-1..10 acceptance criteria; untested, many items unverified | v0.3 |
 | `docs/ci-cd-pipeline.md` | CI/CD security pipeline design: 5 stages, gates mapped to requirements/controls/tests, waivers, pipeline threats; untested, tools unverified | v0.3 |
 | `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
-| `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..30): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.3 |
-| `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.3 |
-| `compliance/compliance-matrix.md` | Control-to-framework mapping by source type (mandatory/guidance/voluntary) and threat-level findings register; references controls by ID only; framework IDs unverified, not legally reviewed | v0.4 |
+| `controls/catalogue.yaml` | **Source** of the control catalogue (CTL-01..30): how each control works, P/D/R/V, parameters, failure behaviour, false positives/negatives, bypass, residual risk | v0.4 |
+| `controls/catalogue.md` | **Generated** readable catalogue; never edit by hand | v0.4 |
+| `compliance/compliance-matrix.md` | Control-to-framework mapping by source type (mandatory/guidance/voluntary) and threat-level findings register; references controls by ID only; framework IDs unverified, not legally reviewed | v0.5 |
 
 There are no build, lint or test commands for the product yet. When code is added, update this file with them.
 
@@ -44,6 +45,7 @@ There are no build, lint or test commands for the product yet. When code is adde
 
 - `python3 -I scripts/check_docs.py` checks cross-document consistency (requirement/AC/ADR/TC references resolve, TC index equals catalogue, `Depends on` version citations match actual versions, HTML parity, section references, stale phrases). Run it after any document edit; it must exit 0.
 - `python3 -I scripts/build_spec_html.py Plan/functional-spec.md Plan/functional-spec.html` regenerates the HTML. Never edit the HTML by hand.
+- `python3 -I scripts/sync_versions.py` rewrites the version citations in `Depends on` and `Companion` rows after you bump a document's version (`--check` only reports).
 - Workflows: `.github/workflows/docs-check.yml` is the only active workflow. `check_docs.py` enforces that active workflows declare `permissions`, pin third-party actions to a full commit SHA (or carry a `# waiver: W-nnn` comment recorded in `docs/ci-cd-pipeline.md` Section 7), and never use `pull_request_target`. The product gates live in `docs/ci-templates/product-security-gates.yml`, which is deliberately not a workflow (action pins are TBD); do not move it under `.github/workflows/` before the pins are verified.
 - `scripts/validate_yaml.py` (needs PyYAML; run it with a Python that has PyYAML and openapi-spec-validator, for example a throwaway virtual environment outside the repo) parses every YAML file, cross-checks the stdlib catalogue loader and validates the OpenAPI outline; it is not part of `check_docs.py` because the repository stays stdlib-only.
 - `python3 -I scripts/build_catalogue_md.py controls/catalogue.yaml controls/catalogue.md` regenerates the catalogue Markdown. `catalogue.yaml` uses a strict YAML subset (see `scripts/catalogue_lib.py`; PyYAML is not installed). `check_docs.py` fails if the Markdown is stale, if requirement, test, threat or control IDs do not resolve, or if the control IDs differ from compliance-matrix Section 3.

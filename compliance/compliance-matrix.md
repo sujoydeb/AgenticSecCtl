@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.4 (draft; **not reviewed by legal or compliance**) |
-| Depends on | `Plan/functional-spec.md` v0.5, `Plan/architecture.md` v0.4, `Plan/threat-model.md` v0.4, `docs/testing/cases.md` v0.4, `docs/runbooks/operational-runbook.md` v0.3, `docs/playbooks/incident-response-playbooks.md` v0.2, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.3 |
+| Version | 0.5 (draft; **not reviewed by legal or compliance**) |
+| Depends on | `Plan/functional-spec.md` v0.6, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/testing/cases.md` v0.5, `docs/runbooks/operational-runbook.md` v0.3, `docs/playbooks/incident-response-playbooks.md` v0.2, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.4 |
 | Satisfies | FR-COMP-2..3 (mandatory/guidance/voluntary labelling, per-finding record). The control catalogue of FR-COMP-1 is in `controls/catalogue.md`. FR-COMP-5 (legal review before release) is **not yet satisfied**. |
 | Review status | Review date: none. Reviewer: none. Release as an authoritative mapping is blocked until reviewed. |
 
@@ -270,6 +270,7 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 | PCI DSS | Access control, logging, segmentation support for agents touching cardholder data | Scoping decisions, QSA assessment, cardholder-data storage rules, policies |
 | SR 11-7 / FFIEC | Inventory, change control, monitoring, audit trail | Model validation, outcomes analysis, model risk governance, third-party risk programme |
 | ISO/NIST/SOC 2 | Evidence for security, access, logging and incident controls | Management-system establishment, internal audit, certification or attestation |
+| Model-internal risks (system-prompt leakage, memorisation, adversarial inputs, hallucination, bias) | Limits consequences through approvals, taint and egress controls | Detection or prevention of the risks themselves; model evaluation and validation, content and fairness governance (explicit exclusions in `Plan/threat-model.md` Section 4.1) |
 
 ## 7. Gaps, limits and review plan
 
@@ -288,3 +289,4 @@ X1 (hidden text), X3 (sampling abuse), X4 (elicitation phishing) and X7 (check-t
 | 0.2 | 2026-11-22 | Control definitions moved to `controls/catalogue.yaml`; Section 3 reduced to the ID list |
 | 0.3 | 2026-11-22 | OWASP MCP entries filled from the official project; verification status per framework; threats X9..X13 and controls CTL-28, CTL-29 added; control list regenerated from the catalogue |
 | 0.4 | 2026-11-22 | Owner roles aligned to the governance glossary; CTL-30 (key management) and threat X14 added; control list regenerated |
+| 0.5 | 2026-11-22 | Shared-responsibility row for model-internal risks added |

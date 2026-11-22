@@ -3,12 +3,19 @@
 
 | | |
 |---|---|
-| Version | 0.5 (draft for review) |
-| Supersedes | 0.4 |
+| Version | 0.6 (draft for review) |
+| Supersedes | 0.5 |
 | Stack decisions | Python/FastAPI, Postgres, OPA, React, cloud-neutral Kubernetes; Redis/Kafka from Phase 2 |
 | Conventions | "shall" = mandatory requirement. **[VERIFY]** = vendor, product or protocol claim not yet checked against current documentation. |
 
 ## 0. Change log
+
+### v0.5 → v0.6 (closure of Low review gaps)
+
+| # | Change | Where |
+|---|---|---|
+| 1 | Governance of additional high-impact action classes and the critical resource tag: FR-AUTHZ-12 and a glossary entry (gap D7) | Section 4.6, glossary |
+| 2 | Test case TC-Z34 linked; AC-13 and the traceability row extended | Sections 5 and 11 |
 
 ### v0.4 → v0.5 (closure of Medium review gaps)
 
@@ -101,6 +108,7 @@ Review of v0.1 found the following. Each is fixed in v0.2.
 - **Taint**: label marking content from an untrusted origin.
 - **High-impact action**: see FR-AUTHZ-5.
 - **JIT grant**: time-boxed permission issued on request and approval.
+- **Critical resource**: a resource its owner has tagged critical in the registry, with the tag confirmed by the approver at approval (FR-AUTHZ-12); writes and executes on critical resources are high-impact (FR-AUTHZ-5).
 - **Emergency policy**: a tenant-approved, pre-defined policy that lets named people relax only the different-approver rule for resuming a suspended agent or tenant, for a limited time, with high-severity audit; see FR-AUTO-6.
 
 ---
@@ -227,6 +235,7 @@ Action classes: **read**, **write**, **execute**, **delete**. Mapping from tool 
 | FR-AUTHZ-9 | An approval request shall show the approver the requester, tool, action class, resource, classification, current taint state and the exact arguments or a platform-generated redacted rendering of them with their hash; any text supplied by the agent shall be shown only in a labelled untrusted area. *(added in v0.5; review required)* | M | P2 | E, X14 | IT, DM |
 | FR-AUTHZ-10 | High-impact approvals and Critical-finding overrides shall require step-up authentication (fresh multi-factor authentication within a configured window). *(added in v0.5; review required)* | M | P2 | E, X14 | IT |
 | FR-AUTHZ-11 | Bulk approval of high-impact actions shall be disabled; approval rates and very short review times shall be monitored and alerted, and a configurable limit of pending high-impact approvals per approver shall apply. *(added in v0.5; review required)* | S | P2 | E, X14 | IT, RT |
+| FR-AUTHZ-12 | Tenants may add high-impact action classes and critical resource tags only through the audited management API by the security admin role, with a recorded reason and an approver other than the requester; new classes and tags shall run in shadow mode before enforcement; removing a class or tag needs the same approvals; the built-in classes of FR-AUTHZ-5 cannot be removed. *(added in v0.6; review required)* | S | P2 | E, X6 | IT |
 
 ### 4.7 Runtime inspection and data protection (FR-RT)
 
@@ -447,7 +456,7 @@ Default levels, lowest to highest: **Public**, **Internal**, **Confidential**, *
 | B Rug pull / drift | FR-DRIFT-1..7 | P1 | Behavior change without definition change (FR-DRIFT-6, P4) | TC-B1..B4, TC-Z3 |
 | C Shadowing / impersonation | FR-INV-2..4, FR-AUTHN-5, FR-AUTHZ-2 | P1/P2 | Local stdio servers (A3) | TC-C1..C3 |
 | D Response injection | FR-RT-4, 5, 9, 11, 12, 13, FR-DATA-3 | P2 | Probabilistic detection; relies on blast-radius controls | TC-D1..D5, TC-X10, TC-X11 |
-| E Excessive permissions | FR-AUTHZ-1..11 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5, TC-Z33, TC-X14 |
+| E Excessive permissions | FR-AUTHZ-1..12 | P1/P2 | Quality of tool→action mapping depends on approvers | TC-E1..E4, TC-Z5, TC-Z33, TC-Z34, TC-X14 |
 | F Agent spoofing | FR-ID-1..4, FR-ID-7, FR-ID-8 | P1/P2 | Compromised legitimate agent identity | TC-F1..F2, TC-X9 |
 | G Auth attacks | FR-AUTHN-1..7, FR-ID-7 | P1/P2 | IdP-dependent features [VERIFY] | TC-G1..G5, TC-X13 |
 | H SSRF | FR-SSRF-1..5, FR-SCAN-6, FR-RT-3, 7 | P1/P2 | Misconfigured exceptions | TC-H1..H4 |
@@ -474,7 +483,7 @@ Default levels, lowest to highest: **Public**, **Internal**, **Confidential**, *
 | X13 Client registration abuse (dynamic or metadata-document) | FR-AUTHN-7 | P2 | IdP-dependent controls [VERIFY] | TC-X13 |
 | X14 Approver deception or fatigue | FR-AUTHZ-9..11 | P2 | Human attention cannot be fully engineered | TC-X14, TC-Z33 |
 
-Test cases are defined in `docs/testing/cases.md` (99 cases; threat-model Section 7 is the index). Every requirement now has a dedicated case or is covered through the control-level test lists in `controls/catalogue.md`; requirements still without a case of their own are listed in Section 21 of the test catalogue.
+Test cases are defined in `docs/testing/cases.md` (100 cases; threat-model Section 7 is the index). Every requirement now has a dedicated case or is covered through the control-level test lists in `controls/catalogue.md`; requirements still without a case of their own are listed in Section 21 of the test catalogue.
 
 ---
 
@@ -541,7 +550,7 @@ Phase 2 (P2) criteria *(added in v0.5)*:
 - AC-10 (NFR-1, NFR-2): Added gateway latency and inline-classifier latency meet the targets in the load test with the method of Section 9 (TC-Z14, TC-Z15).
 - AC-11 (FR-RT-4..13, FR-DATA-3): Injection, taint, DLP and classification scenarios pass and shadow-mode false-block rate stays within the budget before enforcement (TC-D1..D5, TC-I1..I4, TC-X10, TC-X11, TC-Z25).
 - AC-12 (FR-AUTHN-2..5, 7, FR-ID-3, 7): Replay, audience, session and registration abuse are refused in the recorded token-binding mode (TC-G1, TC-G3, TC-G4, TC-X13).
-- AC-13 (FR-AUTHZ-4, 5, 9..11, FR-AUTO-1..6): JIT, bound approvals, step-up, limits, kill switch and emergency policy behave as specified (TC-E3, TC-D4, TC-K1..K3, TC-X14, TC-Z33).
+- AC-13 (FR-AUTHZ-4, 5, 9..12, FR-AUTO-1..6): JIT, bound approvals, step-up, limits, kill switch and emergency policy behave as specified (TC-E3, TC-D4, TC-K1..K3, TC-X14, TC-Z33, TC-Z34).
 - AC-14 (FR-RT-7, FR-SUP-1): Servers cannot bypass the gateway or reach unlisted destinations, and only compliant platform images are admitted (TC-I4, TC-X2, TC-Z26, TC-L4).
 - AC-15 (FR-AUD-3..5, 7, FR-ADM-7, 8, FR-KEY-1..5): Anchoring, audit capacity, retention and legal hold, evidence access and key management controls pass (TC-Z22, TC-Z23, TC-Z19, TC-Z30, TC-Z31, TC-Z32, TC-X5).
 - AC-16 (FR-MCP-1..12): Protocol lifecycle controls pass (TC-P1..P4, TC-Z27, TC-Z28).

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (closes the pinning part of gap E3 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.5 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.4 (Section 4.1), `controls/catalogue.md` v0.3 (CTL-05, CTL-18), `docs/testing/cases.md` v0.4 (TC-P1..P4, TC-Z27, TC-Z28) |
+| Depends on | `Plan/functional-spec.md` v0.6 (FR-MCP-1..12, FR-AUTHN-*, A5, A6), `Plan/architecture.md` v0.5 (Section 4.1), `controls/catalogue.md` v0.4 (CTL-05, CTL-18), `docs/testing/cases.md` v0.5 (TC-P1..P4, TC-Z27, TC-Z28) |
 | Reference revision | **2026-07-28** (pinned) |
 | Evidence | The authorization, transport (overview, stdio, Streamable HTTP), sampling, elicitation and roots pages for revision 2026-07-28 were read on 2026-11-22 through a page-fetching assistant (so the quotations are paraphrases, not verbatim copies). Pages not read: client ID metadata document details, dynamic client registration request format, authorization-server-discovery and client-registration sub-pages, tools, resources, prompts and lifecycle pages, and every other revision. Re-read the primary text before relying on any row. |
 | Review | Not reviewed by a second person. |

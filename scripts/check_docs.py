@@ -406,12 +406,25 @@ if html_path.exists():
     if bal.stack:
         err(f"Plan/functional-spec.html: unclosed tags {bal.stack[-5:]}")
 
+
+# 13. documentation index must list every design document
+index_text = texts.get("docs/index.md", "")
+for f in DOC_FILES:
+    if f.startswith(("Plan/", "docs/", "compliance/", "controls/")) and f != "docs/index.md":
+        if f"`{f}`" not in index_text:
+            err(f"docs/index.md does not list {f}")
+
+# informational: placeholder inventory (never fails)
+_verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
+_tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}
+placeholder_note = f"placeholders: [VERIFY] {sum(_verify.values())}, TBD {sum(_tbd.values())}"
+
 if errors:
     print("FAILED:")
     for e in errors:
         print(" -", e)
     sys.exit(1)
 print(
-    f"OK: {len(fr_defined)} FR, {len(nfr_defined)} NFR, {len(ac_defined)} AC, {len(set(catalogue))} TC; "
+    f"OK ({placeholder_note}): {len(fr_defined)} FR, {len(nfr_defined)} NFR, {len(ac_defined)} AC, {len(set(catalogue))} TC; "
     f"versions {versions}"
 )

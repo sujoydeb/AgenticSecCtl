@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.2 (template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
-| Depends on | `Plan/functional-spec.md` v0.5 (Section 2 roles, Section 12), `Plan/architecture.md` v0.4 (Section 12 ADRs), `controls/catalogue.md` v0.3 (owner roles), `docs/prd.md` v0.3, `docs/roadmap.md` v0.3, `docs/reviewgap.md` v0.3 |
+| Version | 0.3 (template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
+| Depends on | `Plan/functional-spec.md` v0.6 (Section 2 roles, Section 12), `Plan/architecture.md` v0.5 (Section 12 ADRs), `controls/catalogue.md` v0.4 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.4, `docs/reviewgap.md` v0.4 |
 | Purpose | Provide the structure needed to close gaps F2 (no named owners) and G1 (no independent review) in `docs/reviewgap.md`: role glossary and RACI, owner assignment table, review and sign-off log, decision log and risk-acceptance register. It does **not** close those gaps by itself: they close when people fill it in. |
 
 ## 1. Role glossary
@@ -95,6 +95,7 @@ One row per document; add rows per review round. A document is "reviewed" only w
 | `docs/testing/fixtures-and-corpora.md` | 0.1 | *(open)* | | | |
 | `docs/parameter-register.md` | 0.1 | *(open)* | | | |
 | `docs/customer-inputs.md` | 0.1 | *(open; customer)* | | | |
+| `docs/index.md` | 0.1 | *(open)* | | | |
 | `docs/prd.md` | 0.3 | *(open)* | | | |
 | `docs/roadmap.md` | 0.3 | *(open)* | | | |
 
@@ -118,6 +119,7 @@ One row per document; add rows per review round. A document is "reviewed" only w
 | DEC-7 | Reference environment and workload for performance tests | `docs/testing/performance-test-plan.md` | Proposed, pending approval | | |
 | DEC-8 | Spike schedule before Phase 1 | `docs/roadmap.md` Section 4.1 | Proposed, pending approval | | |
 | DEC-9 | Placeholder retention default (13 months hot, 7 years cold) | Replace after legal input (parameter PAR-F-06) | Open, needs legal | | |
+| DEC-10 | Governance of additional high-impact classes and the critical resource tag | Security admin plus a different approver, shadow mode first (FR-AUTHZ-12) | Proposed, pending approval | | |
 
 ## 6. Risk acceptance register
 

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (intake form; closes the specification part of gap F3 in `docs/reviewgap.md`) |
-| Depends on | `docs/prd.md` v0.3 (Section 12 open questions), `Plan/functional-spec.md` v0.5 (Section 12), `Plan/architecture.md` v0.4 (Section 12), `docs/roadmap.md` v0.3 (gates), `docs/governance.md` v0.2 |
+| Depends on | `docs/prd.md` v0.4 (Section 12 open questions), `Plan/functional-spec.md` v0.6 (Section 12), `Plan/architecture.md` v0.5 (Section 12), `docs/roadmap.md` v0.4 (gates), `docs/governance.md` v0.3 |
 | Status | **Blank intake form.** The gap stays open until a customer representative answers; no answer below is real. Fill in with date and respondent. |
 
 ## 1. How to use

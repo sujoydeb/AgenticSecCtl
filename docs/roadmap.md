@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.3 (planning draft; estimates are not validated by engineering) |
-| Depends on | `docs/prd.md` v0.3 (Section 8 release plan), `Plan/functional-spec.md` v0.5 (phase tags on every requirement), `Plan/architecture.md` v0.4 (ADRs, Section 12), `controls/catalogue.md` v0.3 (control phases), `docs/testing/cases.md` v0.4 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.3, `docs/ci-cd-pipeline.md` v0.3, `docs/tech-evaluation.md` v0.2 (spikes S1..S6) |
+| Version | 0.4 (planning draft; estimates are not validated by engineering) |
+| Depends on | `docs/prd.md` v0.4 (Section 8 release plan), `Plan/functional-spec.md` v0.6 (phase tags on every requirement), `Plan/architecture.md` v0.5 (ADRs, Section 12), `controls/catalogue.md` v0.4 (control phases), `docs/testing/cases.md` v0.5 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.3, `docs/ci-cd-pipeline.md` v0.3, `docs/tech-evaluation.md` v0.2 (spikes S1..S6) |
 | Purpose | Turn the five phases into a plan with deliverables, dependencies, effort, acceptance criteria, risks and go/no-go gates, with requirements, controls and tests allocated to phases. |
 | Honesty note | Durations come from the original design plan and assume 2 to 3 engineers. Nothing has been estimated bottom-up and no team exists yet. Treat all numbers as planning ranges to be re-baselined after Phase 0 spikes and again after Phase 1. |
 
@@ -21,7 +21,7 @@
 |---|---|---|---|---|---|---|
 | 0 | Design completion | 3 to 4 weeks (largely done, not signed off) | Now | n/a | n/a | n/a |
 | 1 | MVP | 8 to 10 weeks | Phase 0 sign-off; ADR-3, ADR-4, ADR-6 decided | 42 FRs, all M | CTL-01..06, 08, 13, 14, 16, 18, 23, 24, 27, 28, 29 (16) | 26 (19 are MVP-gating) |
-| 2 | Runtime protection | 10 to 12 weeks | Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided; spikes S1..S4 done | 69 FRs (48 M), including FR-MCP-1..3, 5..12 | CTL-07, 09..12, 15, 17, 21, 22, 26, 30 (11) | 57 |
+| 2 | Runtime protection | 10 to 12 weeks | Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided; spikes S1..S4 done | 70 FRs (48 M), including FR-MCP-1..3, 5..12 | CTL-07, 09..12, 15, 17, 21, 22, 26, 30 (11) | 58 |
 | 3 | Enterprise governance | about 8 weeks | Phase 2 exit; legal/compliance reviewers named; framework IDs verified | 18 FRs (4 M) | CTL-25 (1) | 5 |
 | 4 | Advanced threat protection | about 12 weeks | Phase 3 exit | 18 FRs (1 M) | CTL-19, 20 (2) | 8 |
 | 5 | Enterprise production | 12+ weeks, open-ended | Phase 4 exit (parts can start earlier, see 3) | 2 FRs (FR-ADM-4, FR-KEY-6) plus NFR-3..5, 8 | Completion of CTL-22, 24 | 3 |
@@ -92,7 +92,7 @@ Dependencies outside the team: customer answers CI-5 (IdP), CI-6 (cloud) and CI-
 
 ## 5. Phase 0: design completion (in progress)
 
-Done (drafts, unreviewed): functional specification v0.5 and HTML, architecture v0.4, threat model v0.4, test catalogue (99 cases), technology evaluation (partly verified), architecture assessment, data model, API specification, authentication and authorization design, cross-cutting design, UX outline, MCP compatibility matrix, parameter register, performance test plan, fixtures and corpora specification, privacy assessment, cloud adapter verification (AWS), customer inputs form, governance templates, review gap register, PRD, operational runbook, incident playbooks, compliance matrix, control catalogue, CI/CD pipeline design, deployment architecture, this roadmap; a repository scaffold, consistency checker and generators.
+Done (drafts, unreviewed): functional specification v0.5 and HTML, architecture v0.4, threat model v0.4, test catalogue (100 cases), technology evaluation (partly verified), architecture assessment, data model, API specification, authentication and authorization design, cross-cutting design, UX outline, MCP compatibility matrix, parameter register, performance test plan, fixtures and corpora specification, privacy assessment, cloud adapter verification (AWS), customer inputs form, governance templates, review gap register, PRD, operational runbook, incident playbooks, compliance matrix, control catalogue, CI/CD pipeline design, deployment architecture, this roadmap; a repository scaffold, consistency checker and generators.
 
 Remaining exit criteria:
 1. Review by security, architecture and compliance owners, with named owners and dates.
@@ -159,7 +159,7 @@ Remaining exit criteria:
 **Dependencies.** Phase 1 exit; ADR-1, ADR-2, ADR-5, ADR-7 decided from spikes S1..S4, S6; detector corpora available for shadow mode.
 
 **Acceptance criteria**
-- All 57 Phase 2 test cases pass, in addition to the Phase 1 set (no regression), and acceptance criteria AC-10..AC-17 are met.
+- All 58 Phase 2 test cases pass, in addition to the Phase 1 set (no regression), and acceptance criteria AC-10..AC-17 are met.
 - NFR-1/2 met in the load test on the reference setup (p95 at most 25 ms, p99 at most 60 ms on the deterministic path at 1,000 requests per second per instance; inline classifier at most 150 ms p95 or asynchronous); results published with method.
 - Deployment criteria DA-1..DA-9 pass in staging (DA-5 pending a dedicated test case).
 - Shadow-mode false-block rate at most 0.5% of benign calls for the injection and DLP detectors before enforcement is enabled.
@@ -255,7 +255,7 @@ Remaining exit criteria:
 | Phase | Requirement IDs tagged to the phase (spec) |
 |---|---|
 | 1 | FR-INV-1..4; FR-SCAN-1..4, 6; FR-DRIFT-1..5; FR-ID-1..2; FR-AUTHN-1, 6; FR-AUTHZ-1..3, 8; FR-RT-1; FR-SSRF-1..5; FR-MCP-4; FR-POL-1..2; FR-AUD-1..2, 6; FR-UI-1..3, 7; FR-ADM-1; FR-OBS-1; FR-DATA-1..2 |
-| 2 | FR-INV-5; FR-SCAN-8, 10; FR-DRIFT-7; FR-ID-3, 7; FR-AUTHN-2..5, 7; FR-AUTHZ-4..5, 9..11; FR-RT-2..13; FR-AUTO-1..6; FR-SUP-1; FR-MCP-1..3, 5..12; FR-AUD-3..5, 7; FR-BEH-1; FR-IR-1..3; FR-UI-4; FR-ADM-2..3, 5..8; FR-OBS-2; FR-DATA-3..4; FR-KEY-1..5 |
+| 2 | FR-INV-5; FR-SCAN-8, 10; FR-DRIFT-7; FR-ID-3, 7; FR-AUTHN-2..5, 7; FR-AUTHZ-4..5, 9..12; FR-RT-2..13; FR-AUTO-1..6; FR-SUP-1; FR-MCP-1..3, 5..12; FR-AUD-3..5, 7; FR-BEH-1; FR-IR-1..3; FR-UI-4; FR-ADM-2..3, 5..8; FR-OBS-2; FR-DATA-3..4; FR-KEY-1..5 |
 | 3 | FR-INV-6..7; FR-SCAN-7, 9; FR-AUTHZ-6..7; FR-MOD-1; FR-SUP-3; FR-POL-3..4; FR-IR-5; FR-UI-5..6; FR-COMP-1..5 |
 | 4 | FR-SCAN-5; FR-DRIFT-6; FR-ID-4..6, 8; FR-MEM-1..4; FR-MOD-2..3; FR-EXEC-1..2; FR-SUP-2, 4; FR-BEH-2; FR-IR-4 |
 | 5 | FR-ADM-4; FR-KEY-6 (plus NFR-3, 4, 5, 8) |

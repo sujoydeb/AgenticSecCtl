@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.2 (draft for review; closes gap A1 and, with Section 7.1, gap A6 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.5, `Plan/architecture.md` v0.4, `Plan/threat-model.md` v0.4, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.3, `docs/testing/cases.md` v0.4, `docs/roadmap.md` v0.3 |
+| Version | 0.3 (draft for review; closes gap A1 and, with Section 7.1, gap A6 in `docs/reviewgap.md`) |
+| Depends on | `Plan/functional-spec.md` v0.6, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/tech-evaluation.md` v0.2, `controls/catalogue.md` v0.4, `docs/testing/cases.md` v0.5, `docs/roadmap.md` v0.4 |
 | Purpose | The assessment the master brief asks for before any implementation: missing attack vectors, weak assumptions, architectural gaps, tools to reuse, controls that need deterministic enforcement versus controls that can use LLM-based analysis, performance bottlenecks, and regulatory and operational risks. Each finding points to where the repository answers it. |
 | Status | Written after the design documents, so it consolidates and cross-checks them; it is not the original planning document. Facts marked *search-verified* come from the verification log in `docs/tech-evaluation.md` (mostly secondary sources); everything else is background knowledge and is tagged **[VERIFY]**. |
 
@@ -44,7 +44,7 @@ The current MCP specification revision (2026-07-28, *search-verified*) makes aut
 
 ### 2.3 Deliberately out of scope or only partly covered
 
-- Model-internal risks (training-data memorisation, system-prompt leakage, adversarial examples against the model itself) are outside the platform's reach; the platform limits the *consequences* through approvals, taint and egress controls. This is stated in threat N and the compliance matrix shared-responsibility table.
+- Model-internal risks (training-data memorisation, system-prompt leakage, adversarial examples against the model itself, hallucination, bias) are outside the platform's reach and are listed with reasons and the organisational control needed in `Plan/threat-model.md` Section 4.1; the platform limits the *consequences* through approvals, taint and egress controls. This is stated in threat N and the compliance matrix shared-responsibility table.
 - Social engineering of approvers and approval fatigue are acknowledged (CTL-07, CTL-28) but approval content and step-up authentication are not yet specified (gap H4 in `docs/reviewgap.md`).
 - Unmanaged endpoints remain a reported, accepted residual risk (X2).
 

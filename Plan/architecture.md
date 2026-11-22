@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.4 (draft for review) |
-| Depends on | `functional-spec.md` v0.5 (FR/NFR IDs referenced below) |
-| Companion | `threat-model.md` v0.4; `../docs/testing/cases.md` v0.4; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.2 |
+| Version | 0.5 (draft for review) |
+| Depends on | `functional-spec.md` v0.6 (FR/NFR IDs referenced below) |
+| Companion | `threat-model.md` v0.5; `../docs/testing/cases.md` v0.5; `../docs/runbooks/operational-runbook.md` v0.3; `../docs/tech-evaluation.md` v0.2 |
 | Conventions | **[VERIFY]** = product or protocol claim not yet checked against current documentation. Mermaid diagrams render in GitHub, VS Code and most markdown viewers. |
 
 ## 1. Architectural principles
@@ -321,9 +321,15 @@ Retention classes: audit events, evidence vault, scan history, session data; def
 
 ## 8. Deployment architecture (cloud-neutral Kubernetes)
 
+This section is the summary; the full deployment architecture (environments, node pools, network policy matrix, data tier, availability, tenancy models, adapters, acceptance criteria DA-1..10) is `docs/deployment-architecture.md`, which governs where the two differ.
+
 ```mermaid
 flowchart TB
   subgraph Cluster[Kubernetes cluster]
+    subgraph ns_edge[ns: edge]
+      ING[ingress / WAF for dashboard]
+      ILB[internal LB for gateway]
+    end
     subgraph ns_dp[ns: sec-data-plane]
       GW1[gateway x N]
       OPA1[opa sidecars]
@@ -334,6 +340,7 @@ flowchart TB
       SCN1[scanner workers]
       AUD1[audit service]
       UI1[UI]
+      BND[policy bundle server]
     end
     subgraph ns_data[ns: sec-data]
       PG[(Postgres HA)]
@@ -347,7 +354,9 @@ flowchart TB
       AG[agent pods]
     end
   end
-  AG -->|only allowed egress| GW1
+  AG -->|only allowed egress| ILB
+  ILB --> GW1
+  ING --> UI1
   GW1 --> M1
   M1 -->|allowlist only| EGP1
   ext[(Secrets manager / KMS / object-lock store / SIEM / IdP)]
@@ -355,6 +364,7 @@ flowchart TB
 ```
 
 Controls:
+- **Node pools:** `data-plane` (gateway, egress proxy), `control-plane`, `sandbox` (MCP server pods and scanner workers, stronger runtime isolation), `data` (databases and queues).
 - **NetworkPolicy:** `agents` egress only to gateway; `mcp-servers` ingress only from gateway, egress only via egress proxy; control-plane and data-plane cannot reach each other except on defined ports.
 - **Admission policy** (Kyverno or OPA Gatekeeper **[VERIFY choice]**): signed images by digest, non-root, read-only root filesystem, no privileged, resource limits.
 - **Sandboxed runtime** for servers executing code: gVisor or Kata **[VERIFY availability per cloud]**.

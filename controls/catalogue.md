@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Version | 0.3 |
+| Version | 0.4 |
 | Status | Draft. Every control is specified; none is implemented. Numeric parameters come from the functional spec; where the spec gives no value the entry says to be set. |
-| Depends on | Plan/functional-spec.md v0.5, Plan/architecture.md v0.4, Plan/threat-model.md v0.4, docs/testing/cases.md v0.4, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.4, docs/governance.md v0.2 |
+| Depends on | Plan/functional-spec.md v0.6, Plan/architecture.md v0.5, Plan/threat-model.md v0.5, docs/testing/cases.md v0.5, docs/runbooks/operational-runbook.md v0.3, compliance/compliance-matrix.md v0.5, docs/governance.md v0.3 |
 | Satisfies | FR-COMP-1 (control catalogue with description, owner, type and component). Framework mappings live in compliance/compliance-matrix.md and are not repeated here. |
 
 ## How to read this catalogue
@@ -535,6 +535,7 @@ A control is a platform capability that reduces a named threat. Each entry says 
 3. For a high-impact call the PDP returns an approval obligation; the gateway holds the call and creates a task showing the exact arguments.
 4. Approval is bound to the hash of those arguments; a changed argument needs a new approval; timeout means deny.
 5. The approval view shows the platform-rendered arguments with their hash, the requester, classification and taint state; agent-supplied text is shown only in a labelled untrusted area; step-up authentication is required; bulk approval is unavailable and rapid approvals raise alerts (FR-AUTHZ-9..11).
+6. Tenants may add high-impact classes and critical resource tags only through audited changes by the security admin role with a different approver, in shadow mode first; built-in classes cannot be removed (FR-AUTHZ-12).
 
 **Prevent**
 
@@ -572,14 +573,15 @@ A control is a platform capability that reduces a named threat. Each entry says 
 
 - Approver fatigue and rubber-stamping.
 - Many small actions under a threshold.
+- Collusion between the admin and the approver to weaken classes or tags.
 
 **Residual risk.** Depends on the quality of the high-impact definition and approver attention (threats D, K, E).
 
-**Requirements:** FR-AUTHZ-4..5, FR-AUTO-3, FR-AUTHZ-9..11
+**Requirements:** FR-AUTHZ-4..5, FR-AUTO-3, FR-AUTHZ-9..11, FR-AUTHZ-12
 
 **Threats:** D, E, K, X14
 
-**Tests:** TC-E3, TC-D4, TC-K3, TC-X14, TC-Z33
+**Tests:** TC-E3, TC-D4, TC-K3, TC-X14, TC-Z33, TC-Z34
 
 **Depends on controls:** CTL-06, CTL-13, CTL-23
 

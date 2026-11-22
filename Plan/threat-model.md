@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.4 (draft for review) |
-| Depends on | `architecture.md` v0.4, `functional-spec.md` v0.5 |
-| Companions | `../docs/testing/cases.md` v0.4 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.3 |
+| Version | 0.5 (draft for review) |
+| Depends on | `architecture.md` v0.5, `functional-spec.md` v0.6 |
+| Companions | `../docs/testing/cases.md` v0.5 (test cases for the IDs in Section 7), `../docs/runbooks/operational-runbook.md` v0.3 |
 | Method | STRIDE per boundary crossing, plus agent-specific abuse cases; MITRE ATLAS and OWASP LLM/MCP guidance used as vocabulary **[VERIFY current versions and IDs before mapping in the compliance matrix]** |
 | Scope | (1) the protected estate: agents, MCP servers, tools, data; (2) the platform itself as an attack target |
 
@@ -219,6 +219,20 @@ FR references are to `functional-spec.md` v0.2. Test IDs are defined in Section 
 | X13 | Client registration abuse: open dynamic client registration or metadata-document registration used to obtain trusted-looking clients | Registration disabled unless approved per tenant, allowlisted redirect URIs/hosts, rate limits, owner, unapproved start (FR-AUTHN-7) | Low-Medium | TC-X13 |
 | X14 | Approver deception or fatigue: a misleading agent-supplied summary, bulk or rapid approvals, or an approver without fresh authentication gets a high-impact action approved | Platform-rendered arguments with hash, agent text labelled untrusted, step-up authentication, no bulk approval, rate and review-time alerts (FR-AUTHZ-9..11) | Medium (human attention cannot be fully engineered) | TC-X14, TC-Z33 |
 
+### 4.1 Explicit exclusions (not covered by the platform)
+
+These are model-side or application-side risks the platform does not detect or prevent. Each exclusion says why, what the platform still does to limit consequences, and the organisational control that has to cover the rest. Excluding a risk here is not a claim that it is unimportant.
+
+| Risk class | Why excluded | What the platform still does | Organisational control needed |
+|---|---|---|---|
+| System-prompt leakage (model reveals its instructions) | Occurs inside the model and agent application; the gateway does not see system prompts | Cannot see prompt content; DLP on traffic catches some secret patterns leaving through tools | Keep secrets out of prompts; agent owners review prompt content |
+| Training-data memorisation and extraction | A property of the model, not of tool traffic | Rate limits and quotas on model endpoints it fronts (threat N) | Model selection, provider terms, data hygiene |
+| Adversarial inputs that mislead the model itself | Model robustness is outside the platform | Limits what a misled agent can do (approvals, taint, egress) | Model evaluation and validation (for example model-risk management) |
+| Hallucination or misinformation in model output | Output quality is not a security control of the gateway | Human approval for high-impact actions reduces consequences | Business review of outputs, user training |
+| Bias, fairness and content-safety harms | Different discipline and tooling | None | Model governance and impact assessment |
+| Vulnerabilities inside MCP servers' own code | The platform cannot see or fix server internals | Argument guards, sandboxing, egress limits, hash pinning (threats O, H) | Server owner secure development; third-party intake (FR-SUP-3) |
+| Compromise of the enterprise IdP or secrets manager | External dependency | Short-lived credentials, revocation checks, key management (FR-KEY-*) | IdP and secrets-manager security operations |
+
 ## 5. STRIDE on the platform itself
 
 | Element | S | T | R | I | D | E |
@@ -304,7 +318,7 @@ flowchart TD
 
 ## 7. Test case index (seed for the ≥30-case catalogue)
 
-Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) are written in `docs/testing/cases.md`. IDs below are the traceability anchors. Total: 99 (above the 30-case minimum; the MVP subset is in that document's Section 20).
+Full cases (objective, prerequisites, steps, expected detection/prevention, logs, pass/fail, residual risk) are written in `docs/testing/cases.md`. IDs below are the traceability anchors. Total: 100 (above the 30-case minimum; the MVP subset is in that document's Section 20).
 
 | Threat | IDs |
 |---|---|
@@ -325,7 +339,7 @@ Full cases (objective, prerequisites, steps, expected detection/prevention, logs
 | O | TC-O1 command injection; TC-O2 SQL injection; TC-O3 path traversal |
 | P | TC-P1 unsupported protocol version; TC-P2 sampling request; TC-P3 elicitation for credentials; TC-P4 notification flood |
 | X | TC-X2 direct path bypass; TC-X5 log injection; TC-X6 policy edit without review; TC-X8 gateway compromise exercise; TC-X9 agent-card spoofing; TC-X10 non-text content injection; TC-X11 error-message injection; TC-X12 scanner and detector evasion or overload; TC-X13 client registration abuse; TC-X14 approver deception and fatigue |
-| Cross-cutting | TC-Z1 fuzz JSON-RPC framing; TC-Z2 fuzz schema/importer; TC-Z3 race: approve vs invoke; TC-Z4 oversized/slow response DoS; TC-Z5 PDP down (fail-closed); TC-Z6 audit tamper detection; TC-Z7 dashboard counters and approval queue; TC-Z8 operational views; TC-Z9 relationship graph and posture views; TC-Z10 configuration validation; TC-Z11 notification channels; TC-Z12 scheduled re-scan and finding lifecycle; TC-Z13 external classifier opt-in; TC-Z14 gateway latency and throughput; TC-Z15 inline classifier latency; TC-Z16 availability measurement; TC-Z17 disaster recovery exercise; TC-Z18 scale and soak; TC-Z19 retention and legal hold; TC-Z20 decision replay; TC-Z21 accessibility audit; TC-Z22 anchoring and chain rewrite; TC-Z23 audit buffer full; TC-Z24 break-glass controls; TC-Z25 data classification labelling and inheritance; TC-Z26 unmanaged stdio discovery; TC-Z27 sampling budget; TC-Z28 elicitation limits; TC-Z29 log injection through export and UI; TC-Z30 evidence access and custody; TC-Z31 key inventory and rotation; TC-Z32 key compromise exercise; TC-Z33 step-up and approval content |
+| Cross-cutting | TC-Z1 fuzz JSON-RPC framing; TC-Z2 fuzz schema/importer; TC-Z3 race: approve vs invoke; TC-Z4 oversized/slow response DoS; TC-Z5 PDP down (fail-closed); TC-Z6 audit tamper detection; TC-Z7 dashboard counters and approval queue; TC-Z8 operational views; TC-Z9 relationship graph and posture views; TC-Z10 configuration validation; TC-Z11 notification channels; TC-Z12 scheduled re-scan and finding lifecycle; TC-Z13 external classifier opt-in; TC-Z14 gateway latency and throughput; TC-Z15 inline classifier latency; TC-Z16 availability measurement; TC-Z17 disaster recovery exercise; TC-Z18 scale and soak; TC-Z19 retention and legal hold; TC-Z20 decision replay; TC-Z21 accessibility audit; TC-Z22 anchoring and chain rewrite; TC-Z23 audit buffer full; TC-Z24 break-glass controls; TC-Z25 data classification labelling and inheritance; TC-Z26 unmanaged stdio discovery; TC-Z27 sampling budget; TC-Z28 elicitation limits; TC-Z29 log injection through export and UI; TC-Z30 evidence access and custody; TC-Z31 key inventory and rotation; TC-Z32 key compromise exercise; TC-Z33 step-up and approval content; TC-Z34 high-impact class and critical-tag governance |
 
 ## 8. Risk register (top items)
 

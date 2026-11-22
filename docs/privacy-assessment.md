@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (draft for review by privacy and legal; closes the analysis part of gap H2 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.5 (FR-AUD-3, FR-DATA-*, FR-ADM-4, FR-ADM-5, FR-ADM-7, FR-ADM-8, NFR-6), `docs/data-model.md` v0.1, `docs/deployment-architecture.md` v0.3 (Section 6), `docs/cross-cutting-design.md` v0.1, `compliance/compliance-matrix.md` v0.4 (Section 6), `controls/catalogue.md` v0.3 (CTL-10, CTL-22, CTL-29) |
+| Depends on | `Plan/functional-spec.md` v0.6 (FR-AUD-3, FR-DATA-*, FR-ADM-4, FR-ADM-5, FR-ADM-7, FR-ADM-8, NFR-6), `docs/data-model.md` v0.1, `docs/deployment-architecture.md` v0.3 (Section 6), `docs/cross-cutting-design.md` v0.1, `compliance/compliance-matrix.md` v0.5 (Section 6), `controls/catalogue.md` v0.4 (CTL-10, CTL-22, CTL-29) |
 | Not legal advice | Whether the platform's processing needs a formal impact assessment, which legal bases apply, who is controller or processor, and transfer mechanisms are legal determinations; none is made here. Statements about legal duties are questions for legal, tagged **[LEGAL]**. |
 | Status | Analysis of the *design*. Nothing is implemented; data fields may change at schema freeze. |
 

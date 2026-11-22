@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (design draft; closes gap A4 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.5 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.4 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.1, `docs/api-specification.md` v0.1, `controls/catalogue.md` v0.3 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.4 |
+| Depends on | `Plan/functional-spec.md` v0.6 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.5 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.1, `docs/api-specification.md` v0.1, `controls/catalogue.md` v0.4 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.5 |
 | Status | Design note with **illustrative, unexecuted Rego**. No policy has been run through OPA; syntax and behaviour are unverified (`opa` is not installed in this environment). Identity-provider behaviour is partly search-verified (Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only, see `docs/tech-evaluation.md`). |
 
 ## 1. Scope and principles
