@@ -95,6 +95,7 @@ short = {
     "catalogue.md": "controls/catalogue.md",
     "ci-cd-pipeline.md": "docs/ci-cd-pipeline.md",
     "deployment-architecture.md": "docs/deployment-architecture.md",
+    "roadmap.md": "docs/roadmap.md",
 }
 versions = {}
 for name, path in short.items():
@@ -129,7 +130,7 @@ sections = {
     "tm": {str(i) for i in range(1, 10)},
 }
 for f, t in texts.items():
-    for mm in re.finditer(r"(functional[- ]spec|spec|architecture|threat[- ]model)(?:\.md`?)?(?: v[\d.]+)? (?:\()?Sections? (\d+)", t, re.I):
+    for mm in re.finditer(r"(?<!deployment )(?<!deployment-)(functional[- ]spec|spec|architecture|threat[- ]model)(?:\.md`?)?(?: v[\d.]+)? (?:\()?Sections? (\d+)", t, re.I):
         w = mm.group(1).lower()
         k = "spec" if "spec" in w else "arch" if w.startswith("arch") else "tm"
         if mm.group(2) not in sections[k]:

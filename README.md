@@ -28,6 +28,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
 | `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/`, `.github/dependabot.yml` | `docs-check.yml` is the only active workflow (document consistency and generated-file freshness; untested on GitHub); Dependabot for action updates | NFR-9 |
+| `docs/roadmap.md` | Implementation roadmap: phases 0-5 with deliverables, dependencies, effort, acceptance, risks, decision gates, cross-document findings (estimates unvalidated) | PRD 8 |
 | `docs/deployment-architecture.md` | Deployment architecture: environments, topology, network policy matrix, data tier, HA/DR, multi-tenancy, multi-cloud adapters, hardening, acceptance criteria (untested) | architecture 8, 9 |
 | `docs/ci-cd-pipeline.md`, `docs/ci-templates/` | CI/CD security pipeline design (stages, gates, waivers, pipeline threats) and an inactive template for the product gates (action pins TBD) | NFR-9, CTL-17, CTL-27 |
 | `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`), `build_catalogue_md.py` and `catalogue_lib.py` (generate `controls/catalogue.md`) | — |
