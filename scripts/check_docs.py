@@ -94,6 +94,7 @@ short = {
     "compliance-matrix.md": "compliance/compliance-matrix.md",
     "catalogue.md": "controls/catalogue.md",
     "ci-cd-pipeline.md": "docs/ci-cd-pipeline.md",
+    "deployment-architecture.md": "docs/deployment-architecture.md",
 }
 versions = {}
 for name, path in short.items():

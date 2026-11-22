@@ -16,7 +16,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `policy/rego/`, `policy/tests/` | OPA policies and `opa test` suites | architecture 4.2, FR-POL-* |
 | `web/` | React + TypeScript dashboard | architecture 4.11, FR-UI-* |
 | `db/migrations/` | Postgres schema migrations | architecture 7 |
-| `deploy/compose/` | Docker Compose for dev and CI end-to-end tests | architecture 8 |
+| `deploy/compose/` | Docker Compose for dev and CI end-to-end tests (not yet written; topology in `docs/deployment-architecture.md` Section 13) | architecture 8 |
 | `deploy/helm/`, `deploy/k8s/`, `deploy/admission/` | Helm charts, NetworkPolicies, admission policies | architecture 8 |
 | `controls/` | Control catalogue: `catalogue.yaml` (source) and `catalogue.md` (generated); 27 controls, CTL-01..27 | FR-COMP-1 |
 | `compliance/` | Compliance mapping matrix (`compliance-matrix.md`: framework mappings and findings register; unverified, not legally reviewed) | FR-COMP-2..3 |
@@ -28,6 +28,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
 | `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/`, `.github/dependabot.yml` | `docs-check.yml` is the only active workflow (document consistency and generated-file freshness; untested on GitHub); Dependabot for action updates | NFR-9 |
+| `docs/deployment-architecture.md` | Deployment architecture: environments, topology, network policy matrix, data tier, HA/DR, multi-tenancy, multi-cloud adapters, hardening, acceptance criteria (untested) | architecture 8, 9 |
 | `docs/ci-cd-pipeline.md`, `docs/ci-templates/` | CI/CD security pipeline design (stages, gates, waivers, pipeline threats) and an inactive template for the product gates (action pins TBD) | NFR-9, CTL-17, CTL-27 |
 | `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`), `build_catalogue_md.py` and `catalogue_lib.py` (generate `controls/catalogue.md`) | — |
 
