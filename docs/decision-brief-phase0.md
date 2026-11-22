@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.1 (decision brief; recommendations only, **nothing is decided**) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.7 (FR-POL-1, FR-AUTHZ-8..11, FR-UI-3, Section 12), `Plan/architecture.md` v0.5 (Section 12), `Plan/implementation-plan.md` v0.6 (Sections 3, 4.4, WP-1.5, WP-1.8, WP-1.11), `docs/data-model.md` v0.2, `docs/deployment-architecture.md` v0.4 (Section 9), `docs/tech-evaluation.md` v0.2 (Section 3.4), `docs/authn-authz-design.md` v0.1, `docs/roadmap.md` v0.4 (Sections 4 and 5), `docs/governance.md` v0.4 (Sections 5 and 8), `docs/customer-inputs.md` v0.2 |
+| Depends on | `Plan/functional-spec.md` v0.7 (FR-POL-1, FR-AUTHZ-8..11, FR-UI-3, Section 12), `Plan/architecture.md` v0.5 (Section 12), `Plan/implementation-plan.md` v0.6 (Sections 3, 4.4, WP-1.5, WP-1.8, WP-1.11), `docs/data-model.md` v0.2, `docs/deployment-architecture.md` v0.4 (Section 9), `docs/tech-evaluation.md` v0.2 (Section 3.4), `docs/authn-authz-design.md` v0.1, `docs/roadmap.md` v0.4 (Sections 4 and 5), `docs/governance.md` v0.5 (Sections 5 and 8), `docs/customer-inputs.md` v0.2 |
 | Purpose | Put the three decisions that gate Phase 1 in front of the people who must make them: what each choice is, what it changes in the plan, what is recommended and why, and what would change the recommendation. Closes nothing by itself; the decision is recorded in `docs/governance.md` Section 5. |
 | Audience | Sponsor, security architect, product owner. Each decision names its decider below. |
 | Status | The recommendations are the drafter's judgement from the design documents. Nothing here was run or measured: no SQL, Rego or integration has been executed, and the technology facts are those in `docs/tech-evaluation.md`, much of which is unverified. |

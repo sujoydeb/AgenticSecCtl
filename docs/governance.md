@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.4 (adds the Phase 0 exit checklist, Section 8; template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
+| Version | 0.5 (decision-log rows ADR-3, ADR-4 and ADR-6 now carry the brief's recommendation and conditions, still proposed; v0.4 added the Phase 0 exit checklist, Section 8; template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
 | Depends on | `Plan/functional-spec.md` v0.7 (Section 2 roles, Section 12), `Plan/architecture.md` v0.5 (Section 12 ADRs), `controls/catalogue.md` v0.5 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.4, `docs/reviewgap.md` v0.7 |
 | Purpose | Provide the structure needed to close gaps F2 (no named owners) and G1 (no independent review) in `docs/reviewgap.md`: role glossary and RACI, owner assignment table, review and sign-off log, decision log and risk-acceptance register. It does **not** close those gaps by itself: they close when people fill it in. |
 
@@ -106,10 +106,10 @@ One row per document; add rows per review round. A document is "reviewed" only w
 |---|---|---|---|---|---|
 | ADR-1 | Gateway build or extend | Custom thin gateway for MVP; Phase 2 base after spike S1 | Proposed, pending approval | | |
 | ADR-2 | Identity provider and token binding | Keycloak for development; production IdP after spike S2 | Proposed, pending approval | | |
-| ADR-3 | Approval channel | Dashboard queue first | Proposed, pending approval | | |
-| ADR-4 | Tenancy model | Shared multi-tenant with row-level security | Proposed, pending approval | | |
+| ADR-3 | Approval channel | Dashboard approval queue for tool definitions and agent registrations in Phase 1; webhook adapters to ticketing and chat later. Condition: customer input CI-2 confirms. Brief: `docs/decision-brief-phase0.md` Section 3 | Proposed, pending approval | | |
+| ADR-4 | Tenancy model | Shared multi-tenant with row-level security and tenant ID on every table; dedicated database or cluster stays a deployment option. Conditions: CI-3 confirms no tenant needs a dedicated database at launch; the interleaved-tenant test (checklist row P0-19) passes. Brief: `docs/decision-brief-phase0.md` Section 2 | Proposed, pending approval | | |
 | ADR-5 | Stdio server handling | Managed wrapper | Proposed, pending approval | | |
-| ADR-6 | Policy language | Rego on OPA | Proposed, pending approval | | |
+| ADR-6 | Policy language | Rego on OPA. Conditions: spike S3 does not rule it out; OPA licence confirmed. Choosing Cedar would also change FR-POL-1 in the specification. Brief: `docs/decision-brief-phase0.md` Section 4 | Proposed, pending approval | | |
 | ADR-7 | Audit anchoring target | Object-lock storage in a separate account | Proposed, pending approval | | |
 | DEC-1 | Data classification default levels | Public, Internal, Confidential, Restricted; unlabelled = Confidential (spec Section 4.22) | Proposed, pending approval | | |
 | DEC-2 | Phase-tag resolutions for review gap C1 | As recorded in spec change log v0.4 and test catalogue v0.3 | Proposed, pending approval | | |
