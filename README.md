@@ -26,7 +26,7 @@ Enterprise security gateway and governance platform for AI agents, MCP servers a
 | `docs/prd.md` | Product requirements document | — |
 | `docs/tech-evaluation.md` | Technology evaluation (mostly unverified; has a verification log) | architecture 10, 12 |
 | `docs/runbooks/` | Operational runbook (design-stage draft) | FR-OBS, NFR-3/4 |
-| `docs/playbooks/` | Incident response playbooks (not yet written) | FR-IR-4 |
+| `docs/playbooks/` | Incident response playbooks (`incident-response-playbooks.md`, 15 scenarios, untested) | FR-IR-* |
 | `.github/workflows/` | CI security gates | NFR-9 |
 | `scripts/` | `check_docs.py` (cross-document consistency checks), `build_spec_html.py` (regenerates `Plan/functional-spec.html`) | — |
 

@@ -6,7 +6,7 @@
 | Status | **Written before any implementation exists.** Procedures describe intended operations. Commands, endpoints, metric names, alert names and thresholds are placeholders marked `[TBD]` and must be replaced with real ones when the services are built, then validated in a game day (Section 14). |
 | Depends on | `Plan/architecture.md` v0.2 (components, failure behaviour, deployment, audit event vocabulary in 4.8), `Plan/functional-spec.md` v0.3 (FR/NFR IDs), `Plan/threat-model.md` v0.2, `docs/testing/cases.md` v0.2 |
 | Audience | Platform operators, on-call engineers, security engineers, incident responders |
-| Out of scope | Security incident handling steps beyond first containment: see `docs/playbooks/` (not yet written). Application-level agent debugging. |
+| Out of scope | Security incident handling steps beyond first containment: see `docs/playbooks/incident-response-playbooks.md`. Application-level agent debugging. |
 
 ## 1. Operating principles
 
@@ -164,7 +164,7 @@ Offboarding: disable agent access, revoke tokens, export evidence as requested, 
 1. Quarantine the tool, server or agent from the dashboard/API (FR-IR-2). Expected effect within 5 s.
 2. Revoke tokens/clients at the IdP and broker; confirm in gateway that revoked identities are denied (check deny reason `[TBD]`).
 3. Preserve evidence snapshot before changing anything else (FR-IR-3).
-4. Open an incident and hand over to Security on-call; continue with `docs/playbooks/`.
+4. Open an incident and hand over to Security on-call; continue with `docs/playbooks/incident-response-playbooks.md` (PB-01..PB-15).
 
 ### 7.7 Kill switch (suspend agent or tenant)
 Use for runaway agents or suspected tenant-wide abuse (FR-AUTO-4): suspend the agent or tenant; confirm calls are denied within 5 s; record reason; notify owner. Resume requires approver ≠ the person who suspended (FR-AUTO-5), unless emergency policy states otherwise.
@@ -365,4 +365,4 @@ Owner and date for each item to be assigned.
 Command lines, dashboards' exact queries, alert rule definitions, cloud-specific failover steps, staffing and rotas, SLA wording for tenants. These depend on implementation and customer decisions (ADR-1..7, spec Section 12).
 
 ### 15.3 Related documents
-`Plan/architecture.md` (components and failure design), `Plan/functional-spec.md` (requirements), `Plan/threat-model.md` (threats), `docs/testing/cases.md` (test cases used for smoke and game days), `docs/prd.md` (scope and phases), `docs/playbooks/` (incident response; to be written).
+`Plan/architecture.md` (components and failure design), `Plan/functional-spec.md` (requirements), `Plan/threat-model.md` (threats), `docs/testing/cases.md` (test cases used for smoke and game days), `docs/prd.md` (scope and phases), `docs/playbooks/incident-response-playbooks.md` (incident response).

@@ -16,6 +16,7 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/testing/cases.md` | 65 security test cases (specifications, none executed) | v0.2 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.1 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
+| `docs/playbooks/incident-response-playbooks.md` | Common IR phases and 15 scenario playbooks (PB-01..15); untested | v0.1 |
 
 There are no build, lint or test commands for the product yet. When code is added, update this file with them.
 
@@ -31,7 +32,7 @@ There are no build, lint or test commands for the product yet. When code is adde
 - `services/{common,api,gateway,scanner}/`: separate Python packages (`src/agenticsecctl_<name>`, Python >= 3.12, own `pyproject.toml`, no dependencies declared). Only a `__version__` string exists.
 - `policy/{rego,tests}/`, `web/`, `db/migrations/`, `deploy/{compose,helm,k8s,admission}/`, `controls/`, `compliance/`, `scripts/`, `.github/workflows/`: empty (`.gitkeep`).
 - `tests/{unit,integration,e2e,fuzz,adversarial}/` and `tests/fixtures/{evil_mcp,benign_mcp}/`: empty. Test IDs follow `TC-*` in the threat model.
-- `docs/playbooks/`: empty (incident playbooks not written). `docs/testing/` and `docs/runbooks/` hold the catalogue and runbook listed above.
+- `docs/testing/`, `docs/runbooks/` and `docs/playbooks/` hold the catalogue, runbook and incident playbooks listed above.
 - Keep the data-plane (`gateway`) and control-plane (`api`, `scanner`) packages independent; do not import across them except through `common`.
 
 ## Working on the documents

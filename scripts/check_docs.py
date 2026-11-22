@@ -85,6 +85,7 @@ short = {
     "tech-evaluation.md": "docs/tech-evaluation.md",
     "prd.md": "docs/prd.md",
     "operational-runbook.md": "docs/runbooks/operational-runbook.md",
+    "incident-response-playbooks.md": "docs/playbooks/incident-response-playbooks.md",
 }
 versions = {}
 for name, path in short.items():
@@ -131,8 +132,6 @@ for f, t in texts.items():
     body = t
     if f == "Plan/functional-spec.md":
         body = t.split("## 1. Purpose")[1]
-    if f == "docs/runbooks/operational-runbook.md":
-        body = body.replace("(incident response; to be written)", "").replace("(not yet written)", "")
     if f == "CLAUDE.md":
         continue
     for p in stale:
