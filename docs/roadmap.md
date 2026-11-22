@@ -94,7 +94,7 @@ Dependencies outside the team: customer answers CI-5 (IdP), CI-6 (cloud) and CI-
 
 Done (drafts, unreviewed): functional specification v0.5 and HTML, architecture v0.4, threat model v0.4, test catalogue (100 cases), technology evaluation (partly verified), architecture assessment, data model, API specification, authentication and authorization design, cross-cutting design, UX outline, MCP compatibility matrix, parameter register, performance test plan, fixtures and corpora specification, privacy assessment, cloud adapter verification (AWS), customer inputs form, governance templates, review gap register, PRD, operational runbook, incident playbooks, compliance matrix, control catalogue, CI/CD pipeline design, deployment architecture, this roadmap; a repository scaffold, consistency checker and generators.
 
-Remaining exit criteria:
+Remaining exit criteria (itemised with owners, evidence and due weeks in `docs/governance.md` Section 8):
 1. Review by security, architecture and compliance owners, with named owners and dates.
 2. ADR-3, ADR-4 and ADR-6 decided; ADR-1, ADR-2, ADR-5, ADR-7 scheduled with owners.
 3. Verification of `[VERIFY]` items in priority order (tech evaluation Section 8) and of framework identifiers (compliance matrix Section 7).

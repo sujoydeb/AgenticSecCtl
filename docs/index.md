@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (closes gap G7 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.7, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `docs/governance.md` v0.4 |
 | Purpose | Tell each reader which documents to read, in what order, and where every document lives. `scripts/check_docs.py` fails if a document is missing from the table in Section 2. |
 | Status | All documents are drafts. Nothing has been independently reviewed (see `docs/governance.md`). Versions are in each document's header table, not repeated here. |
 

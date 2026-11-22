@@ -496,6 +496,19 @@ if plan_text:
     else:
         err("Plan/implementation-plan.md: effort table, total row or lane table not found")
 
+# 15. Phase 0 exit checklist (docs/governance.md Section 8) names every B1 parameter of the parameter register
+_gov = texts.get("docs/governance.md", "")
+_par = texts.get("docs/parameter-register.md", "")
+if _gov and _par:
+    _b1 = re.findall(r"^\| (PAR-O-\d+) \|.*\| B1 \|", _par, re.M)
+    _row = re.search(r"^\| P0-20 \|.*$", _gov, re.M)
+    if not _row:
+        err("docs/governance.md: Phase 0 exit checklist row P0-20 (B1 parameters) is missing")
+    else:
+        for pid in _b1:
+            if pid not in _row.group(0):
+                err(f"docs/governance.md: P0-20 does not name {pid}, a parameter with gate B1")
+
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
 _tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}
