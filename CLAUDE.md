@@ -16,11 +16,11 @@ AgenticSecCtl is an enterprise security gateway and governance platform for AI a
 | `docs/testing/cases.md` | 100 security test cases (specifications, none executed) | v0.5 |
 | `docs/tech-evaluation.md` | Reuse-vs-build evaluation; mostly unverified, has a verification log | v0.2 |
 | `docs/runbooks/operational-runbook.md` | Operations procedures; placeholders marked `[TBD]` | v0.2 |
-| `docs/implementationgaps.md` | Gap register for the implementation plan (IG-1..17; IG-1, IG-2 and the five Low gaps closed pending review) | v0.3 |
-| `Plan/implementation-plan.md` | Build-level implementation plan (Phase 1 work packages WP-1.1..13, schedule, tests, definition of done; phases 2-5 outlined; generated traceability table of P1 requirements) | v0.3 |
+| `docs/implementationgaps.md` | Gap register for the implementation plan (IG-1..17; IG-1, IG-2, the five Low and the eight Medium gaps closed pending review; IG-3 and IG-5 open) | v0.4 |
+| `Plan/implementation-plan.md` | Build-level implementation plan (Phase 1 work packages WP-1.1..13, schedule, tests, definition of done; phases 2-5 outlined; generated traceability table of P1 requirements) | v0.4 |
 | `docs/roadmap.md` | Enterprise implementation roadmap (phases 0-5), gates, spikes, allocation of requirements/controls/tests to phases, findings F1-F8; estimates unvalidated | v0.4 |
 | `docs/architecture-assessment.md` | The first-task critical architecture assessment, traced to requirements, controls, tests and decisions | v0.3 |
-| `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.1 |
+| `docs/data-model.md` | Logical data model, constraints, roles, retention (illustrative SQL, unvalidated) | v0.2 |
 | `docs/api-specification.md`, `docs/api/openapi.yaml` | Management API endpoints, roles, SoD, errors; OpenAPI 3.1 outline (unvalidated) | v0.1 |
 | `docs/governance.md` | Role glossary, RACI, owner assignment, review/sign-off log, decision log, risk acceptance register (templates; no names yet) | v0.3 |
 | `docs/reviewgap.md` | Holistic review gap register (50 gaps) with a closure update for the 14 High gaps | v0.5 |

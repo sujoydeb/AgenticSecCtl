@@ -464,6 +464,38 @@ if plan_text:
         if not pk or any(w not in _wps for w in pk):
             err(f"Plan/implementation-plan.md: control {cid} maps to a missing or unknown work package")
 
+    # IG-11: acceptance-criteria table; cases exist in the case table and owners equal the cases' owners
+    _tc_owner = dict(re.findall(r"^\| (TC-[A-Z]\d+) \| [^|]* \| [^|]* \| (WP-1\.\d+) \|$", plan_text, re.M))
+    _ac_rows = {}
+    for _m in re.finditer(r"^\| (AC-\d+) \| ([^|]*) \| ([^|]*) \|$", plan_text, re.M):
+        _ac_rows[_m.group(1)] = (re.findall(r"TC-[A-Z]\d+", _m.group(2)), re.findall(r"WP-1\.\d+", _m.group(3)))
+    for n in range(1, 10):
+        if f"AC-{n}" not in _ac_rows:
+            err(f"Plan/implementation-plan.md: Phase 1 acceptance criterion AC-{n} missing from the AC table")
+    for ac, (tcs, wps) in _ac_rows.items():
+        for tc in tcs:
+            if tc not in _tc_owner:
+                err(f"Plan/implementation-plan.md: {ac} names {tc}, which is not in the Phase 1 case table")
+        if {_tc_owner[x] for x in tcs if x in _tc_owner} != set(wps):
+            err(f"Plan/implementation-plan.md: {ac} owning packages {sorted(set(wps))} differ from the owners of its cases")
+
+    # IG-15: lane loads add up to the effort total of Section 6.1
+    def _rng(s):
+        m = re.search(r"(\d+(?:\.\d+)?) to (\d+(?:\.\d+)?)", s)
+        return (float(m.group(1)), float(m.group(2))) if m else None
+    _eff = [_rng(m.group(1)) for m in re.finditer(r"^\| 1\.\d+ \| [^|]* \| ([^|]*) \|$", plan_text, re.M)]
+    _eff_tot = re.search(r"^\| \| \*\*Total\*\* \| \*\*([^*]*)\*\* \|$", plan_text, re.M)
+    _lane = [_rng(m.group(1)) for m in re.finditer(r"^\| (?:[A-D]|Shared) \| [^|]* \| [^|]* \| ([^|]*) \|", plan_text, re.M)]
+    if _eff and _eff_tot and _lane:
+        _lo, _hi = sum(x[0] for x in _eff), sum(x[1] for x in _eff)
+        _tot = _rng(_eff_tot.group(1))
+        if _tot != (_lo, _hi):
+            err(f"Plan/implementation-plan.md: effort total {_tot} differs from the sum of packages {(_lo, _hi)}")
+        if (round(sum(x[0] for x in _lane), 2), round(sum(x[1] for x in _lane), 2)) != (_lo, _hi):
+            err(f"Plan/implementation-plan.md: lane loads sum to {(sum(x[0] for x in _lane), sum(x[1] for x in _lane))}, packages sum to {(_lo, _hi)}")
+    else:
+        err("Plan/implementation-plan.md: effort table, total row or lane table not found")
+
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
 _tbd = {f: len(re.findall(r"TBD", t)) for f, t in texts.items()}

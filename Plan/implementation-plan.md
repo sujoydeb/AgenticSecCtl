@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.3 (plan draft; nothing is built, all estimates are unvalidated; v0.3 incorporates the Low gaps IG-10, IG-12, IG-13, IG-16 and IG-17 of `docs/implementationgaps.md`, on top of IG-1 and IG-2 in v0.2) |
+| Version | 0.4 (plan draft; nothing is built, all estimates are unvalidated; v0.4 incorporates the Medium gaps IG-4, IG-6 to IG-9, IG-11, IG-14 and IG-15 of `docs/implementationgaps.md`, on top of the Low gaps in v0.3 and IG-1 and IG-2 in v0.2) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.1, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/parameter-register.md` v0.2, `docs/governance.md` v0.3 |
+| Depends on | `Plan/functional-spec.md` v0.7, `Plan/architecture.md` v0.5, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.2, `docs/api-specification.md` v0.1, `docs/authn-authz-design.md` v0.1, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.4, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.4, `docs/parameter-register.md` v0.2, `docs/governance.md` v0.3 |
 | Purpose | Turn the Phase 1 scope of the roadmap into an ordered, testable work breakdown that engineers can start from: modules, interfaces, work packages, schedule, test strategy, definition of done. Later phases are sequenced at lower confidence. |
 | Status | **Plan only.** No code has been written. Library names and versions are unverified **[VERIFY]**. Open decisions (ADR-1..7) are not decided here: the plan builds on the proposed defaults in the design documents and says what changes if a decision differs. Effort and duration figures are proposals for the re-baseline checkpoints in the roadmap, not commitments. |
 
@@ -100,15 +100,16 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 ### WP-1.2 `common` core: canonical JSON, redaction, errors, configuration, telemetry
 - **Covers:** FR-ADM-1, FR-OBS-1, FR-AUTHN-6, the hashing part of FR-DRIFT-1; TC-G5, TC-Z10.
 - **Tasks:** canonicaliser per RFC 8785 including number formatting, with the RFC test vectors; SHA-256 helper; redaction filter for logs, errors and findings; typed configuration with validation at start, layering and safety bounds (`docs/cross-cutting-design.md` Section 6); configuration version hash and `config.changed` event shape; error catalogue and problem-details builder; OpenTelemetry bootstrap without payloads.
-- **Tests first:** RFC 8785 vectors and property tests (key order, Unicode, numbers); redaction tests across error and debug paths (TC-G5); configuration rejects unknown keys and out-of-range values (TC-Z10).
+- **Hashed definition fields (IG-8, proposal):** the hash input is the canonical JSON (Unicode NFC applied to every string first) of an object holding the server ID and the tool object as returned by the server with these fields: `name`, `title`, `description`, `icons`, `inputSchema`, `outputSchema`, `annotations`. Rules: (1) any other field present in the tool object (an unknown or extension field) is also hashed, so adding, removing or changing it changes the hash, and a finding is raised for the unknown field; (2) list-level metadata (`ttlMs`, `cacheScope`, `resultType`) and `_meta` are not hashed; (3) absent and `null` are different; (4) array order is significant. Per-authorization-context lists: one approved definition exists per tool, and the list returned for each requesting identity is compared with it tool by tool; a tool missing from a particular context's list is not drift, but any tool that appears must match the approved hash. `docs/mcp-compatibility.md` Section 3A hashes title and icons, whereas FR-DRIFT-1 lists six fields (server ID, name, description, input schema, output schema, annotations); the plan follows the longer list and the specification needs the matching change (Section 12).
+- **Tests first:** one test vector per hashed field showing that a change alters the hash, and vectors showing that `ttlMs`, `cacheScope` and `_meta` do not; an unknown extra field changes the hash and raises a finding; RFC 8785 vectors and property tests (key order, Unicode, numbers); redaction tests across error and debug paths (TC-G5); configuration rejects unknown keys and out-of-range values (TC-Z10).
 - **Done when:** no service starts with invalid configuration; no secret survives the redaction suite; canonical hashes are stable across runs and machines.
 - **Estimate:** 2 to 3. **Risk:** number serialisation edge cases; mitigate by testing against the RFC vectors and a second implementation.
 
 ### WP-1.3 `common` SSRF guard
 - **Covers:** FR-SSRF-1..5, CTL-08; TC-H1..H4, AC-4.
-- **Tasks:** address classification (loopback, link-local including 169.254.169.254, private ranges, IPv4-mapped IPv6, unique-local, multicast, reserved); parsing of alternate encodings (decimal, octal, hex, IPv6 forms, userinfo tricks); resolve then pin the validated address for the connection; redirects off by default and re-validated per hop with a limit; per-server exception entries with owner, reason and expiry; a client wrapper that cannot be used without the guard.
-- **Tests first:** a table of hostile inputs and expected rejections; a rebinding test server that changes its DNS answer between check and connect; redirect to an internal address.
-- **Done when:** all four threat-H cases pass against the hostile fixtures; registration, import and health check use the wrapper only.
+- **Tasks:** address classification (loopback, link-local including 169.254.169.254, private ranges, IPv4-mapped IPv6, unique-local, multicast, reserved); parsing of alternate encodings (decimal, octal, hex, IPv6 forms, userinfo tricks); resolve then pin the validated address for the connection; redirects off by default and re-validated per hop with a limit; per-server exception entries with owner, reason and expiry; a client wrapper that cannot be used without the guard. The wrapper is the only HTTP client in the repository, and covers identity-provider discovery and key-set (JWKS) fetches by the gateway and the API as well as registration, import, health checks and upstream proxying. The development Keycloak is reachable on a private address, so it gets an exception entry (IG-4): scoped to the one host and port, development environment only, with an owner (security engineer), a reason and an expiry (PAR-O-03); the entry is configuration, never a code path that skips the guard.
+- **Tests first:** an identity-provider discovery URL on a private address is refused without an exception entry, allowed with one, and refused again after the entry expires; a table of hostile inputs and expected rejections; a rebinding test server that changes its DNS answer between check and connect; redirect to an internal address.
+- **Done when:** all four threat-H cases pass against the hostile fixtures; registration, import, health check and identity-provider fetches use the wrapper only (the import-boundary check in WP-1.1 also rejects any other HTTP client).
 - **Estimate:** 1.5 to 2. **Depends on:** WP-1.2 (errors, config). **Risk:** platform differences in address parsing; test on the CI operating system and the container base image.
 
 ### WP-1.4 `common` audit chain, verifier and decision replay
@@ -120,9 +121,9 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 
 ### WP-1.5 Database schema, migrations, roles and row-level security
 - **Covers:** tenancy foundations (ADR-4), FR-DATA-1, immutability support for FR-DRIFT-5, CTL-22 groundwork.
-- **Tasks:** migrations for tenancy and access, inventory, authorization, findings, audit and governance tables as in `docs/data-model.md` Section 3; `tool_versions` without update or delete permission and with a trigger or rule that rejects changes; row-level security policies on every table; database roles (application, audit writer, read-only, migration owner); classification levels table.
+- **Tasks:** migrations for tenancy and access, inventory, authorization, findings, audit and governance tables as in `docs/data-model.md` Section 3; `tool_versions` without update or delete permission and with a trigger or rule that rejects changes; row-level security policies on every table; database roles (application, audit writer, read-only, migration owner); classification levels table; `scan_jobs` (IG-6, `docs/data-model.md` Section 3.4), which must be in the schema before the freeze. **Tenant setting (IG-9):** each request sets the tenant inside its own transaction (`set_config('app.tenant_id', ..., true)`), session-level settings are forbidden, an unset tenant matches no rows, and application roles have neither superuser nor `BYPASSRLS`; the connection pool resets session state on return as a second defence.
 - **Documentation:** keep `docs/data-model.md` in step with the migrations; record the migration and access-layer decisions (Section 4.3).
-- **Tests first:** a cross-tenant read and write attempt fails for each table; an update of `tool_versions` fails for every application role; migration up and down on an empty database.
+- **Tests first:** interleaved requests for two tenants over a pool of one connection never see each other's rows, and a request that does not set a tenant sees no rows (IG-9); a cross-tenant read and write attempt fails for each table; an update of `tool_versions` fails for every application role; migration up and down on an empty database.
 - **Scheduling:** starts in week 1 on its own lane so the tables can be frozen at the end of week 2; roles, row-level security tests, constraint tests and indexes finish in weeks 3 to 4. Changes to frozen tables need the security architect's approval.
 - **Done when:** schema is frozen (ADR-4 decided), tests above pass, indexes for the main queries exist.
 - **Estimate:** 2 to 3. **Depends on:** ADR-4 and `docs/data-model.md` only (not on WP-1.2). **Risk:** schema churn after freeze; keep tenant ID everywhere so the dedicated-database option stays open.
@@ -137,8 +138,8 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 
 ### WP-1.7 Importer, scanner v1 and corpus baseline
 - **Covers:** FR-SCAN-1..3, FR-SCAN-6, CTL-02; TC-A1..A5, TC-Z2; AC-1, AC-8.
-- **Tasks:** hardened importer in an isolated worker with connection, time, size, depth and item limits, no redirects by default and the SSRF guard; normaliser (Unicode normalisation, hidden characters, bidirectional controls, encoded content detection); deterministic rules for override phrases, credential requests, exfiltration URLs, cross-tool instructions, concealment, schema anomalies and homoglyphs; scoring that is reproducible with evidence excerpts and rule IDs; classifier interface with a stub; baseline measurement of precision and recall on `tests/fixtures/corpus/`.
-- **Tests first:** every corpus item has an expected label; the hostile server that is oversized, deeply nested, slow and redirecting (AC-8); fuzzing of the importer and normaliser.
+- **Tasks:** hardened importer in an isolated worker with connection, time, size, depth and item limits, no redirects by default and the SSRF guard; normaliser (Unicode normalisation, hidden characters, bidirectional controls, encoded content detection); deterministic rules for override phrases, credential requests, exfiltration URLs, cross-tool instructions, concealment, schema anomalies and homoglyphs; scoring that is reproducible with evidence excerpts and rule IDs; classifier interface with a stub; baseline measurement of precision and recall on `tests/fixtures/corpus/`. **Job dispatch and isolation (IG-6, proposal):** `POST /servers/{id}/imports` inserts a row in `scan_jobs` (database job table, no Redis or Kafka before Phase 2). The scanner worker has its own machine identity (an OIDC client distinct from every agent and user, created in WP-1.10) and talks only to the API: it claims a job (the API selects with `FOR UPDATE SKIP LOCKED` and sets a lease), renews or completes it, and posts scan results and findings back through the API. A job whose lease expires returns to the queue until `max_attempts`, then fails with a recorded reason and an `import.failed` event. The worker runs as a separate container and unprivileged process with no database credentials and no secrets, under a network policy that allows only the API and, through the SSRF guard, the import target; a malformed import can crash the worker but not the API. The internal claim and result endpoints are added to the OpenAPI outline in WP-1.6.
+- **Tests first:** two workers never claim the same job; an abandoned job is re-queued after the lease and fails after `max_attempts`; from the worker container a direct database connection and a connection to an internal address both fail (isolation test); every corpus item has an expected label; the hostile server that is oversized, deeply nested, slow and redirecting (AC-8); fuzzing of the importer and normaliser.
 - **Done when:** poisoned seeds score High or Critical with evidence, benign seeds do not, and the measured numbers are reported against the 95 percent recall and 90 percent precision targets even if not met (the corpus is too small to prove either).
 - **Estimate:** 4 to 5. **Depends on:** WP-1.2, WP-1.3, spike S5, corpus growth. **Risk:** false positives and low recall; keep the classifier advisory and review findings in shadow.
 
@@ -151,15 +152,15 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 
 ### WP-1.9 Thin gateway: list filtering, pin check, decisions
 - **Covers:** FR-RT-1, FR-DRIFT-2..3, FR-INV-4, FR-AUTHN-1, FR-AUTHZ-8, FR-MCP-4, CTL-03, CTL-05 (Phase 1 part); TC-B1..B3, TC-F1, TC-F2, TC-G2, TC-Z5; AC-2, AC-7.
-- **Tasks:** MCP endpoint that validates the Origin header and token (signature, issuer, expiry, audience); registry client with a cache (60 s) that denies when the cache expires and the registry is unreachable; recompute the definition hash on every `tools/list` and on list-changed notifications and compare with the approved hash; quarantine on mismatch and remove the tool from list results and block calls; call the PDP with the contract fields and enforce the answer; fail closed everywhere; audit events for decisions; no response inspection yet.
+- **Tasks:** MCP endpoint that validates the Origin header and token (signature, issuer, expiry, audience); registry client with a cache (60 s) that denies when the cache expires and the registry is unreachable; recompute the definition hash on every `tools/list` and on list-changed notifications and compare with the approved hash; quarantine on mismatch and remove the tool from list results and block calls; call the PDP with the contract fields and enforce the answer; fail closed everywhere; audit events for decisions; no response inspection yet. **Effect time of registry changes (IG-7):** in Phase 1 a quarantine, revocation or approval change reaches the gateway when its registry cache entry expires, so the guarantee is at most the cache TTL (60 s, PAR-F-02) plus one registry round trip, not the 5 seconds of PAR-F-01. The gateway also caps the TTL at the server's `ttlMs` when that is smaller. The 5 second effect time is a Phase 2 target met by change events pushed to gateways (WP-2.6, with Redis or Kafka); until then AC-2 is read as "by the next `tools/list` after the cache expires". Registry unreachable with an expired cache still denies.
 - **Documentation:** gateway operator notes: configuration, fail-closed behaviours and what each denial reason means, as input to the Phase 1 runbook items.
-- **Tests first:** changed description, widened schema and flipped annotation each quarantine by the next list; a call made after quarantine fails; an unregistered agent is denied; forged token and wrong audience are denied; stopping OPA denies.
+- **Tests first:** the measured delay between a quarantine in the registry and the first denied call is at most the cache TTL plus a small tolerance, and the measured value is recorded in the acceptance report (IG-7); an identity-provider key-set fetch that fails with an expired cache denies; changed description, widened schema and flipped annotation each quarantine by the next list; a call made after quarantine fails; an unregistered agent is denied; forged token and wrong audience are denied; stopping OPA denies.
 - **Done when:** AC-2, AC-3 and AC-7 pass in the end-to-end harness (WP-1.12).
 - **Estimate:** 3 to 4. **Depends on:** WP-1.2, WP-1.6, WP-1.8, WP-1.10. **Risk:** scope creep into inspection; the roadmap excludes it from Phase 1.
 
 ### WP-1.10 Identity, OIDC and role bindings
 - **Covers:** FR-UI-7, FR-ID-1..2 (client and owner), FR-AUTHN-1 (token source), CTL-23; supports TC-F2, TC-G2.
-- **Tasks:** Keycloak development realm with users per role, an agent client per test agent and MFA flow for dashboard users; token validation library in `common` used by api and gateway; role binding table and server-side role checks per the endpoint table; machine identities for agents with distinct credentials.
+- **Tasks:** Keycloak development realm with users per role, an agent client per test agent and MFA flow for dashboard users; token validation library in `common` used by api and gateway; role binding table and server-side role checks per the endpoint table; machine identities for agents and for the scanner worker with distinct credentials; identity-provider discovery and key-set fetches go through the guarded client (WP-1.3) with the development exception entry.
 - **Tests first:** each endpoint refuses roles not listed in `docs/api-specification.md` Section 2; shared credentials between agents are rejected.
 - **Done when:** the harness logs in as every role and every agent without static shared secrets.
 - **Estimate:** 1.5 to 2. **Note:** development identity only; the production IdP is ADR-2 and spike S2.
@@ -181,7 +182,7 @@ Estimates are person-weeks with a range; they sum to a total in Section 6. "Test
 
 ### WP-1.13 Hardening, acceptance run and runbook exercise
 - **Covers:** AC-1..AC-9, roadmap acceptance criteria and gate checklist.
-- **Tasks:** run all 26 Phase 1 cases and record results and exceptions; measure scanner precision and recall and report them; run the dependency, secret and SAST checks and resolve or waive findings; exercise the Phase 1 runbook items once (fail-closed behaviour, database restore with chain verification) and update `docs/runbooks/operational-runbook.md`: replace each `[TBD]` for Phase 1 items with the real command, metric or alert name, and add the procedures the exercise showed to be missing (parameter PAR-O-24); gather evidence for the gate review; re-baseline the estimate for Phase 2.
+- **Tasks:** run all 26 Phase 1 cases and record results and exceptions; measure scanner precision and recall and report them; run the dependency, secret and SAST checks and resolve or waive findings; exercise the Phase 1 runbook items once (fail-closed behaviour, database restore with chain verification) and update `docs/runbooks/operational-runbook.md`: replace each `[TBD]` for Phase 1 items with the real command, metric or alert name, and add the procedures the exercise showed to be missing (parameter PAR-O-24); gather evidence for the gate review, including the fuzzing results for R3 and the evidence pack for the independent review R4; re-baseline the estimate for Phase 2.
 - **Estimate:** 2 to 3.
 
 ## 6. Effort, team and schedule
@@ -256,6 +257,19 @@ Lanes: A platform (backend), B security engines (security engineer), C gateway a
 
 This plan moves the SSRF guard and the audit library earlier than the roadmap's milestone list (weeks 3 to 4 instead of week 8), because registration, import and approvals depend on them; only the verification endpoint and the dashboard finish in weeks 7 to 8. The roadmap milestone text should be aligned when this plan is approved.
 
+**Lane load and capacity (IG-15).** Package effort from Section 6.1 assigned to the lanes of the weekly plan; WP-1.2 is split evenly between lanes B and C, as the weekly plan has both working on it, and WP-1.13 is shared by all lanes.
+
+| Lane | Who (roadmap assumption) | Packages | Load, person-weeks (low to high) | Capacity in weeks 1 to 8 | Fit |
+|---|---|---|---|---|---|
+| A | One backend engineer, full time | WP-1.5, 1.4, 1.6 | 7 to 10 | 8 | Fits at the low end; about 2 weeks over at the high end |
+| B | Security engineer, full time | half of WP-1.2, WP-1.3, 1.7 | 6.5 to 8.5 | 8 (less review and decision work) | Fits; little room for the review work in Section 8.1 |
+| C | One backend engineer, full time | half of WP-1.2, WP-1.10, 1.8, 1.9 | 7.5 to 10.5 | 8 | Fits at the low end; about 2.5 weeks over at the high end |
+| D | Part-time frontend and part-time DevSecOps engineers, about 1 full-time equivalent together | WP-1.1, 1.11, 1.12 | 7.5 to 10 | 8 | About 2 weeks over at the high end; the dashboard needs the frontend engineer for weeks 5 to 8 at more than half time |
+| Shared | All lanes | WP-1.13 | 2 to 3 | weeks 9 to 10 | Fits only if weeks 1 to 8 finish on time |
+| **Total** | | | **30.5 to 42** | | Equals the total in Section 6.1 |
+
+Capacity assumes the upper part of the roadmap team assumption (about 3.5 full-time equivalents). With two to three engineers the lanes merge and Section 6.1 gives 15 to 21 weeks. The plan therefore says which work slips first if lanes C or D overrun, in this order: (1) the seven Phase 1 cases that are not MVP-gating carry a recorded exception; (2) dashboard polish beyond the approval flow, counters and drill-down, and accessibility checks beyond the core flows; (3) fixture breadth beyond what the MVP-gating cases need; (4) corpus growth beyond the seed. These never slip: the invariants of Section 2, the 19 MVP-gating cases, the checkpoints R1 to R4, and the schema freeze. Dates are committed only after the team is named and a 15 to 20 percent buffer is added.
+
 WP-1.2 starts from the first project files and does not wait for CI. Critical path: schema freeze (end of week 2), then registry and approvals, then gateway pin check, then end-to-end acceptance. Buffer: none is built in; add 15 to 20 percent when committing dates.
 
 Spikes S5, S3 and S2 run before or alongside weeks 1 to 4 (`docs/roadmap.md` Section 4.1). S1, S4 and S6 do not block Phase 1.
@@ -315,9 +329,20 @@ The 19 MVP-gating cases are those marked MVP-gating; the other seven are Phase 1
 - **Migrations:** forward-only in production; each migration has a tested rollback for development; schema changes after the freeze go through the security architect.
 - **Versioning:** services versioned independently; the policy bundle has its own content hash; the API follows the OpenAPI outline.
 
+### 8.1 Review checkpoints (IG-14)
+
+The invariants in Section 2 are security-critical, so the build has reviews as well as tests. Roles are those of `docs/governance.md`; no person is named yet (Section 12).
+
+| Checkpoint | When | What is reviewed | Reviewer |
+|---|---|---|---|
+| R1 design review | After the design notes for upstream forwarding and the audit path (IG-3, IG-5) and the decisions of this plan (IG-4, IG-6 to IG-9) are written, and before WP-1.4 and WP-1.9 start | Walk-through of the code design against the threat model: the Phase 1 subset of the 14 interceptor stages, trust boundaries, failure behaviour of every security path, the invariants of Section 2 | Security architect, with the independent reviewer |
+| R2 code review rules | Every change, from the first merge | Changes to `common` (canonical, ssrf, auditchain, redact), to `policy/` and to `db/migrations/` need approval by the security engineer and one other engineer; the author never approves their own change; the rule is enforced through code-owner settings once a remote exists (`docs/repository-setup.md`) | Security engineer |
+| R3 fuzzing review | Before the acceptance run | Fuzzing results for `canonical`, `auditchain`, `importer` and `normalise`: coverage reached, crashes found and fixed, corpus kept | Security engineer |
+| R4 independent review | Before the acceptance run is accepted | Evidence for AC-1..AC-9, the 19 MVP-gating cases, recorded exceptions and waivers; sign-off in the review log | Independent reviewer, who did not write the code under review |
+
 **Definition of done (package):** requirements and tests listed for the package pass; no invariant in Section 2 weakened; logs, errors and configuration follow the cross-cutting design; new parameters have a row in the register; documentation updated and `scripts/check_docs.py` still passes; audit events used are in the vocabulary.
 
-**Definition of done (phase):** AC-1..AC-9 pass with the mapped cases; the 19 MVP cases pass and the other seven pass or have recorded exceptions; scanner precision and recall are measured and reported; CI gates run clean with no open Critical or High finding without a waiver; runbook items for fail-closed and restore are exercised once; the gate checklist in `docs/roadmap.md` Section 10 is completed; evidence is attached to the review log in `docs/governance.md`.
+**Definition of done (phase):** AC-1..AC-9 pass with the mapped cases; the 19 MVP cases pass and the other seven pass or have recorded exceptions; scanner precision and recall are measured and reported; CI gates run clean with no open Critical or High finding without a waiver; runbook items for fail-closed and restore are exercised once; the gate checklist in `docs/roadmap.md` Section 10 is completed; R1 to R4 above are complete and logged; evidence is attached to the review log in `docs/governance.md`.
 
 ## 9. Phases 2 to 5 (outline, lower confidence)
 
@@ -393,6 +418,38 @@ All 42 requirements tagged Phase 1 (including those tagged P1/P2) in `Plan/funct
 | FR-UI-2 | Drill-down per agent, server, tool: owner, environment, criticality, risk, ver... | WP-1.11 |  |
 | FR-UI-3 | Approval queue with diff, evidence and SoD enforcement. | WP-1.11 | WP-1.6 |
 
+### 11.1 Acceptance criteria, non-functional requirements and threats
+
+**Acceptance criteria.** AC-1 to AC-9 are the Phase 1 criteria. The owning packages are those that own the listed cases in Section 7; `scripts/check_docs.py` checks that every Phase 1 criterion has a row, that each case exists in the Section 7 table, and that the owning packages equal those of the cases.
+
+| AC | Test cases | Owning packages |
+|---|---|---|
+| AC-1 | TC-A1, TC-A2, TC-A3 | WP-1.7 |
+| AC-2 | TC-B1, TC-B2 | WP-1.9 |
+| AC-3 | TC-E1, TC-C3, TC-F1 | WP-1.8, WP-1.9 |
+| AC-4 | TC-H1, TC-H2, TC-H3, TC-H4 | WP-1.3 |
+| AC-5 | TC-Z6 | WP-1.4 |
+| AC-6 | TC-E4, TC-Z7 | WP-1.6, WP-1.11 |
+| AC-7 | TC-Z5 | WP-1.9 |
+| AC-8 | TC-Z2 | WP-1.7 |
+| AC-9 | TC-G5 | WP-1.2 |
+
+AC-7 is also supported by the deny-by-default rules of WP-1.8; the case is run at the gateway. Anchoring is not part of AC-5 in Phase 1 (TC-Z22 is Phase 2).
+
+**Non-functional requirements.** Only four have Phase 1 content; the others are measured or enforced later.
+
+| NFR | Phase 1 content | Package | Evidence in Phase 1 |
+|---|---|---|---|
+| NFR-7 reproducibility | Every decision stores policy hash and input digest; replay function | WP-1.4, WP-1.8 | TC-Z20 over a recorded sample |
+| NFR-8 isolation | Row-level security on every table, per-transaction tenant, cross-tenant tests | WP-1.5, WP-1.6 | Database tests and API tests; no penetration test yet |
+| NFR-9 platform security | Dependency, secret and static-analysis gates; no long-lived upstream secret in the gateway; separate planes | WP-1.1, WP-1.9, WP-1.13 | CI gate results and the import-boundary check; no image signing or SBOM before Phase 2 |
+| NFR-10 accessibility | Automated and manual checks on the core dashboard flows | WP-1.11 | Check results attached to the acceptance run |
+| NFR-1, NFR-2 | None. Latency is measured with the load tests in Phase 2; Phase 1 only records timings seen in the end-to-end runs | WP-1.13 (record only) | Informal timings, not a pass or fail |
+| NFR-3, NFR-4, NFR-5 | None (Phases 5, 5, 2 and later) | none | none |
+| NFR-6 retention | Audit events are stored; retention is a placeholder and is not enforced | WP-1.5 | none |
+
+**Threats.** The Phase 1 cases cover threat classes A (tool poisoning), B (rug pull and drift), C (shadowing), E (excessive permissions), F (agent spoofing), G (authentication attacks, partly) and H (SSRF), plus the platform cases TC-Z2, TC-Z5, TC-Z6, TC-Z7, TC-Z10 and TC-Z20. Threat classes D, I to O and X2 to X14 have no Phase 1 case; their residual gaps are in `Plan/functional-spec.md` Section 5.
+
 Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py` checks that every control whose phase in `controls/catalogue.yaml` includes P1 has a row, that each row names an existing package, and that the phase column matches the catalogue.
 
 | Control | Title | Catalogue phase | Package(s) |
@@ -421,6 +478,9 @@ Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py
 - The roadmap duration for Phase 1 assumes more than two engineers (Section 6.1); confirm the team before committing dates.
 - Library and tool choices in Section 4.3 are unverified; verify and record in `docs/tech-evaluation.md` before pinning.
 - The roadmap milestone text for weeks 4 and 8 differs from Section 6.3; align the roadmap once this plan is approved.
+- FR-DRIFT-1 lists six hashed fields, while `docs/mcp-compatibility.md` Section 3A also hashes title and icons and WP-1.2 follows the longer list (IG-8); the specification needs the matching change and a decision by the security engineer.
+- The independent reviewer for R4 (Section 8.1) and the engineers for the lanes (Section 6.3) are not named; `docs/governance.md` Section 3 is still open.
+- The internal scanner endpoints (job claim and result) are not yet in `docs/api/openapi.yaml`; WP-1.6 adds them (IG-6).
 - Phase 5 has no requirement set (roadmap finding F3); Section 9 cannot plan it further.
 - Retagging of FR-SUP-1 and the Phase 1 acceptance of TC-Z6 are handled in the roadmap findings and the test catalogue, not here.
 
@@ -428,6 +488,7 @@ Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py
 
 | Version | Date | Change |
 |---|---|---|
+| 0.4 | 2026-11-22 | Medium gaps: IG-4 (identity-provider fetches through the guard, development exception entry); IG-6 (database job table, scanner identity, isolation and test); IG-7 (Phase 1 effect time bounded by the cache TTL, test that measures it); IG-8 (hashed field list and unknown-field rule, test vectors); IG-9 (per-transaction tenant setting, pooled-connection test); IG-11 (AC, NFR and threat tables, checked); IG-14 (review checkpoints R1 to R4); IG-15 (lane load and capacity, slip order, checked totals) |
 | 0.3 | 2026-11-22 | IG-10: ADR-3 row reworded (Phase 1 approves tool definitions and agent registrations). IG-12: control-to-package table, checked by `scripts/check_docs.py`. IG-13: documentation tasks added to WP-1.1, WP-1.5, WP-1.6, WP-1.9 and a runbook update task to WP-1.13. IG-16: dependency graph edges added (WP-1.5 to WP-1.4, ADR-3, ADR-6) and spike links explained. IG-17: seed fleet proposal in WP-1.12; migration tool, access layer and coverage thresholds recorded as PAR-O-26..28 |
 | 0.2 | 2026-11-22 | IG-1: FR-MCP-4 added to the traceability table (42 requirements). IG-2: WP-1.5 starts in week 1 so the schema freeze at the end of week 2 is achievable; dependency and lane text corrected |
 | 0.1 | 2026-11-22 | First version |

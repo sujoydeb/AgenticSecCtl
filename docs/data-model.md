@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.1 (design draft; closes gap A2 in `docs/reviewgap.md`) |
+| Version | 0.2 (design draft; closes gap A2 in `docs/reviewgap.md`; v0.2 adds `scan_jobs` and the per-transaction tenant rule for IG-6 and IG-9 of `docs/implementationgaps.md`) |
 | Depends on | `Plan/functional-spec.md` v0.7 (Section 7 entities, FR-DRIFT-1, FR-AUD-*, FR-DATA-*, FR-ADM-*), `Plan/architecture.md` v0.5 (Sections 4, 7, 12), `docs/deployment-architecture.md` v0.4 (Section 6), `controls/catalogue.md` v0.4 (CTL-03, CTL-13, CTL-22, CTL-29) |
 | Status | Logical model with illustrative PostgreSQL constraints. **Not validated, not executed**: no SQL has been run and no migration exists. The tenancy assumption is ADR-4 *proposed* (shared multi-tenant with row-level security), pending approval; column and table names may change at schema freeze. |
 
@@ -82,6 +82,7 @@ Types are indicative. `tenant_id uuid not null` is on every table below unless s
 |---|---|---|
 | `rule_sets` | version, content_hash, published_at | Scans record the rule-set version (FR-SCAN-2) |
 | `scans` | tool_version_id or server_id, rule_set_id, risk_score, started_at, finished_at, status | |
+| `scan_jobs` | server_id, kind (import, rescan), status (queued, claimed, done, failed), claimed_by (scanner identity), lease_expires_at, attempts, max_attempts, result_scan_id, failure_reason | Job queue for Phase 1 (no Redis or Kafka yet). Written only by the API; the scanner claims and completes jobs through the API (plan WP-1.7). A claim sets a lease; an expired lease returns the job to `queued` until `max_attempts`, then `failed` |
 | `findings` | scan_id, rule_id, severity (critical, high, medium, low, info), location, evidence_excerpt, confidence, status (open, accepted, fixed), waiver_expires_at | Evidence excerpts are short and redacted |
 | `incidents` | severity, status, opened_by, commander, summary | |
 | `incident_assets` | incident_id, asset_type, asset_id | Affected agents, servers, tools |
@@ -125,10 +126,13 @@ ALTER TABLE approvals ADD CONSTRAINT approvals_sod
 ALTER TABLE permissions ADD CONSTRAINT permissions_jit_expiry
   CHECK (grant_type <> 'jit' OR expires_at IS NOT NULL);
 
--- Row-level security on a tenant-owned table
+-- Row-level security on a tenant-owned table.
+-- The tenant is set per transaction (set_config('app.tenant_id', <id>, true), the same as SET LOCAL),
+-- never per session, so a pooled connection cannot carry a tenant into the next request.
+-- current_setting(..., true) returns NULL when unset, which matches no row (fail closed).
 ALTER TABLE tools ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON tools
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+  USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid);
 
 -- Audit table: application roles may only insert
 REVOKE UPDATE, DELETE, TRUNCATE ON audit_events FROM app_role;
