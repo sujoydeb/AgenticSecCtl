@@ -60,3 +60,25 @@ jobs:
         run: python3 -I -m unittest discover -s tests/unit -p 'test_policy_bundle.py'
       - name: Product schema (WP-1.5 migrations and tests)
         run: db/tests/run.sh
+
+  # The Python code checks and the service tests. Dependencies are installed from the hash-locked files only
+  # (--require-hashes), so a changed or missing hash fails the job. Needs Docker for PostgreSQL and OPA (images pinned by digest).
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PG_IMAGE: postgres@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
+    steps:
+      # actions/checkout: same pin as the docs job above
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Create a virtual environment and install the locked dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --require-hashes -r services/api/requirements-test.lock -r services/api/requirements-binary.lock
+          "$RUNNER_TEMP/venv/bin/pip" check
+      - name: Code checks and unit tests of every package
+        run: |
+          export PATH="$RUNNER_TEMP/venv/bin:$PATH"
+          sh scripts/check_all.sh
