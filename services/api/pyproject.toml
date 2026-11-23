@@ -7,7 +7,17 @@ name = "agenticsecctl-api"
 version = "0.0.0"
 description = "Management API and registry (agents, servers, tools, approvals, findings, incidents)"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "psycopg==3.3.9",        # LGPL-3.0-only, accepted (docs/governance.md Section 6); pure Python, needs libpq
+  "psycopg-pool==3.3.3",   # LGPL-3.0-only
+  "fastapi==0.165.0",      # MIT; brings starlette 1.10.x (BSD-3-Clause) and, in this version, opentelemetry-api
+  "pydantic==2.14.4",      # MIT
+]
+
+[project.optional-dependencies]
+# Bundles libpq so no system library is needed (development machines, some images). Also LGPL-3.0-only.
+binary = ["psycopg-binary==3.3.9"]
+test = ["httpx==0.28.1"]   # BSD-3-Clause; used only by the in-process test client
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agenticsecctl_api"]
