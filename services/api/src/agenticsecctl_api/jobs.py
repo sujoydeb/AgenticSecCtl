@@ -17,14 +17,13 @@ import hashlib
 import re
 from typing import Any
 
-import psycopg
 from agenticsecctl_common.contracts import SEVERITIES, risk_score
 from agenticsecctl_common.redact import escape_untrusted, redact
 
-from .db import Database
+from .db import Conn, Database
 from .errors import Conflict, Invalid, NotFound
 from .events import emit
-from .registry import Actor, _j, _one, _uuid, submit_definitions
+from .registry import Actor, _j, _one, _uuid, scalar, submit_definitions
 
 LEASE_SECONDS = 120          # proposal for the scan job lease (PAR-O-01 family), confirmed in the parameter register
 MAX_LEASE_SECONDS = 900
@@ -67,7 +66,7 @@ def tenant_of(dispatch: Database, job_id: str) -> str:
     return str(row["tenant_id"])
 
 
-def fail_exhausted(conn: psycopg.Connection, tenant: str, job_id: str) -> bool:
+def fail_exhausted(conn: Conn, tenant: str, job_id: str) -> bool:
     """In the job's tenant: fail a job whose last attempt's lease expired and record the event, atomically."""
     row = conn.execute("UPDATE scan_jobs SET status = 'failed', failure_reason = 'lease-expired' WHERE id = %s AND status = 'claimed' "
                        "AND lease_expires_at < now() AND attempts >= max_attempts RETURNING server_id", [job_id]).fetchone()
@@ -78,29 +77,29 @@ def fail_exhausted(conn: psycopg.Connection, tenant: str, job_id: str) -> bool:
 
 # ------------------------------------------------------------------ in the job's tenant
 
-def _held(conn: psycopg.Connection, job_id: str, worker: str) -> dict[str, Any]:
+def _held(conn: Conn, job_id: str, worker: str) -> dict[str, Any]:
     job = _one(conn, "SELECT * FROM scan_jobs WHERE id = %s FOR UPDATE", [_uuid(job_id, "job id")], "job")
-    live = conn.execute("SELECT %s::timestamptz > now() AS live", [job["lease_expires_at"]]).fetchone()["live"] if job["lease_expires_at"] else False  # type: ignore[index]
+    live = bool(scalar(conn, "SELECT %s::timestamptz > now() AS live", [job["lease_expires_at"]], "live")) if job["lease_expires_at"] else False
     if job["status"] != "claimed" or job["claimed_by"] != worker or not live:
         raise Conflict("the job is not held by this worker")
     return job
 
 
-def details(conn: psycopg.Connection, job_id: str) -> dict[str, Any]:
+def details(conn: Conn, job_id: str) -> dict[str, Any]:
     job = _one(conn, "SELECT * FROM scan_jobs WHERE id = %s", [job_id], "job")
     server = _one(conn, "SELECT id, namespace, url FROM mcp_servers WHERE id = %s", [job["server_id"]], "server")
     return {"job_id": str(job["id"]), "kind": job["kind"], "attempts": job["attempts"], "max_attempts": job["max_attempts"],
             "lease_expires_at": job["lease_expires_at"].isoformat(), "server_id": str(server["id"]), "namespace": server["namespace"], "url": server["url"]}
 
 
-def renew(conn: psycopg.Connection, job_id: str, worker: str, lease_seconds: int = LEASE_SECONDS) -> dict[str, Any]:
+def renew(conn: Conn, job_id: str, worker: str, lease_seconds: int = LEASE_SECONDS) -> dict[str, Any]:
     job = _held(conn, job_id, worker)
     lease = max(10, min(int(lease_seconds), MAX_LEASE_SECONDS))
     row = _one(conn, "UPDATE scan_jobs SET lease_expires_at = now() + make_interval(secs => %s) WHERE id = %s RETURNING lease_expires_at", [lease, job["id"]])
     return {"lease_expires_at": row["lease_expires_at"].isoformat()}
 
 
-def fail(conn: psycopg.Connection, job_id: str, worker: str, reason: Any, retryable: Any) -> dict[str, Any]:
+def fail(conn: Conn, job_id: str, worker: str, reason: Any, retryable: Any) -> dict[str, Any]:
     if not isinstance(reason, str) or not _REASON.match(reason) or not isinstance(retryable, bool):
         raise Invalid("reason must be a short code and retryable a boolean")
     job = _held(conn, job_id, worker)
@@ -140,7 +139,7 @@ def _check_result(result: Any) -> tuple[dict[str, str], list[dict[str, Any]]]:
     return rs, tools
 
 
-def complete(conn: psycopg.Connection, job_id: str, worker: str, result: Any) -> dict[str, Any]:
+def complete(conn: Conn, job_id: str, worker: str, result: Any) -> dict[str, Any]:
     job = _held(conn, job_id, worker)
     rs, tools = _check_result(result)
     server = _one(conn, "SELECT * FROM mcp_servers WHERE id = %s", [job["server_id"]], "server")

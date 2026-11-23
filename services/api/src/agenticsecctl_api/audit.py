@@ -12,16 +12,15 @@ from __future__ import annotations
 import datetime as dt
 from typing import Any
 
-import psycopg
 from agenticsecctl_common.auditchain import GENESIS_HASH, VerifyResult, compute_hash, verify_chain
 
-from .db import Database
+from .db import Conn, Database
 
 _OPTIONAL = ("subject_type", "subject_id", "decision", "policy_hash", "input_digest", "payload_digest", "redacted_excerpt")
 
 
 def _stamp(t: dt.datetime) -> str:
-    return t.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    return t.astimezone(dt.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 def _row_to_event(tenant: str, r: dict[str, Any]) -> dict[str, Any]:
@@ -71,10 +70,10 @@ def tenants_with_pending(db: Database, tenants: list[str]) -> list[str]:
     return out
 
 
-def rows(conn: psycopg.Connection, tenant: str) -> list[dict[str, Any]]:
+def rows(conn: Conn, tenant: str) -> list[dict[str, Any]]:
     return [_row_to_event(tenant, r) for r in conn.execute("SELECT * FROM audit_events ORDER BY seq")]
 
 
-def verify(conn: psycopg.Connection, tenant: str, expected_head: tuple[int, str] | None = None) -> VerifyResult:
+def verify(conn: Conn, tenant: str, expected_head: tuple[int, str] | None = None) -> VerifyResult:
     """Verify the tenant's whole chain as stored (POST /audit/verification). A failure is a finding for the caller to record."""
     return verify_chain(rows(conn, tenant), expected_head)

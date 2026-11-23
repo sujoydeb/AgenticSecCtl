@@ -33,7 +33,7 @@ def main(argv: list[str]) -> int:
             f.write_text(orig)
         killed = p.returncode != 0
         survived += not killed
-        tail = [l for l in (p.stdout + p.stderr).splitlines() if l.startswith(("FAILED", "FAIL:", "OK", "PASS:", "Ran "))]
+        tail = [line for line in (p.stdout + p.stderr).splitlines() if line.startswith(("FAILED", "FAIL:", "OK", "PASS:", "Ran "))]
         rows.append(f"| {m['label']} | `{m['file']}` | {'caught' if killed else '**SURVIVED**'} | {'; '.join(tail[-2:])} |")
     now = dt.datetime.now().astimezone()
     out = ROOT / "docs/testing/results" / f"{now.date()}-{wp.lower()}-mutations.md"

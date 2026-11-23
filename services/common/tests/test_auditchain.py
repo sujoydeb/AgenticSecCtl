@@ -4,9 +4,13 @@ import threading
 import unittest
 
 from agenticsecctl_common.auditchain import (
-    GENESIS_HASH, ChainWriter, EventError, compute_hash, verify_chain,
+    GENESIS_HASH,
+    ChainWriter,
+    EventError,
+    compute_hash,
+    verify_chain,
 )
-from agenticsecctl_common.replay import ReplayError, input_digest, replay_decisions
+from agenticsecctl_common.replay import input_digest, replay_decisions
 
 
 def _ev(i, tenant="t1", **kw):
@@ -28,7 +32,7 @@ class ChainBasics(unittest.TestCase):
         rows = _chain(5)
         self.assertEqual([r["seq"] for r in rows], [1, 2, 3, 4, 5])
         self.assertEqual(rows[0]["prev_hash"], GENESIS_HASH)
-        for a, b in zip(rows, rows[1:]):
+        for a, b in zip(rows, rows[1:], strict=False):
             self.assertEqual(b["prev_hash"], a["hash"])
         self.assertTrue(verify_chain(rows).ok)
 
@@ -200,6 +204,7 @@ class Replay(unittest.TestCase):
 class Vocabulary(unittest.TestCase):
     def test_equals_architecture_section_4_8(self):
         import pathlib
+
         from agenticsecctl_common.contracts import EVENT_TYPES
         text = (pathlib.Path(__file__).resolve().parents[3] / "Plan/architecture.md").read_text()
         block = text.split("Audit event vocabulary", 1)[1].split("Names are confirmed", 1)[0]

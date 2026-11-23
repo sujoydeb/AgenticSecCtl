@@ -65,9 +65,9 @@ def _check(name: str, f: Field, v: Any) -> str | None:
         return f"{name}: expected {f.type.__name__}"
     if f.secret and not (isinstance(v, str) and v.startswith(SECRET_PREFIX) and len(v) > len(SECRET_PREFIX)):
         return f"{name}: must be a secret reference ({SECRET_PREFIX}...), not a value"
-    if f.min is not None and v < f.min:
+    if f.min is not None and isinstance(v, (int, float)) and v < f.min:
         return f"{name}: below the minimum"
-    if f.max is not None and v > f.max:
+    if f.max is not None and isinstance(v, (int, float)) and v > f.max:
         return f"{name}: above the maximum"
     return None
 

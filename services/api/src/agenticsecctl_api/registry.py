@@ -20,12 +20,13 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-import psycopg
+from psycopg import errors as pgerr
+
 from agenticsecctl_common.canonical import canonicalize
 from agenticsecctl_common.http import Guard, SsrfRejected, validate_url
 from agenticsecctl_common.tooldef import tool_definition_hash
-from psycopg import errors as pgerr
 
+from .db import Conn
 from .errors import Conflict, Invalid, NotFound, SeparationOfDuties, SsrfRefused
 from .events import emit
 
@@ -63,14 +64,27 @@ def _j(v: Any) -> Any:
     return v
 
 
+def _row(row: Any) -> dict[str, Any]:
+    out: dict[str, Any] = _j(row)
+    return out
+
+
+def scalar(conn: Conn, sql: str, params: list[Any], key: str) -> Any:
+    """One value from an aggregate query, which always returns a row; an absent row is an internal error, not a default."""
+    row = conn.execute(sql, params).fetchone()  # type: ignore[call-overload,unused-ignore]
+    if row is None:
+        raise RuntimeError("aggregate query returned no row")
+    return row[key]
+
+
 def _text(value: Any, field: str, *, maximum: int = 200) -> str:
     if not isinstance(value, str) or not value.strip() or len(value) > maximum:
         raise Invalid(f"{field} must be a non-empty string of at most {maximum} characters")
     return value.strip()
 
 
-def _one(conn: psycopg.Connection, sql: str, params: list[Any], what: str = "object") -> dict[str, Any]:
-    row = conn.execute(sql, params).fetchone()  # type: ignore[arg-type]
+def _one(conn: Conn, sql: str, params: list[Any], what: str = "object") -> dict[str, Any]:
+    row = conn.execute(sql, params).fetchone()
     if row is None:
         raise NotFound(what)  # other tenants' rows are invisible, so they are "not found" too
     return row
@@ -83,7 +97,7 @@ def _uuid(value: Any, field: str) -> str:
         raise Invalid(f"{field} must be a UUID") from None
 
 
-def ensure_levels(conn: psycopg.Connection, tenant: str) -> str:
+def ensure_levels(conn: Conn, tenant: str) -> str:
     """Create the default classification levels if missing; return the id of Confidential (FR-DATA-1/2)."""
     for name, rank in DEFAULT_LEVELS:
         conn.execute("INSERT INTO classification_levels (tenant_id, name, rank) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
@@ -93,7 +107,7 @@ def ensure_levels(conn: psycopg.Connection, tenant: str) -> str:
 
 # ------------------------------------------------------------------ agents and servers
 
-def register_agent(conn: psycopg.Connection, actor: Actor, *, name: Any, identity_ref: Any, environment: Any = "dev",
+def register_agent(conn: Conn, actor: Actor, *, name: Any, identity_ref: Any, environment: Any = "dev",
                    criticality: Any = "medium") -> dict[str, Any]:
     name, identity_ref, environment = _text(name, "name"), _text(identity_ref, "identity_ref"), _text(environment, "environment", maximum=40)
     try:
@@ -105,14 +119,15 @@ def register_agent(conn: psycopg.Connection, actor: Actor, *, name: Any, identit
         raise Conflict("agent name or identity already registered") from None
     except pgerr.CheckViolation:
         raise Invalid("criticality is not valid") from None
-    assert agent is not None
+    if agent is None:
+        raise RuntimeError("INSERT returned no row")
     ap = _one(conn, "INSERT INTO approvals (tenant_id, subject_type, subject_id, requested_by) VALUES (%s, 'agent', %s, %s) RETURNING id",
               [actor.tenant, agent["id"], actor.user_id])
     emit(conn, actor.tenant, "approval.requested", actor.label, subject_type="agent", subject_id=agent["id"])
     return {**_j(agent), "approval_id": str(ap["id"])}
 
 
-def register_server(conn: psycopg.Connection, actor: Actor, *, namespace: Any, url: Any, guard: Guard,
+def register_server(conn: Conn, actor: Actor, *, namespace: Any, url: Any, guard: Guard,
                     environment: Any = "dev", criticality: Any = "medium") -> dict[str, Any]:
     namespace, url = _text(namespace, "namespace", maximum=60), _text(url, "url", maximum=2000)
     try:
@@ -129,33 +144,36 @@ def register_server(conn: psycopg.Connection, actor: Actor, *, namespace: Any, u
         raise Conflict("namespace already registered") from None
     except pgerr.CheckViolation:
         raise Invalid("namespace or criticality is not valid") from None
-    assert server is not None
+    if server is None:
+        raise RuntimeError("INSERT returned no row")
     emit(conn, actor.tenant, "server.registered", actor.label, subject_type="server", subject_id=server["id"])
-    return _j(server)
+    return _row(server)
 
 
-def enqueue_import(conn: psycopg.Connection, actor: Actor, server_id: str) -> dict[str, Any]:
+def enqueue_import(conn: Conn, actor: Actor, server_id: str) -> dict[str, Any]:
     server = _one(conn, "SELECT id FROM mcp_servers WHERE id = %s", [_uuid(server_id, "server id")], "server")
     job = conn.execute("INSERT INTO scan_jobs (tenant_id, server_id, kind) VALUES (%s, %s, 'import') RETURNING *",
                        [actor.tenant, server["id"]]).fetchone()
-    return _j(job)  # type: ignore[arg-type]
+    return _row(job)
 
 
 # ------------------------------------------------------------------ tool definitions
 
-def _registry_scan(conn: psycopg.Connection, tenant: str, server_id: Any) -> Any:
+def _registry_scan(conn: Conn, tenant: str, server_id: Any) -> Any:
     rs = conn.execute("SELECT id FROM rule_sets WHERE version = %s", [RULESET]).fetchone()
     if rs is None:
         rs = conn.execute("INSERT INTO rule_sets (tenant_id, version, content_hash) VALUES (%s, %s, %s) RETURNING id",
                           [tenant, RULESET, hashlib.sha256(RULESET.encode()).digest()]).fetchone()
-    assert rs is not None
+    if rs is None:
+        raise RuntimeError("INSERT returned no row")
     scan = conn.execute("INSERT INTO scans (tenant_id, server_id, rule_set_id, status, finished_at) VALUES (%s, %s, %s, 'completed', now()) RETURNING id",
                         [tenant, server_id, rs["id"]]).fetchone()
-    assert scan is not None
+    if scan is None:
+        raise RuntimeError("INSERT returned no row")
     return scan["id"]
 
 
-def record_finding(conn: psycopg.Connection, actor: Actor, *, tool_id: Any, scan_id: Any, rule_id: str, severity: str,
+def record_finding(conn: Conn, actor: Actor, *, tool_id: Any, scan_id: Any, rule_id: str, severity: str,
                    evidence: str | None = None, location: str | None = None) -> dict[str, Any]:
     try:
         row = conn.execute(
@@ -165,12 +183,13 @@ def record_finding(conn: psycopg.Connection, actor: Actor, *, tool_id: Any, scan
              (evidence or None) and evidence[:512]]).fetchone()
     except pgerr.CheckViolation:
         raise Invalid("severity is not valid") from None
-    assert row is not None
+    if row is None:
+        raise RuntimeError("INSERT returned no row")
     emit(conn, actor.tenant, "finding.created", actor.label, subject_type="tool", subject_id=tool_id, excerpt=f"{severity} {rule_id}")
-    return _j(row)
+    return _row(row)
 
 
-def submit_definitions(conn: psycopg.Connection, actor: Actor, server_id: str, tools: Any) -> list[dict[str, Any]]:
+def submit_definitions(conn: Conn, actor: Actor, server_id: str, tools: Any) -> list[dict[str, Any]]:
     """Register tool definitions as returned by a server; every new or changed one needs approval."""
     if not isinstance(tools, list) or not tools or len(tools) > 500:
         raise Invalid("tools must be a list of 1 to 500 tool objects")
@@ -198,7 +217,8 @@ def submit_definitions(conn: psycopg.Connection, actor: Actor, server_id: str, t
                 created = conn.execute("INSERT INTO tools (tenant_id, server_id, name, action_class, classification_level_id) "
                                        "SELECT %s, %s, %s, 'execute', id FROM classification_levels WHERE tenant_id = %s AND name = 'Confidential' RETURNING *",
                                        [actor.tenant, server["id"], name, actor.tenant]).fetchone()
-            assert created is not None
+            if created is None:
+                raise RuntimeError("INSERT returned no row")
             existing, state = created, "new"
         else:
             cur = None
@@ -239,11 +259,11 @@ def submit_definitions(conn: psycopg.Connection, actor: Actor, server_id: str, t
     return out
 
 
-def _duplicate_name(conn: psycopg.Connection, tool: dict[str, Any]) -> bool:
+def _duplicate_name(conn: Conn, tool: dict[str, Any]) -> bool:
     return conn.execute("SELECT 1 FROM tools WHERE name = %s AND server_id <> %s LIMIT 1", [tool["name"], tool["server_id"]]).fetchone() is not None
 
 
-def quarantine_tool(conn: psycopg.Connection, actor: Actor, tool_id: str, reason: Any) -> dict[str, Any]:
+def quarantine_tool(conn: Conn, actor: Actor, tool_id: str, reason: Any) -> dict[str, Any]:
     reason = _text(reason, "reason", maximum=300)
     tool = _one(conn, "SELECT * FROM tools WHERE id = %s FOR UPDATE", [_uuid(tool_id, "tool id")], "tool")
     if tool["status"] in ("approved", "pending"):
@@ -251,19 +271,19 @@ def quarantine_tool(conn: psycopg.Connection, actor: Actor, tool_id: str, reason
         emit(conn, actor.tenant, "tool.quarantined", actor.label, subject_type="tool", subject_id=tool["id"], excerpt=reason)
     elif tool["status"] != "quarantined":
         raise Conflict("tool is not in a state that can be quarantined")
-    return _j(_one(conn, "SELECT * FROM tools WHERE id = %s", [tool["id"]]))
+    return _row(_one(conn, "SELECT * FROM tools WHERE id = %s", [tool["id"]]))
 
 
 # ------------------------------------------------------------------ approvals
 
-def _blocking_findings(conn: psycopg.Connection, tenant: str, tool_id: Any) -> list[Any]:
+def _blocking_findings(conn: Conn, tenant: str, tool_id: Any) -> list[Any]:
     return [r["id"] for r in conn.execute(
         "SELECT f.id FROM findings f WHERE f.tenant_id = %s AND f.tool_id = %s AND f.severity = 'critical' AND f.status = 'open' "
         "AND NOT EXISTS (SELECT 1 FROM overrides o WHERE o.tenant_id = f.tenant_id AND o.finding_id = f.id "
         "AND o.effective_at IS NOT NULL AND o.expires_at > now())", [tenant, tool_id])]
 
 
-def decide_approval(conn: psycopg.Connection, actor: Actor, approval_id: str, *, decision: Any, action_class: Any = None,
+def decide_approval(conn: Conn, actor: Actor, approval_id: str, *, decision: Any, action_class: Any = None,
                     reason: Any = None, key: Any = None) -> dict[str, Any]:
     if decision not in ("approve", "reject"):
         raise Invalid("decision must be approve or reject")
@@ -271,11 +291,11 @@ def decide_approval(conn: psycopg.Connection, actor: Actor, approval_id: str, *,
     ap = _one(conn, "SELECT * FROM approvals WHERE id = %s FOR UPDATE", [_uuid(approval_id, "approval id")], "approval")
     if ap["status"] != "pending":
         if ap["decision_key"] == key and str(ap["decided_by"]) == actor.user_id:
-            return _j(ap)  # replay of the same decision
+            return _row(ap)  # replay of the same decision
         raise Conflict("approval was already decided or has expired")
     if str(ap["requested_by"]) == actor.user_id:
         raise SeparationOfDuties("requester cannot decide their own request")  # SoD-1
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     approve = decision == "approve"
     note = _text(reason, "reason", maximum=300) if reason else None
     if ap["subject_type"] == "agent":
@@ -298,7 +318,7 @@ def decide_approval(conn: psycopg.Connection, actor: Actor, approval_id: str, *,
             blocking = _blocking_findings(conn, actor.tenant, tool["id"])
             if blocking:
                 raise Conflict("critical findings block approval; an override with two distinct approvers is required")
-            n = conn.execute("SELECT coalesce(max(version_no), 0) + 1 AS n FROM tool_versions WHERE tool_id = %s", [tool["id"]]).fetchone()["n"]  # type: ignore[index]
+            n = scalar(conn, "SELECT coalesce(max(version_no), 0) + 1 AS n FROM tool_versions WHERE tool_id = %s", [tool["id"]], "n")
             try:
                 ver = _one(conn, "INSERT INTO tool_versions (tenant_id, tool_id, version_no, canonical_json, sha256, approved_by) "
                                  "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
@@ -318,10 +338,10 @@ def decide_approval(conn: psycopg.Connection, actor: Actor, approval_id: str, *,
     emit(conn, actor.tenant, "approval.granted" if approve else "approval.denied", actor.label, subject_type=ap["subject_type"], subject_id=ap["subject_id"], excerpt=note)
     if ap["subject_type"] == "tool":
         emit(conn, actor.tenant, "tool.approved" if approve else "tool.rejected", actor.label, subject_type="tool", subject_id=ap["subject_id"])
-    return _j(row)
+    return _row(row)
 
 
-def request_override(conn: psycopg.Connection, actor: Actor, approval_id: str, finding_id: str, justification: Any,
+def request_override(conn: Conn, actor: Actor, approval_id: str, finding_id: str, justification: Any,
                      expires_at: Any) -> dict[str, Any]:
     justification = _text(justification, "justification", maximum=500)
     if len(justification) < 10:
@@ -330,7 +350,7 @@ def request_override(conn: psycopg.Connection, actor: Actor, approval_id: str, f
         exp = dt.datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
     except ValueError:
         raise Invalid("expires_at must be an ISO 8601 time") from None
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     if exp.tzinfo is None or exp <= now or exp > now + dt.timedelta(days=MAX_OVERRIDE_DAYS):
         raise Invalid(f"expires_at must be in the future, with a time zone, within {MAX_OVERRIDE_DAYS} days")
     ap = _one(conn, "SELECT * FROM approvals WHERE id = %s", [_uuid(approval_id, "approval id")], "approval")
@@ -340,12 +360,12 @@ def request_override(conn: psycopg.Connection, actor: Actor, approval_id: str, f
     row = _one(conn, "INSERT INTO overrides (tenant_id, approval_id, finding_id, justification, expires_at, requested_by) "
                      "VALUES (%s, %s, %s, %s, %s, %s) RETURNING *", [actor.tenant, ap["id"], f["id"], justification, exp, actor.user_id])
     emit(conn, actor.tenant, "override.requested", actor.label, subject_type="finding", subject_id=f["id"])
-    return _j(row)
+    return _row(row)
 
 
-def approve_override(conn: psycopg.Connection, actor: Actor, override_id: str) -> dict[str, Any]:
+def approve_override(conn: Conn, actor: Actor, override_id: str) -> dict[str, Any]:
     ov = _one(conn, "SELECT * FROM overrides WHERE id = %s FOR UPDATE", [_uuid(override_id, "override id")], "override")
-    if ov["expires_at"] <= dt.datetime.now(dt.timezone.utc):
+    if ov["expires_at"] <= dt.datetime.now(dt.UTC):
         raise Conflict("override has expired")
     try:
         with conn.transaction():
@@ -355,7 +375,7 @@ def approve_override(conn: psycopg.Connection, actor: Actor, override_id: str) -
         raise Conflict("this approver already approved the override") from None
     except pgerr.IntegrityConstraintViolation:
         raise SeparationOfDuties("a requester cannot approve their own override") from None
-    n = conn.execute("SELECT count(DISTINCT approver_user_id) AS n FROM override_approvers WHERE override_id = %s", [ov["id"]]).fetchone()["n"]  # type: ignore[index]
+    n = scalar(conn, "SELECT count(DISTINCT approver_user_id) AS n FROM override_approvers WHERE override_id = %s", [ov["id"]], "n")
     if n >= 2 and ov["effective_at"] is None:
         conn.execute("UPDATE overrides SET effective_at = now() WHERE id = %s", [ov["id"]])
     emit(conn, actor.tenant, "override.approved", actor.label, subject_type="finding", subject_id=ov["finding_id"], excerpt=f"{n} of 2 approvers")
@@ -368,9 +388,13 @@ def _page(limit: Any) -> int:
     return max(1, min(int(limit), 200)) if str(limit).isdigit() else 50
 
 
-def list_rows(conn: psycopg.Connection, table: str, *, where: str = "TRUE", params: list[Any] | None = None, limit: Any = 50,
+LISTABLE = frozenset({"agents", "mcp_servers", "tools", "findings", "approvals", "classification_levels", "audit_events"})
+
+
+def list_rows(conn: Conn, table: str, *, where: str = "TRUE", params: list[Any] | None = None, limit: Any = 50,
               after: Any = None) -> list[dict[str, Any]]:
-    assert table in {"agents", "mcp_servers", "tools", "findings", "approvals", "classification_levels", "audit_events"}
+    if table not in LISTABLE:  # the name is interpolated into SQL below, so it must come from this fixed set
+        raise ValueError("table is not listable")
     sql = f"SELECT * FROM {table} WHERE {where}"  # noqa: S608 - table is from the fixed set above
     p = list(params or [])
     if after and table != "audit_events":
@@ -379,20 +403,21 @@ def list_rows(conn: psycopg.Connection, table: str, *, where: str = "TRUE", para
     sql += " ORDER BY seq" if table == "audit_events" else " ORDER BY id"
     sql += " LIMIT %s"
     p.append(_page(limit))
-    return [_j(r) for r in conn.execute(sql, p)]  # type: ignore[arg-type]
+    return [_j(r) for r in conn.execute(sql, p)]
 
 
-def get_row(conn: psycopg.Connection, table: str, row_id: str, what: str) -> dict[str, Any]:
-    assert table in {"agents", "mcp_servers", "tools"}
-    return _j(_one(conn, f"SELECT * FROM {table} WHERE id = %s", [_uuid(row_id, f"{what} id")], what))  # noqa: S608
+def get_row(conn: Conn, table: str, row_id: str, what: str) -> dict[str, Any]:
+    if table not in {"agents", "mcp_servers", "tools"}:
+        raise ValueError("table is not readable by id")
+    return _row(_one(conn, f"SELECT * FROM {table} WHERE id = %s", [_uuid(row_id, f"{what} id")], what))  # noqa: S608
 
 
-def tool_versions(conn: psycopg.Connection, tool_id: str) -> list[dict[str, Any]]:
+def tool_versions(conn: Conn, tool_id: str) -> list[dict[str, Any]]:
     _one(conn, "SELECT id FROM tools WHERE id = %s", [_uuid(tool_id, "tool id")], "tool")
     return [_j(r) for r in conn.execute("SELECT * FROM tool_versions WHERE tool_id = %s ORDER BY version_no", [tool_id])]
 
 
-def tool_diff(conn: psycopg.Connection, tool_id: str) -> dict[str, Any]:
+def tool_diff(conn: Conn, tool_id: str) -> dict[str, Any]:
     """Field-level difference between the approved definition and the one waiting for approval (FR-DRIFT-4)."""
     tool = _one(conn, "SELECT * FROM tools WHERE id = %s", [_uuid(tool_id, "tool id")], "tool")
     cur = conn.execute("SELECT canonical_json FROM tool_versions WHERE id = %s", [tool["current_version_id"]]).fetchone() if tool["current_version_id"] else None

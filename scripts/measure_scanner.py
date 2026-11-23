@@ -26,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "services/common/src"), str(ROOT / "services/scanner/src")]
-from agenticsecctl_scanner.rules import RANK, ruleset_hash, RULESET_VERSION  # noqa: E402
+from agenticsecctl_scanner.rules import RANK, RULESET_VERSION, ruleset_hash  # noqa: E402
 from agenticsecctl_scanner.scan import scan_tool  # noqa: E402
 
 FILES = {"dev": "tool_descriptions.jsonl", "holdout": "tool_descriptions_holdout.jsonl", "evasion": "tool_descriptions_evasion.jsonl"}
@@ -52,12 +52,16 @@ def run(name: str, details: bool) -> list[str]:
         if r["label"] == "poisoned":
             need = RANK.get(r["expected_min_severity"], 2)
             hit = flagged and RANK.get(res.max_severity, 0) >= need or (need <= RANK["low"] and RANK.get(res.max_severity, 0) >= need)
-            tp += hit; fn += not hit
-            per_cat.setdefault(r["category"], [0, 0]); per_cat[r["category"]][0] += hit; per_cat[r["category"]][1] += 1
+            tp += hit
+            fn += not hit
+            per_cat.setdefault(r["category"], [0, 0])
+            per_cat[r["category"]][0] += hit
+            per_cat[r["category"]][1] += 1
             if not hit:
                 miss.append((r["id"], r["category"], r["expected_min_severity"], res.max_severity, r["text"]))
         else:
-            fp += flagged; tn += not flagged
+            fp += flagged
+            tn += not flagged
             if flagged:
                 false_pos.append((r["id"], res.max_severity, [f.rule_id for f in res.findings][:4], r["text"]))
     P, R = (tp / (tp + fp) if tp + fp else float("nan")), (tp / (tp + fn) if tp + fn else float("nan"))

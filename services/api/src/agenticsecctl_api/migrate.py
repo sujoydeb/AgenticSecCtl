@@ -109,7 +109,7 @@ def up(conn: psycopg.Connection, migrations: list[Migration], target: int | None
                 continue
             try:
                 with conn.transaction():
-                    conn.execute(m.up)  # type: ignore[arg-type]
+                    conn.execute(m.up)  # type: ignore[arg-type,unused-ignore]
                     conn.execute("INSERT INTO schema_migrations (version, name, checksum) VALUES (%s, %s, %s)",
                                  [m.version, m.name, m.checksum])
             except psycopg.Error as exc:
@@ -136,7 +136,7 @@ def down(conn: psycopg.Connection, migrations: list[Migration], steps: int = 1) 
         for v in sorted(applied, reverse=True)[:steps]:
             try:
                 with conn.transaction():
-                    conn.execute(by_version[v].down)  # type: ignore[arg-type]
+                    conn.execute(by_version[v].down)  # type: ignore[arg-type,unused-ignore]
                     conn.execute("DELETE FROM schema_migrations WHERE version = %s", [v])
             except psycopg.Error as exc:
                 raise MigrationError(f"rollback of {v:04d} failed and was undone: {exc.diag.message_primary or type(exc).__name__}") from exc

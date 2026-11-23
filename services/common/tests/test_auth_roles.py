@@ -7,10 +7,19 @@ from datetime import UTC, datetime, timedelta
 
 from agenticsecctl_common.auth.jwt import Claims
 from agenticsecctl_common.auth.principals import (
-    IdentityDirectory, IdentityError, Kind, Principal,
+    IdentityDirectory,
+    IdentityError,
+    Kind,
+    Principal,
 )
 from agenticsecctl_common.auth.roles import (
-    ENDPOINTS, INTERNAL_ENDPOINTS, Forbidden, Role, RoleBinding, RoleBindings, authorize,
+    ENDPOINTS,
+    INTERNAL_ENDPOINTS,
+    Forbidden,
+    Role,
+    RoleBinding,
+    RoleBindings,
+    authorize,
 )
 
 NOW = datetime(2026, 11, 23, 12, tzinfo=UTC)

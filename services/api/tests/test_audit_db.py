@@ -3,10 +3,11 @@ import threading
 import unittest
 
 import psycopg
-from agenticsecctl_api import audit, events
-from agenticsecctl_api import registry as r
 from pg import docker_ok, login_dsn
 from world import GUARD, Env
+
+from agenticsecctl_api import audit, events
+from agenticsecctl_api import registry as r
 
 
 @unittest.skipUnless(docker_ok(), "Docker is not available")

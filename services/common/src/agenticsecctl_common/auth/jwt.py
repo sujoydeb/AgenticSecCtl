@@ -121,8 +121,10 @@ class TokenValidator:
         exp, iat, nbf = _num(p.get("exp")), _num(p.get("iat")), p.get("nbf")
         if exp is None or now >= exp + self._leeway:
             raise AuthError("exp")
-        if nbf is not None and ((_num(nbf) is None) or _num(nbf) > now + self._leeway):
-            raise AuthError("nbf")
+        if nbf is not None:
+            nbf_value = _num(nbf)
+            if nbf_value is None or nbf_value > now + self._leeway:
+                raise AuthError("nbf")
         if iat is None or iat > now + self._leeway:
             raise AuthError("iat")
         if exp - iat > self._max:

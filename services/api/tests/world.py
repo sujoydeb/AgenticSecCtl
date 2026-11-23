@@ -3,10 +3,11 @@ import uuid
 from dataclasses import dataclass
 
 import psycopg
+from pg import admin_dsn, login_dsn, new_database
+
 from agenticsecctl_api.db import Database
 from agenticsecctl_api.registry import Actor
 from agenticsecctl_common.http import Guard
-from pg import admin_dsn, login_dsn, new_database
 
 PUBLIC_IP = "93.184.216.34"
 GUARD = Guard(resolver=lambda host, port: [PUBLIC_IP], environment="test")

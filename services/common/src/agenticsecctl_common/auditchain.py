@@ -16,8 +16,9 @@ from __future__ import annotations
 import datetime as _dt
 import threading
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from .canonical import canonicalize, sha256_hex
 from .contracts import EVENT_TYPES
@@ -89,7 +90,7 @@ class ChainWriter:
                     raise EventError("event_id was already used with different content")
                 return dict(prior[1])
             rows = self._rows.setdefault(tenant, [])
-            row: dict[str, Any] = {k: v for k, v in event.items()}
+            row: dict[str, Any] = dict(event)
             if "redacted_excerpt" in row:
                 row["redacted_excerpt"] = escape_untrusted(redact(row["redacted_excerpt"]), EXCERPT_LIMIT)
             row["tenant_id"] = tenant
@@ -120,14 +121,14 @@ class VerifyResult:
     def as_event(self) -> dict[str, Any]:
         return {
             "event_id": str(uuid.uuid4()),
-            "occurred_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "occurred_at": _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "event_type": "audit.verify.failed", "actor": "system:verifier",
             "subject_type": "audit_chain", "subject_id": str(self.first_bad_seq),
             "decision": "fail", "redacted_excerpt": f"{self.kind}: {self.detail}",
         }
 
 
-def _fail(n: int, seq: int, kind: str, detail: str, tenant: str) -> VerifyResult:
+def _fail(n: int, seq: int | None, kind: str, detail: str, tenant: str) -> VerifyResult:
     return VerifyResult(False, n, seq, kind, detail, tenant)
 
 

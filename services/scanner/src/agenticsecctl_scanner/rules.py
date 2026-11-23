@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from agenticsecctl_common.canonical import canonicalize
@@ -166,7 +167,7 @@ _SENT = re.compile(r"(?<=[.!?;])\s+|\n+")
 CHUNK, OVERLAP, MAX_CHUNKS = 4000, 300, 600
 
 
-def _chunks(skeleton: str):
+def _chunks(skeleton: str) -> Iterator[str]:
     """Sentences, with any long run (no full stop for thousands of characters) cut into overlapping pieces so an
     instruction placed late in a run-on text is still scanned; the overlap keeps a phrase from falling in the gap."""
     count = 0

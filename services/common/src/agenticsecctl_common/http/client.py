@@ -1,6 +1,7 @@
 """Guarded HTTP client: validates every hop, connects to the pinned address."""
 from __future__ import annotations
 
+import contextlib
 import http.client
 import math
 import socket
@@ -35,19 +36,20 @@ class _Pinned(http.client.HTTPConnection):
         super().__init__(target.host, target.port, timeout=timeout)
         self._ip, self._connector = ip, connector
 
-    def connect(self):
-        self.sock = self.tracked = self._connector(self._ip, self.port, self.timeout)
+    def connect(self) -> None:
+        self.sock = self.tracked = self._connector(self._ip, self.port, float(self.timeout or 0))
 
 
 class _PinnedTLS(http.client.HTTPSConnection):
     def __init__(self, target: Target, ip: str, timeout: float, connector: Connector):
-        super().__init__(target.host, target.port, timeout=timeout, context=ssl.create_default_context())
+        self._tls = ssl.create_default_context()
+        super().__init__(target.host, target.port, timeout=timeout, context=self._tls)
         self._ip, self._connector = ip, connector
 
-    def connect(self):
-        raw = self._connector(self._ip, self.port, self.timeout)
+    def connect(self) -> None:
+        raw = self._connector(self._ip, self.port, float(self.timeout or 0))
         # certificate and SNI are checked against the host name, not the pinned address
-        self.sock = self.tracked = self._context.wrap_socket(raw, server_hostname=self.host)
+        self.sock = self.tracked = self._tls.wrap_socket(raw, server_hostname=self.host)
 
 
 def _kill(conn: http.client.HTTPConnection) -> None:
@@ -55,14 +57,15 @@ def _kill(conn: http.client.HTTPConnection) -> None:
     # http.client forgets conn.sock once a "Connection: close" response starts, so use the reference kept at connect time
     sock = getattr(conn, "tracked", None) or conn.sock
     if sock is not None:
-        try:
+        with contextlib.suppress(OSError):
             sock.shutdown(socket.SHUT_RDWR)
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             sock.close()
-        except OSError:
-            pass
+
+
+def _expire(conn: http.client.HTTPConnection, fired: threading.Event) -> None:
+    fired.set()
+    _kill(conn)
 
 
 class GuardedClient:
@@ -90,7 +93,7 @@ class GuardedClient:
             fired = threading.Event()
             timer = None
             if remaining is not None:
-                timer = threading.Timer(remaining, lambda c=conn, f=fired: (f.set(), _kill(c)))
+                timer = threading.Timer(remaining, _expire, args=(conn, fired))
                 timer.daemon = True
                 timer.start()
             try:

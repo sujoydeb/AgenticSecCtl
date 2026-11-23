@@ -12,6 +12,7 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Protocol
 
 from .principals import Kind, Principal
 
@@ -118,6 +119,12 @@ class RoleBinding:
     expires_at: datetime | None = None
 
 
+class RoleStore(Protocol):
+    """Anything that can say which roles a user holds right now; the API's is backed by the database."""
+
+    def active(self, tenant: str, user_id: str, now: datetime, resource: tuple[str, str] | None) -> set[Role]: ...
+
+
 class RoleBindings:
     """In-memory model of the ``role_bindings`` table; the database-backed store arrives with WP-1.6."""
 
@@ -139,7 +146,7 @@ class RoleBindings:
         return out
 
 
-def authorize(principal: Principal | None, method: str, path: str, store: RoleBindings, *,
+def authorize(principal: Principal | None, method: str, path: str, store: RoleStore, *,
               now: datetime, resource: tuple[str, str] | None = None) -> None:
     """Return silently when allowed, raise ``Forbidden`` otherwise. ``path`` is the route template."""
     ep = _BY_KEY.get((method, path))

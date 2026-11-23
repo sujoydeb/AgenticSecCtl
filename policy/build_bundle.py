@@ -77,7 +77,7 @@ def main() -> None:
         fail("--max-age must be an integer number of seconds")
     if not 0 < max_age <= MAX_AGE_LIMIT:
         fail(f"--max-age must be between 1 and {MAX_AGE_LIMIT} seconds")
-    generated = a.generated_at or dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    generated = a.generated_at or dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     try:
         dt.datetime.strptime(generated, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:

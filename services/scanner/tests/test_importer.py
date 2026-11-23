@@ -1,4 +1,5 @@
 """WP-1.7 tests: the hardened importer against hostile servers (TC-Z2, AC-8, FR-SCAN-6)."""
+import contextlib
 import json
 import random
 import threading
@@ -9,7 +10,14 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from agenticsecctl_common.http import ExceptionEntry, Guard, GuardedClient
-from agenticsecctl_scanner.importer import ImportFailed, ImportLimits, check_depth, fetch_tool_definitions, parse_json, parse_response
+from agenticsecctl_scanner.importer import (
+    ImportFailed,
+    ImportLimits,
+    check_depth,
+    fetch_tool_definitions,
+    parse_json,
+    parse_response,
+)
 
 NOW = datetime(2026, 11, 23, tzinfo=UTC)
 TOOL = lambda n: {"name": n, "description": "d", "inputSchema": {"type": "object"}}  # noqa: E731
@@ -36,10 +44,8 @@ class Hostile(BaseHTTPRequestHandler):
         req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
         Hostile.seen.append((self.path, dict(self.headers), req))
         rid, cursor, mode = req["id"], req.get("params", {}).get("cursor"), Hostile.mode
-        try:
+        with contextlib.suppress(BrokenPipeError, ConnectionResetError):
             self.route(rid, cursor, mode)
-        except (BrokenPipeError, ConnectionResetError):
-            pass
 
     def route(self, rid, cursor, mode):
         if mode == "normal":
@@ -200,7 +206,7 @@ class Importer(unittest.TestCase):
 
     def test_refused_addresses_are_not_contacted(self):
         c = GuardedClient(Guard(resolver=lambda h, p: ["10.0.0.5"], environment="test", clock=lambda: NOW))
-        for url in ("http://internal.example.test/mcp", "http://169.254.169.254/", "http://[::1]/", "http://2130706433:%d/" % self.port):
+        for url in ("http://internal.example.test/mcp", "http://169.254.169.254/", "http://[::1]/", f"http://2130706433:{self.port}/"):
             with self.assertRaises(ImportFailed) as cm:
                 fetch_tool_definitions(c, url)
             self.assertTrue(cm.exception.reason.startswith("guard:"), url)
@@ -242,7 +248,7 @@ class Parsing(unittest.TestCase):
         seeds = [b'{"jsonrpc":"2.0","id":1,"result":{"tools":[{"name":"a","description":"d","inputSchema":{"type":"object","properties":{"p":{"type":"string"}}}}]}}',
                  b'data: {"jsonrpc":"2.0","id":1,"result":{"tools":[]}}\n\n']
         start = time.monotonic()
-        for i in range(1500):
+        for _ in range(1500):
             b = bytearray(rnd.choice(seeds))
             for _ in range(rnd.randint(0, 6)):
                 op = rnd.random()

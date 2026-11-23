@@ -12,11 +12,15 @@ extend-exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "C4"]
-ignore = ["S101"]          # asserts are fine in tests; production code uses explicit errors
+# S101: asserts are fine in tests; production code uses explicit errors (not enforced by ruff, checked in review).
+# E501: line length is not enforced. SQL statements, regular-expression tables and evidence strings are kept on one
+# line because wrapping them hides what they match; there is no formatter in the project to wrap them consistently.
+ignore = ["S101", "E501"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S105", "S106", "S108", "S310", "S104"]   # dummy secrets, local test servers
-"tests/**" = ["S603", "S105", "S106"]
+"**/tests/**" = ["S105", "S106", "S108", "S310", "S104", "E701", "E702", "E731", "S311", "S603", "S607", "S602", "B023"]   # dummy secrets, local test servers, dense one-line test steps, seeded randomness, docker CLI calls
+"tests/**" = ["S603", "S607", "S602", "S105", "S106", "S108", "S104", "S310", "S311", "E701", "E702", "E731", "B023"]
+"scripts/**" = ["S602", "S603", "S607"]   # developer scripts that run commands on purpose
 
 [tool.mypy]
 python_version = "3.12"

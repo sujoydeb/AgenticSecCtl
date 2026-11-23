@@ -10,16 +10,16 @@ import uuid
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "services/common/tests"))
 
-from agenticsecctl_api import audit  # noqa: E402
+from pg import docker_ok  # noqa: E402
+from starlette.testclient import TestClient  # noqa: E402
+from world import GUARD, Env  # noqa: E402
+
 from agenticsecctl_api.app import create_app  # noqa: E402
 from agenticsecctl_api.roles_db import user_lookup  # noqa: E402
 from agenticsecctl_common.auth.jwt import TokenValidator  # noqa: E402
 from agenticsecctl_common.auth.principals import IdentityDirectory  # noqa: E402
 from agenticsecctl_common.auth.rsa import RsaPublicKey  # noqa: E402
-from pg import docker_ok  # noqa: E402
 from rsa_helper import Key, make_token  # noqa: E402
-from starlette.testclient import TestClient  # noqa: E402
-from world import GUARD, Env  # noqa: E402
 
 ISS, AUD = "https://idp.example.test/realms/dev", "https://api.example.test"
 KEY = Key(2048, "k1")
@@ -267,7 +267,7 @@ class Lifecycle(Api):
             fid = c.execute("INSERT INTO findings (tenant_id, scan_id, tool_id, rule_id, severity) VALUES (%s, %s, %s, 'R-X', 'critical') RETURNING id", [self.t.id, sc, tool["tool_id"]]).fetchone()[0]
         path, body = f"/approvals/{tool['approval_id']}/decision", {"decision": "approve", "action_class": "read"}
         self.assertEqual(self.call("POST", path, "amir", body).status_code, 409)
-        exp = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=3)).isoformat()
+        exp = (dt.datetime.now(dt.UTC) + dt.timedelta(days=3)).isoformat()
         ov = self.call("POST", f"/approvals/{tool['approval_id']}/overrides", "eve", {"finding_id": str(fid), "justification": "accepted for the pilot by the board", "expires_at": exp})
         self.assertEqual(ov.status_code, 201, ov.text)
         oid = ov.json()["id"]

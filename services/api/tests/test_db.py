@@ -4,8 +4,9 @@ import unittest
 import uuid
 
 import psycopg
-from agenticsecctl_api.db import Database, TenantError, parse_tenant
 from pg import admin_dsn, docker_ok, login_dsn, new_database
+
+from agenticsecctl_api.db import Database, TenantError, parse_tenant
 
 A, B = str(uuid.uuid4()), str(uuid.uuid4())
 

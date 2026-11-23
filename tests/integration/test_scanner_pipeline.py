@@ -14,6 +14,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 for p in ("services/common/src", "services/api/src", "services/scanner/src", "services/common/tests", "services/api/tests"):
     sys.path.insert(0, str(ROOT / p))
 
+from pg import docker_ok  # noqa: E402
+from starlette.testclient import TestClient  # noqa: E402
+from world import Env  # noqa: E402
+
 from agenticsecctl_api import jobs  # noqa: E402
 from agenticsecctl_api.app import create_app  # noqa: E402
 from agenticsecctl_api.roles_db import user_lookup  # noqa: E402
@@ -23,10 +27,7 @@ from agenticsecctl_common.auth.rsa import RsaPublicKey  # noqa: E402
 from agenticsecctl_common.http import ExceptionEntry, Guard, GuardedClient  # noqa: E402
 from agenticsecctl_scanner.importer import ImportLimits  # noqa: E402
 from agenticsecctl_scanner.worker import ApiError, JobApi, LeaseLost, run_once  # noqa: E402
-from pg import docker_ok  # noqa: E402
 from rsa_helper import Key, make_token  # noqa: E402
-from starlette.testclient import TestClient  # noqa: E402
-from world import Env  # noqa: E402
 
 ISS, AUD, KEY = "https://idp.example.test/realms/dev", "https://api.example.test", Key(2048, "k1")
 NOW = datetime(2026, 11, 23, tzinfo=UTC)

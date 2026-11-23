@@ -8,6 +8,7 @@ trace. Errors are RFC 9457 problem details from the fixed catalogue; no input te
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import uuid
@@ -15,19 +16,20 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from agenticsecctl_common.auth.jwt import AuthError, TokenValidator
-from agenticsecctl_common.auth.principals import IdentityDirectory, IdentityError, Kind, Principal
-from agenticsecctl_common.auth.roles import Forbidden, authorize
-from agenticsecctl_common.errors import CATALOGUE, problem_details
-from agenticsecctl_common.http import Guard
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 from starlette.concurrency import run_in_threadpool
 
+from agenticsecctl_common.auth.jwt import AuthError, TokenValidator
+from agenticsecctl_common.auth.principals import IdentityDirectory, IdentityError, Kind, Principal
+from agenticsecctl_common.auth.roles import Forbidden, authorize
+from agenticsecctl_common.errors import CATALOGUE, problem_details
+from agenticsecctl_common.http import Guard
+
 from . import audit, jobs, registry
 from .db import Database
-from .errors import DomainError, Invalid
+from .errors import DomainError
 from .events import emit
 from .registry import Actor
 from .roles_db import DbRoleStore
@@ -298,10 +300,8 @@ def create_app(*, db: Database, audit_db: Database | None, validator: TokenValid
             return {"ok": v.ok, "checked": v.checked, "first_bad_seq": v.first_bad_seq, "kind": v.kind}
         if audit_db is not None:
             principal_tenant = None
-            try:
+            with contextlib.suppress(AuthError, IdentityError):  # an unauthenticated caller is refused by handle() below
                 principal_tenant = authenticate(request).tenant
-            except (AuthError, IdentityError):
-                pass
             if principal_tenant:  # chain what is waiting, so the check covers every event so far
                 await run_in_threadpool(drain, principal_tenant)
         return await handle(request, "POST", "/audit/verification", fn, write=True, pass_body=False)
@@ -341,7 +341,8 @@ def create_app(*, db: Database, audit_db: Database | None, validator: TokenValid
     @app.post("/v1/internal/scan-jobs/claim")
     async def job_claim(request: Request) -> JSONResponse:
         def fn(p: Principal, b: ClaimIn) -> Any:
-            assert dispatch_db is not None
+            if dispatch_db is None:
+                raise RuntimeError("dispatcher is not configured")
             worker = jobs.worker_id(p.client_id, b.worker_id)
             for e in jobs.exhausted(dispatch_db):  # jobs that ran out of attempts are failed before the next claim
                 with db.transaction(e["tenant_id"]) as c:
@@ -354,7 +355,8 @@ def create_app(*, db: Database, audit_db: Database | None, validator: TokenValid
         return await handle_internal(request, "POST", "/internal/scan-jobs/claim", fn, model=ClaimIn)
 
     def in_job_tenant(job_id: str, work: Callable[[Any], Any]) -> Any:
-        assert dispatch_db is not None
+        if dispatch_db is None:
+            raise RuntimeError("dispatcher is not configured")
         with db.transaction(jobs.tenant_of(dispatch_db, job_id)) as c:
             return work(c)
 

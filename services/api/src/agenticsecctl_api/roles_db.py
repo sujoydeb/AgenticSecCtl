@@ -1,6 +1,7 @@
 """Role bindings read from the ``role_bindings`` table (CTL-23), tenant-scoped by row-level security."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 
 from agenticsecctl_common.auth.roles import Role
@@ -28,7 +29,7 @@ class DbRoleStore:
         return out
 
 
-def user_lookup(db: Database):
+def user_lookup(db: Database) -> Callable[[str, str], str | None]:
     """The (tenant, subject) -> user id function for ``IdentityDirectory``; only active users resolve."""
     def lookup(tenant: str, subject: str) -> str | None:
         try:

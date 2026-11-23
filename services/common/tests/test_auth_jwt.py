@@ -1,5 +1,4 @@
 """WP-1.10 tests: token validation (FR-AUTHN-1, TC-F2, TC-G2) and key-set handling."""
-import base64
 import hashlib
 import hmac
 import http.server
@@ -44,7 +43,7 @@ def _pub(k):
 
 
 def validator(src=None, **kw):
-    args = dict(issuer=ISS, audience=AUD, keys=src or Source(KEY), clock=lambda: NOW)
+    args = {"issuer": ISS, "audience": AUD, "keys": src or Source(KEY), "clock": lambda: NOW}
     args.update(kw)
     return TokenValidator(**args)
 

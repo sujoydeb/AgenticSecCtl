@@ -109,9 +109,10 @@ class IdentityDirectory:
             return Principal(Kind.SERVICE, claims.subject, client, service=self._services[client])
         if client not in self._user_clients:
             raise IdentityError("unknown-client")
-        tenant = claims.raw.get("tenant_id")
-        if not isinstance(tenant, str) or not tenant:
+        claimed = claims.raw.get("tenant_id")
+        if not isinstance(claimed, str) or not claimed:
             raise IdentityError("unknown-user")
+        tenant = claimed
         user_id = self._users.get((tenant, claims.subject))
         if user_id is None and self._user_lookup is not None:
             user_id = self._user_lookup(tenant, claims.subject)

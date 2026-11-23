@@ -14,8 +14,9 @@ import json
 import logging
 import re
 import uuid
+from collections.abc import Iterator
 from datetime import UTC, datetime
-from typing import Any
+from typing import IO, Any, Literal
 
 from .redact import escape_untrusted, redact
 
@@ -33,7 +34,7 @@ def new_correlation_id() -> str:
 
 
 @contextlib.contextmanager
-def correlation(cid: str, tenant: str | None = None):
+def correlation(cid: str, tenant: str | None = None) -> Iterator[None]:
     t1, t2 = _cid.set(cid), _tenant.set(tenant)
     try:
         yield
@@ -76,7 +77,7 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def configure_logging(service: str, version: str, level: int = logging.INFO, stream=None) -> None:
+def configure_logging(service: str, version: str, level: int = logging.INFO, stream: IO[str] | None = None) -> None:
     h = logging.StreamHandler(stream)
     h.setFormatter(JsonFormatter(service, version))
     root = logging.getLogger()
@@ -97,7 +98,8 @@ def record_span_attrs(attrs: dict[str, Any]) -> dict[str, Any]:
 
 class Span:
     def __init__(self, name: str, attrs: dict[str, Any] | None = None):
-        self.name, self.attrs, self._otel = name, record_span_attrs(attrs or {}), None
+        self.name, self.attrs = name, record_span_attrs(attrs or {})
+        self._otel: Any = None
 
     def set(self, key: str, value: Any) -> None:
         self.attrs.update(record_span_attrs({key: value}))
@@ -108,7 +110,7 @@ class Span:
             self._otel.__enter__()
         return self
 
-    def __exit__(self, *exc) -> bool:
+    def __exit__(self, *exc: Any) -> Literal[False]:
         if self._otel is not None:  # pragma: no cover
             self._otel.__exit__(*exc)
         return False
@@ -120,8 +122,8 @@ def bootstrap(*, service: str, version: str, exporter_endpoint: str | None) -> d
     if not exporter_endpoint:
         return {"backend": "none"}
     try:  # pragma: no cover - needs the SDK
-        from opentelemetry import trace
-        _tracer = trace.get_tracer(service, version)
+        from opentelemetry import trace  # type: ignore[import-not-found,unused-ignore]
+        _tracer = trace.get_tracer(service, version)  # type: ignore[attr-defined,unused-ignore]
         return {"backend": "opentelemetry"}
     except ImportError:
         return {"backend": "none"}

@@ -11,17 +11,21 @@ from __future__ import annotations
 import contextlib
 import uuid
 from collections.abc import Iterator
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+
+# Every connection from this module returns rows as dictionaries (dict_row).
+Conn = psycopg.Connection[dict[str, Any]]
 
 
 class TenantError(ValueError):
     pass
 
 
-def _reset(conn: psycopg.Connection) -> None:
+def _reset(conn: Conn) -> None:
     # DISCARD ALL cannot run inside a transaction block, so run it in autocommit mode and switch back.
     conn.autocommit = True
     try:
@@ -42,20 +46,20 @@ def parse_tenant(tenant: object) -> str:
 
 class Database:
     def __init__(self, dsn: str, *, min_size: int = 1, max_size: int = 10, timeout: float = 5.0):
-        self._pool = ConnectionPool(dsn, min_size=min_size, max_size=max_size, timeout=timeout, open=False,
+        self._pool: ConnectionPool[Conn] = ConnectionPool(dsn, min_size=min_size, max_size=max_size, timeout=timeout, open=False,
                                     reset=_reset, kwargs={"row_factory": dict_row, "autocommit": False,
                                             "prepare_threshold": None})  # DISCARD ALL drops server-side prepared statements
         self._pool.open(wait=True, timeout=timeout)
 
     @contextlib.contextmanager
-    def transaction(self, tenant: object) -> Iterator[psycopg.Connection]:
+    def transaction(self, tenant: object) -> Iterator[Conn]:
         tid = parse_tenant(tenant)
         with self._pool.connection() as conn, conn.transaction():
             conn.execute("SELECT set_config('app.tenant_id', %s, true)", [tid])
             yield conn
 
     @contextlib.contextmanager
-    def unscoped(self) -> Iterator[psycopg.Connection]:
+    def unscoped(self) -> Iterator[Conn]:
         """A transaction with no tenant: row-level security shows nothing. For health checks and tests."""
         with self._pool.connection() as conn, conn.transaction():
             yield conn

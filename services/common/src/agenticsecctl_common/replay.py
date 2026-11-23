@@ -4,8 +4,9 @@ replayed (missing bundle, digest mismatch, evaluator error) counts as a
 mismatch, never as a skip."""
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterable
+from typing import Any
 
 from .canonical import canonicalize, sha256_hex
 
@@ -29,21 +30,25 @@ class ReplayReport:
 
 
 def replay_decisions(records: Iterable[dict[str, Any]],
-                     bundles: dict[str, Callable[[dict], dict]]) -> ReplayReport:
+                     bundles: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]) -> ReplayReport:
     rep = ReplayReport()
     for rec in records:
         rep.checked += 1
-        def bad(reason: str) -> None:
+
+        def bad(reason: str, rec: dict[str, Any] = rec) -> None:  # bound per record, not per loop variable
             rep.mismatches.append({"record": rec.get("input_digest"), "reason": reason})
-        evaluator = bundles.get(rec.get("policy_hash"))
+        evaluator = bundles.get(str(rec.get("policy_hash")))
         if evaluator is None:
-            bad("policy bundle not available for the stored hash"); continue
+            bad("policy bundle not available for the stored hash")
+            continue
         try:
             if input_digest(rec["input"]) != rec["input_digest"]:
-                bad("input digest does not match the stored input"); continue
+                bad("input digest does not match the stored input")
+                continue
             got = "allow" if evaluator(rec["input"]).get("allow") is True else "deny"
         except Exception as exc:  # fail closed: an unreplayable record is a failure
-            bad(f"replay failed: {type(exc).__name__}"); continue
+            bad(f"replay failed: {type(exc).__name__}")
+            continue
         if got != rec.get("decision"):
             bad(f"replayed {got}, stored {rec.get('decision')}")
     return rep

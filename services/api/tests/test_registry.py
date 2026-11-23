@@ -3,11 +3,12 @@ import datetime as dt
 import unittest
 
 import psycopg
+from pg import docker_ok, login_dsn
+from world import GUARD, Env
+
 from agenticsecctl_api import registry as r
 from agenticsecctl_api.errors import Conflict, Invalid, NotFound, SeparationOfDuties, SsrfRefused
 from agenticsecctl_common.tooldef import tool_definition_hash
-from pg import docker_ok, login_dsn
-from world import GUARD, Env
 
 TOOL = {"name": "read_doc", "description": "Read a document", "inputSchema": {"type": "object", "properties": {"path": {"type": "string"}}}}
 
@@ -276,7 +277,7 @@ class CriticalFindings(Base):
         with self.env.app.transaction(self.t.id) as c:
             scan = r._registry_scan(c, self.t.id, self.s["id"])
             self.f = r.record_finding(c, self.eve, tool_id=self.tid, scan_id=scan, rule_id="R-OVERRIDE-PHRASE", severity="critical", evidence="ignore previous instructions")
-        self.exp = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=7)).isoformat()
+        self.exp = (dt.datetime.now(dt.UTC) + dt.timedelta(days=7)).isoformat()
 
     def test_a_critical_finding_blocks_approval(self):
         with self.assertRaises(Conflict) as cm:
@@ -320,7 +321,7 @@ class CriticalFindings(Base):
 
     def test_override_request_validation(self):
         for kw in ({"justification": "short"}, {"expires_at": "yesterday"}, {"expires_at": "2000-01-01T00:00:00+00:00"},
-                   {"expires_at": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=400)).isoformat()},
+                   {"expires_at": (dt.datetime.now(dt.UTC) + dt.timedelta(days=400)).isoformat()},
                    {"expires_at": (dt.datetime.now() + dt.timedelta(days=2)).isoformat()}):  # no time zone
             args = {"justification": "a long enough reason", "expires_at": self.exp, **kw}
             with self.assertRaises(Invalid, msg=str(kw)):
@@ -372,8 +373,19 @@ class TenantIsolation(Base):
         first = self.run_as(r.list_rows, "agents", limit=2)
         second = self.run_as(r.list_rows, "agents", limit=2, after=first[-1]["id"])
         self.assertEqual((len(first), len(second)), (2, 2))
-        self.assertTrue(set(x["id"] for x in first).isdisjoint(x["id"] for x in second))
+        self.assertTrue({x["id"] for x in first}.isdisjoint(x["id"] for x in second))
         self.assertEqual(len(self.run_as(r.list_rows, "agents", limit=9999)), 5)
+
+
+class TableNameGuard(unittest.TestCase):
+    """The table name is interpolated into SQL, so the guard must be a real check (an assert disappears under python -O)."""
+
+    def test_only_fixed_tables_are_accepted(self):
+        for bad in ("agents; DROP TABLE tenants", "users", "", "AGENTS", "agents --", None):
+            with self.assertRaises(ValueError, msg=str(bad)):
+                r.list_rows(None, bad)  # refused before the connection is touched
+            with self.assertRaises(ValueError, msg=str(bad)):
+                r.get_row(None, bad, "00000000-0000-0000-0000-000000000000", "x")
 
 
 if __name__ == "__main__":

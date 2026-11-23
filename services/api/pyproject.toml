@@ -17,7 +17,8 @@ dependencies = [
 [project.optional-dependencies]
 # Bundles libpq so no system library is needed (development machines, some images). Also LGPL-3.0-only.
 binary = ["psycopg-binary==3.3.9"]
-test = ["httpx==0.28.1"]   # BSD-3-Clause; used only by the in-process test client
+test = ["httpx==0.28.1"]
+dev = ["ruff==0.17.6", "mypy==2.4.1"]   # lint and type gates   # BSD-3-Clause; used only by the in-process test client
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agenticsecctl_api"]

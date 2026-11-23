@@ -45,6 +45,8 @@ def _number(v: int | float) -> str:
     t = Decimal(repr(abs(v))).as_tuple()
     digits = "".join(map(str, t.digits)).rstrip("0") or "0"
     # value = 0.DIGITS * 10**n  (ECMAScript's k, n)
+    if not isinstance(t.exponent, int):  # NaN and infinity were refused above; this keeps the type honest
+        raise ValueError("not a finite number")
     n = len(t.digits) + t.exponent
     k = len(digits)
     if k <= n <= 21:

@@ -14,6 +14,7 @@ source archive), which is what ``pip install --require-hashes`` needs on any pla
 Install:  pip install --require-hashes -r services/api/requirements.lock
 Test:     pip install --require-hashes -r services/api/requirements-test.lock
 Optional: pip install --require-hashes -r services/api/requirements-binary.lock   (bundles libpq; LGPL-3.0-only)
+Dev/CI:   pip install --require-hashes -r services/api/requirements-dev.lock -r services/api/requirements-binary.lock   (adds ruff and mypy)
 """
 from __future__ import annotations
 
@@ -33,6 +34,7 @@ OUT = ROOT / "services/api"
 RUNTIME = ["psycopg==3.3.9", "psycopg-pool==3.3.3", "fastapi==0.165.0", "pydantic==2.14.4"]
 TEST = ["httpx==0.28.1"]
 BINARY = ["psycopg-binary==3.3.9"]
+DEV = ["ruff==0.17.6", "mypy==2.4.1"]   # lint and type check gates (scripts/check_all.sh)
 # Targets the lock must work for: the supported Python range, Linux (CI and images) and the macOS development machines.
 ENVS = [
     {"python_version": v, "python_full_version": f"{v}.0", "sys_platform": sp, "platform_system": ps, "os_name": "posix",
@@ -107,8 +109,14 @@ def hashes(name: str, version: str) -> list[str]:
 
 def licence(name: str, version: str) -> str:
     info = fetch(name, version)["info"]
-    return info.get("license_expression") or (info.get("license") or "").splitlines()[0][:60] or \
-        "; ".join(c.split("::")[-1].strip() for c in info.get("classifiers", []) if c.startswith("License ::")) or "UNKNOWN"
+    expression = info.get("license_expression")
+    if expression:
+        return str(expression)
+    first_line = (info.get("license") or "").strip().splitlines()
+    if first_line:
+        return first_line[0][:60]
+    classifiers = "; ".join(c.split("::")[-1].strip() for c in info.get("classifiers", []) if c.startswith("License ::"))
+    return classifiers or "UNKNOWN"
 
 
 def render(title: str, pins: dict[str, str], include: str | None = None) -> str:
@@ -129,10 +137,13 @@ def main() -> int:
     full = resolve(RUNTIME + TEST)
     test_only = {k: v for k, v in full.items() if k not in runtime}
     binary = {k: v for k, v in resolve(BINARY).items() if k.startswith("psycopg-binary")}
+    dev_all = resolve(RUNTIME + TEST + DEV)
+    dev_only = {k: v for k, v in dev_all.items() if k not in full}
     files = {
         "requirements.lock": render("Locked runtime dependencies of the api package", runtime),
         "requirements-test.lock": render("Locked test-only additions (httpx and what it needs) on top of requirements.lock", test_only, "requirements.lock"),
         "requirements-binary.lock": render("Optional: psycopg-binary (bundles libpq; LGPL-3.0-only)", binary),
+        "requirements-dev.lock": render("Developer and CI tools (ruff, mypy and what mypy needs) on top of requirements-test.lock", dev_only, "requirements-test.lock"),
     }
     if "--check" in sys.argv:
         bad = [n for n, text in files.items() if (OUT / n).read_text() != text]
@@ -141,7 +152,7 @@ def main() -> int:
     for n, text in files.items():
         (OUT / n).write_text(text)
     print("| Package | Version | Licence | In |\n|---|---|---|---|")
-    for scope, pins in (("runtime", runtime), ("test", test_only), ("binary", binary)):
+    for scope, pins in (("runtime", runtime), ("test", test_only), ("binary", binary), ("dev", dev_only)):
         for n, v in sorted(pins.items()):
             print(f"| {n} | {v} | {licence(n, v)} | {scope} |")
     return 0

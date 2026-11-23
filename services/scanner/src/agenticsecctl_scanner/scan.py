@@ -6,6 +6,7 @@ fetches a URL it finds (TC-A3): it only reads the text.
 from __future__ import annotations
 
 import ipaddress
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -13,9 +14,18 @@ from typing import Any
 from . import normalise as nm
 from .classifier import Classifier
 from .rules import (
-    RANK, RULESET_VERSION, Finding, evidence, finding, match_instruction_rules, max_severity, risk_score, ruleset_hash,
+    RANK,
+    RULESET_VERSION,
+    Finding,
+    evidence,
+    finding,
+    match_instruction_rules,
+    max_severity,
+    risk_score,
+    ruleset_hash,
 )
 
+log = logging.getLogger("agenticsecctl.scanner")
 MAX_DEPTH, MAX_STRINGS, MAX_FINDINGS = 24, 5000, 100
 _URL = re.compile(r"(?i)\b(?:https?|ftp|file|gopher)://[^\s'\"<>)\]]+")
 _IP = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.]*\d)")
@@ -55,9 +65,8 @@ def _walk(node: Any, path: str, out: list[tuple[str, str, bool]], depth: int = 0
     elif isinstance(node, dict):
         for k, v in node.items():
             sub = f"{path}.{k}" if path else str(k)
-            if isinstance(k, str) and k:
-                if path.endswith("properties") or path.endswith("$defs") or path.endswith("definitions"):
-                    out.append((sub + " (name)", k, False))
+            if isinstance(k, str) and k and path.endswith(("properties", "$defs", "definitions")):
+                out.append((sub + " (name)", k, False))
             ok = _walk(v, sub, out, depth + 1) and ok
     elif isinstance(node, list):
         for i, v in enumerate(node):
@@ -70,7 +79,9 @@ def _hidden_findings(nv: nm.Normalised, loc: str) -> list[Finding]:
     kinds: dict[str, list[nm.Hidden]] = {}
     for h in nv.hidden:
         kinds.setdefault(h.kind, []).append(h)
-    offsets = lambda hs: "offsets " + ",".join(str(h.offset) for h in hs[:12]) + ("..." if len(hs) > 12 else "")  # noqa: E731
+    def offsets(hs: list[nm.Hidden]) -> str:
+        return "offsets " + ",".join(str(h.offset) for h in hs[:12]) + ("..." if len(hs) > 12 else "")
+
     if "tag" in kinds:
         out.append(finding("R-HIDDEN-UNICODE", loc, evidence(f"{len(kinds['tag'])} tag characters at {offsets(kinds['tag'])}; decoded: {nv.hidden_tag_text}")))
     if "bidi" in kinds:
@@ -165,7 +176,7 @@ def scan_tool(tool: dict[str, Any], *, classifier: Classifier | None = None) -> 
             if 0.8 <= score <= 1.0:
                 found.append(finding("R-CLASSIFIER", "description", evidence(f"advisory score {score:.2f}")))
         except Exception:  # noqa: BLE001 - an advisory component must never change the deterministic outcome
-            pass
+            log.debug("advisory classifier failed; its opinion is ignored")
     unique: dict[tuple[str, str, str], Finding] = {}
     for f in found:
         unique.setdefault((f.rule_id, f.location, f.evidence), f)

@@ -34,10 +34,10 @@ class ExceptionEntry:
     port: int
     owner: str
     reason: str
-    expires_at: datetime | None
+    expires_at: datetime
     environments: frozenset[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.owner.strip() or not self.reason.strip():
             raise ValueError("exception entry needs an owner and a reason")
         if self.expires_at is None or self.expires_at.tzinfo is None:
@@ -53,7 +53,7 @@ class Guard:
     environment: str = "production"
     clock: Callable[[], datetime] = lambda: datetime.now(UTC)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.resolver is None:
             object.__setattr__(self, "resolver", system_resolver)
 
@@ -69,7 +69,7 @@ class Target:
 
 def system_resolver(host: str, port: int) -> list[str]:
     infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
-    return list(dict.fromkeys(i[4][0] for i in infos))
+    return list(dict.fromkeys(str(i[4][0]) for i in infos))
 
 
 BLOCKED_HOSTS = frozenset({"localhost", "metadata", "metadata.google.internal", "instance-data",

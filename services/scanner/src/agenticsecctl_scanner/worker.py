@@ -55,7 +55,8 @@ class HttpJobApi:
             raise LeaseLost(409)
         if r.status != 200:
             raise ApiError(r.status)
-        return json.loads(r.body)
+        out: dict[str, Any] = json.loads(r.body)
+        return out
 
     def claim(self, instance: str) -> dict[str, Any] | None:
         return self._post("/claim", {"worker_id": instance}).get("job")

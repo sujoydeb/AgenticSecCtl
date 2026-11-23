@@ -1,13 +1,13 @@
 """PAR-O-27: the migration runner (up, down, checksums, atomicity, concurrency)."""
-import shutil
 import tempfile
 import threading
 import unittest
 from pathlib import Path
 
 import psycopg
-from agenticsecctl_api import migrate as m
 from pg import admin_dsn, docker_ok, ensure_logins, new_database
+
+from agenticsecctl_api import migrate as m
 
 
 def mdir(tmp, files):

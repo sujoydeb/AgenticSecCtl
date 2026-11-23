@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -163,7 +164,7 @@ def _check_tool(t: Any, limits: ImportLimits) -> None:
         raise ImportFailed("bad-tool-name")
 
 
-def fetch_tool_definitions(client: GuardedClient, url: str, limits: ImportLimits = ImportLimits(), *, clock=None) -> list[dict[str, Any]]:  # noqa: B008
+def fetch_tool_definitions(client: GuardedClient, url: str, limits: ImportLimits = ImportLimits(), *, clock: Callable[[], float] | None = None) -> list[dict[str, Any]]:  # noqa: B008
     """Page through ``tools/list`` and return the tool objects exactly as the server sent them."""
     import time
     now = clock or time.monotonic
