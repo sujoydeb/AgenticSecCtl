@@ -203,6 +203,55 @@ paths:
         '201': {description: Approval recorded, content: {application/json: {schema: {type: object}}}}
         '403': {$ref: '#/components/responses/Problem'}
         default: {$ref: '#/components/responses/Problem'}
+  /internal/scan-jobs/claim:
+    post:
+      tags: [internal]
+      summary: Scanner worker claims the next queued import job (machine identity only; see api-specification Section 2.1)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [worker_id], properties: {worker_id: {type: string, maxLength: 100}, lease_seconds: {type: integer, minimum: 10, maximum: 900}}}}}
+      responses:
+        '200': {description: 'A job, or job null when nothing is queued', content: {application/json: {schema: {type: object}}}}
+        default: {$ref: '#/components/responses/Problem'}
+  /internal/scan-jobs/{jobId}/renew:
+    parameters:
+      - {name: jobId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [internal]
+      summary: Extend the lease of a claimed job
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [worker_id], properties: {worker_id: {type: string}, lease_seconds: {type: integer}}}}}
+      responses:
+        '200': {description: New lease expiry, content: {application/json: {schema: {type: object}}}}
+        '409': {$ref: '#/components/responses/Problem'}
+        default: {$ref: '#/components/responses/Problem'}
+  /internal/scan-jobs/{jobId}/result:
+    parameters:
+      - {name: jobId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [internal]
+      summary: Submit tool definitions and findings for a claimed job
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [worker_id, result], properties: {worker_id: {type: string}, result: {type: object, required: [rule_set, tools], properties: {rule_set: {type: object, required: [version, hash]}, tools: {type: array, maxItems: 500}}}}}}}
+      responses:
+        '200': {description: Scan recorded, content: {application/json: {schema: {type: object}}}}
+        '409': {$ref: '#/components/responses/Problem'}
+        default: {$ref: '#/components/responses/Problem'}
+  /internal/scan-jobs/{jobId}/failure:
+    parameters:
+      - {name: jobId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [internal]
+      summary: Report a failed import with a stable reason code
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [worker_id, reason, retryable], properties: {worker_id: {type: string}, reason: {type: string, pattern: '^[a-z0-9:_.-]{1,60}$'}, retryable: {type: boolean}}}}}
+      responses:
+        '200': {description: Job requeued or failed, content: {application/json: {schema: {type: object}}}}
+        '409': {$ref: '#/components/responses/Problem'}
+        default: {$ref: '#/components/responses/Problem'}
   /findings:
     get:
       tags: [security]

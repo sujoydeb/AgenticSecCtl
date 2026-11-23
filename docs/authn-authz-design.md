@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.3 (design draft; closes gap A4 in `docs/reviewgap.md`; v0.3 replaces the spike policy of Section 6 by the Phase 1 product policy of WP-1.8; v0.2 ran the Section 6 policy under OPA and fixed the defects found) |
-| Depends on | `Plan/functional-spec.md` v0.8 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.6 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.2, `docs/api-specification.md` v0.3, `controls/catalogue.md` v0.6 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.5 |
+| Depends on | `Plan/functional-spec.md` v0.8 (FR-AUTHN-*, FR-AUTHZ-*, FR-ID-*, FR-POL-*, FR-DATA-*), `Plan/architecture.md` v0.6 (Sections 4.2, 4.6, 5, 6), `docs/mcp-compatibility.md` v0.2, `docs/api-specification.md` v0.4, `controls/catalogue.md` v0.6 (CTL-04..07, CTL-16), `docs/testing/cases.md` v0.5 |
 | Status | Design note. The Section 6 policy is the Phase 1 product policy (`policy/rego/authz.rego`, WP-1.8), run under OPA with a decision-table test suite and `opa check --strict` (results in `docs/testing/results/`); it has not run behind a gateway yet (WP-1.9). It covers the Phase 1 rules only (Section 4 packages other than `agentic.authz` are later phases). Identity-provider behaviour is partly search-verified (Keycloak DPoP from 26.4; token exchange V2 internal-to-internal only, see `docs/tech-evaluation.md`); the Phase 1 token validation is in `services/common/.../auth/` (WP-1.10). |
 
 ## 1. Scope and principles

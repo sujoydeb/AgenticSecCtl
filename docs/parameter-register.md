@@ -31,7 +31,7 @@ Decision gates: **P0** Phase 0 sign-off; **B1** before Phase 1 starts; **P1**, *
 
 | ID | Parameter | Source | Proposed owner role | Decide by | Notes |
 |---|---|---|---|---|---|
-| PAR-O-01 | Importer limits: timeout, response size, JSON depth, item count | CTL-02, FR-SCAN-6 | Security engineer | B1 | Needed for TC-Z2 |
+| PAR-O-01 | Importer limits: timeout, response size, JSON depth, item count | CTL-02, FR-SCAN-6 | Security engineer | B1 | Needed for TC-Z2. **Proposed in WP-1.7, not confirmed** (`ImportLimits`): 15 s for the whole import, 5 s per read, 1 MB per response, JSON depth 20, 100,000 nodes, strings of 100,000 characters, 500 tools, 10 pages, 50 events read per stream. Scan job lease 120 s (at most 900 s) and 3 attempts |
 | PAR-O-02 | Policy bundle staleness limit | CTL-16, FR-AUTHZ-8 | Security engineer | B1 | Gateways deny beyond it; tested by TC-Z5. Proposal in WP-1.8, not confirmed: default 300 s (`policy/build_bundle.py`), hard bound 3600 s |
 | PAR-O-03 | Exception expiry for SSRF allowlist entries | CTL-08, FR-SSRF-5 | Security engineer | B1 | |
 | PAR-O-04 | Approval timeout | CTL-07, CTL-28 | Product owner | B1 | Timeout means deny |

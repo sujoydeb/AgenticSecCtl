@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.3 (design draft; v0.3 adds the definitions and override endpoints found necessary while building WP-1.6, and records which endpoints are implemented; v0.2 records the OpenAPI validation; closes gap A3 in `docs/reviewgap.md`) |
+| Version | 0.4 (design draft; v0.4 adds the internal scanner interfaces (Section 2.1); v0.3 adds the definitions and override endpoints found necessary while building WP-1.6, and records which endpoints are implemented; v0.2 records the OpenAPI validation; closes gap A3 in `docs/reviewgap.md`) |
 | Depends on | `Plan/functional-spec.md` v0.8 (Section 4.21 conventions, roles in Section 2, FR rows referenced below), `Plan/architecture.md` v0.6 (Section 4.4 and Section 4.8 audit vocabulary), `docs/data-model.md` v0.3, `controls/catalogue.md` v0.6 |
 | Machine-readable outline | `docs/api/openapi.yaml` (OpenAPI 3.1; schema-valid per `openapi-spec-validator` 0.9.0 on 2026-11-22: 20 paths, 32 operations; **the Phase 1 registry subset is implemented in `services/api` (WP-1.6) and tested against PostgreSQL; the rest is not implemented**) |
 | Scope | The management API: registry, approvals, findings, incidents, audit, governance. The gateway's agent-facing MCP interface and the internal gateway-to-registry and event interfaces are not covered. |
@@ -41,6 +41,18 @@ Roles use the names of spec Section 2: Viewer (V), Agent owner (AO), Server owne
 | GET `/classification-levels` | Read levels | V, AO, SO | Changes are a separate admin operation | FR-DATA-1 | `classification.changed` on change |
 | POST `/evidence-packs` | Generate signed pack | AU | Operators cannot read raw evidence | FR-COMP-4 | none specific |
 | GET `/health` | Readiness | all (unauthenticated) | Fails when fail-closed guarantees cannot be met | FR-OBS-2 | none |
+
+### 2.1 Internal interfaces (machine identities only)
+
+Called by platform services, never by people or agents; the role table of Section 2 does not apply. The scanner worker holds the `scanner` service identity, which has no other access. Every call carries the worker's instance ID; the API stores the claimant as `client:instance` and refuses any call from another holder, or after the lease has run out (409).
+
+| Method and path | Caller | Purpose | Audit events |
+|---|---|---|---|
+| `POST /internal/scan-jobs/claim` | scanner | Claim the oldest queued job with a lease (default 120 s, at most 900 s); returns the server URL, or `{"job": null}`. Jobs that ran out of attempts are failed first. | `import.failed` for such jobs |
+| `POST /internal/scan-jobs/{id}/renew` | scanner | Extend the lease of a job it holds | none |
+| `POST /internal/scan-jobs/{id}/result` | scanner | Submit tool definitions with their findings and the rule-set version and hash; the API hashes the definitions, recomputes the score and creates approvals | `scan.completed`, `finding.created`, `approval.requested`, `tool.quarantined` |
+| `POST /internal/scan-jobs/{id}/failure` | scanner | Report a failed import with a stable reason code and whether it may be retried; a retryable failure requeues the job until `max_attempts` | `import.failed` when final |
+| `POST /internal/audit/events`, `GET /internal/registry/view` | gateway | Not implemented yet (WP-1.9) | |
 
 Not yet specified (to be added before the corresponding phase): configuration endpoints (FR-ADM-1), notification channels (FR-ADM-3), role bindings and break-glass administration (FR-ADM-6), data source and classification label assignment (FR-DATA-2/4), model registry (FR-MOD-1), discovery assets (FR-INV-5), compliance mappings (FR-COMP-*), incident reports (FR-IR-5).
 
