@@ -55,6 +55,7 @@
 | `docs/testing/cases.md` | Security test cases (specifications) | Test engineers, security |
 | `docs/testing/fixtures-and-corpora.md` | Fixture servers, harness requirements, detector corpus format and rules | Test engineers, security |
 | `docs/testing/performance-test-plan.md` | Proposed load-test environment, workload, pass criteria | Test engineers, platform |
+| `docs/testing/results/README.md` | Saved results of the package gates, one file per run (written by `scripts/run_gate.py`) | Test engineers, security, reviewers |
 | `docs/ux-outline.md` | Dashboard information architecture and flows | Product, design, frontend |
 
 Not listed here because they are not design documents: `README.md` (repository overview), `CLAUDE.md` (guidance for automated assistants and contributors), the service stubs under `services/`, and the seed-corpus note under `tests/fixtures/corpus/`. Machine-readable sources: `controls/catalogue.yaml` (source of `controls/catalogue.md`), `docs/api/openapi.yaml`, `Plan/functional-spec.html` (generated from the specification).

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.3 (draft for review; closes gap A1 and, with Section 7.1, gap A6 in `docs/reviewgap.md`) |
-| Depends on | `Plan/functional-spec.md` v0.8, `Plan/architecture.md` v0.6, `Plan/threat-model.md` v0.5, `docs/tech-evaluation.md` v0.3, `controls/catalogue.md` v0.6, `docs/testing/cases.md` v0.5, `docs/roadmap.md` v0.4 |
+| Depends on | `Plan/functional-spec.md` v0.8, `Plan/architecture.md` v0.6, `Plan/threat-model.md` v0.5, `docs/tech-evaluation.md` v0.3, `controls/catalogue.md` v0.6, `docs/testing/cases.md` v0.5, `docs/roadmap.md` v0.5 |
 | Purpose | The assessment the master brief asks for before any implementation: missing attack vectors, weak assumptions, architectural gaps, tools to reuse, controls that need deterministic enforcement versus controls that can use LLM-based analysis, performance bottlenecks, and regulatory and operational risks. Each finding points to where the repository answers it. |
 | Status | Written after the design documents, so it consolidates and cross-checks them; it is not the original planning document. Facts marked *search-verified* come from the verification log in `docs/tech-evaluation.md` (mostly secondary sources); everything else is background knowledge and is tagged **[VERIFY]**. |
 

@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.7 (plan draft; v0.7 records the Phase 0 spikes and updates the dependency table, WP-1.2 and WP-1.5; nothing is built, all estimates are unvalidated; v0.5 incorporates the High gaps IG-3 and IG-5 of `docs/implementationgaps.md`, on top of the Medium gaps in v0.4, the Low gaps in v0.3 and IG-1 and IG-2 in v0.2; every gap in the register is now incorporated) |
+| Version | 0.8 (plan draft; v0.8 aligns the spike sentence of Section 6.3 with the roadmap's new schedule; v0.7 records the Phase 0 spikes and updates the dependency table, WP-1.2 and WP-1.5; nothing is built, all estimates are unvalidated; v0.5 incorporates the High gaps IG-3 and IG-5 of `docs/implementationgaps.md`, on top of the Medium gaps in v0.4, the Low gaps in v0.3 and IG-1 and IG-2 in v0.2; every gap in the register is now incorporated) |
 | Date | 2026-11-22 |
-| Depends on | `Plan/functional-spec.md` v0.8, `Plan/architecture.md` v0.6, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.4, `docs/data-model.md` v0.3, `docs/api-specification.md` v0.2, `docs/authn-authz-design.md` v0.2, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.6, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.8, `docs/parameter-register.md` v0.3, `docs/governance.md` v0.6 |
+| Depends on | `Plan/functional-spec.md` v0.8, `Plan/architecture.md` v0.6, `Plan/threat-model.md` v0.5, `docs/roadmap.md` v0.5, `docs/data-model.md` v0.3, `docs/api-specification.md` v0.3, `docs/authn-authz-design.md` v0.3, `docs/cross-cutting-design.md` v0.1, `docs/testing/cases.md` v0.5, `controls/catalogue.md` v0.6, `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.8, `docs/parameter-register.md` v0.3, `docs/governance.md` v0.6 |
 | Purpose | Turn the Phase 1 scope of the roadmap into an ordered, testable work breakdown that engineers can start from: modules, interfaces, work packages, schedule, test strategy, definition of done. Later phases are sequenced at lower confidence. |
 | Status | **Plan only.** No product code has been written; two spikes exist (`policy/`, the Rego sketch run under OPA, and `db/spike/`, the core tables run on PostgreSQL). Library names and versions are partly verified (Section 4.3); versions are not pinned. Open decisions (ADR-1..7) are not decided here: the plan builds on the proposed defaults in the design documents and says what changes if a decision differs. Effort and duration figures are proposals for the re-baseline checkpoints in the roadmap, not commitments. |
 
@@ -77,7 +77,7 @@ Python 3.12 or later, one package per service as in the scaffold (`services/<nam
 |---|---|---|
 | HTTP framework and models | FastAPI, Pydantic | From the approved stack; both MIT (repository metadata) |
 | MCP protocol | Official MCP Python SDK | Verified: MIT; v2 (latest v2.3.0) states it implements revision 2026-07-28 and negotiates back; not run here. Keep the thin interface around it (Section 10 risk) |
-| Database | PostgreSQL with row-level security (17.12 runs the core-table spike, `db/spike/`); a migration tool and a driver | Open decisions recorded as PAR-O-27 (migration tool) and PAR-O-28 (database access layer) in `docs/parameter-register.md`; both decided before WP-1.5 starts. Constraint: the access layer must let the tenant be set per transaction (see IG-9 in `docs/implementationgaps.md`) |
+| Database | PostgreSQL with row-level security (17.12 runs the core-table spike, `db/spike/`); a migration tool and a driver | Decided 2026-11-23 (PAR-O-27, PAR-O-28 in `docs/parameter-register.md`): plain SQL migrations with a small runner, and psycopg 3 with psycopg-pool and raw SQL (psycopg and psycopg-pool 3.3.x are LGPL-3.0-only; accepted, legal review pending). Constraint kept: the tenant is set per transaction (IG-9) |
 | Policy | OPA and `opa test` | Verified: Apache-2.0; 1.22.4 runs the spike policy (`policy/`, 15 tests) |
 | HTTP client for importer and health checks | `httpx` or similar | Must allow connecting to a pinned address while keeping the host name for TLS |
 | Tests | `pytest` (MIT), a property-testing library (Hypothesis is MPL-2.0, test-only), a fuzzing harness | Property tests for canonicalisation and the chain. Coverage thresholds are open (PAR-O-26); Section 7 gives the proposal |
@@ -315,7 +315,7 @@ Capacity assumes the upper part of the roadmap team assumption (about 3.5 full-t
 
 WP-1.2 starts from the first project files and does not wait for CI. Critical path: schema freeze (end of week 2), then registry and approvals, then gateway pin check, then end-to-end acceptance. Buffer: none is built in; add 15 to 20 percent when committing dates.
 
-Spikes S5, S3 and S2 run before or alongside weeks 1 to 4 (`docs/roadmap.md` Section 4.1). S1, S4 and S6 do not block Phase 1.
+Spikes S5 and S3 finish before Phase 1 starts (weeks -6 to -4) and gate the design of WP-1.7 and WP-1.8; S2, S1, S4a and S6 follow in weeks -4 to -1 and S4b after Phase 1 (`docs/roadmap.md` Section 4.1). Only S5 and S3 gate Phase 1 packages.
 
 ## 7. Test strategy tied to the build
 
@@ -531,6 +531,7 @@ Controls with Phase 1 content map to packages as follows. `scripts/check_docs.py
 
 | Version | Date | Change |
 |---|---|---|
+| 0.8 | 2026-11-22 | Section 6.3 spike sentence aligned with `docs/roadmap.md` v0.5 Section 4.1 (S5 and S3 gate Phase 1; S2, S1, S4a and S6 follow before Phase 1; S4b after) |
 | 0.7 | 2026-11-22 | Phase 0 runs recorded: dependency table (Section 4.3) updated with the licence, release and SDK-revision checks; WP-1.2 field-list note updated (specification v0.8 now matches); WP-1.5 points to the PostgreSQL spike; audit-gap event uses `audit.buffer_full`; two open items closed |
 | 0.6 | 2026-11-22 | Section 11 control phases for CTL-02, CTL-03, CTL-06 and CTL-24 follow the corrected catalogue 0.5 (CTL-12 has no Phase 1 content and no row) |
 | 0.5 | 2026-11-22 | IG-3: Section 4.4 forwarding note (Streamable HTTP only, proxying through the guarded client, no upstream credential, stage table for Phase 1). IG-5: audit path note (chain writer in `api`, authenticated batched submission, bounded buffer, deny when full, idempotent events). Estimates WP-1.4 to 2.5 to 3.5 and WP-1.9 to 3.5 to 5; total 31.5 to 43.5; lane C and A loads updated |

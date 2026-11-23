@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.6 (checklist rows P0-13, P0-14, P0-16, P0-18 and P0-19 updated with the 2026-11-22 runs, and the ADR-4 and ADR-6 conditions that are now met; v0.5: decision-log rows ADR-3, ADR-4 and ADR-6 now carry the brief's recommendation and conditions, still proposed; v0.4 added the Phase 0 exit checklist, Section 8; template; **no owner, reviewer or approval below is real until a person's name and date are entered**) |
-| Depends on | `Plan/functional-spec.md` v0.8 (Section 2 roles, Section 12), `Plan/architecture.md` v0.6 (Section 12 ADRs), `controls/catalogue.md` v0.6 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.4, `docs/reviewgap.md` v0.8 |
+| Depends on | `Plan/functional-spec.md` v0.8 (Section 2 roles, Section 12), `Plan/architecture.md` v0.6 (Section 12 ADRs), `controls/catalogue.md` v0.6 (owner roles), `docs/prd.md` v0.4, `docs/roadmap.md` v0.5, `docs/reviewgap.md` v0.8 |
 | Purpose | Provide the structure needed to close gaps F2 (no named owners) and G1 (no independent review) in `docs/reviewgap.md`: role glossary and RACI, owner assignment table, review and sign-off log, decision log and risk-acceptance register. It does **not** close those gaps by itself: they close when people fill it in. |
 
 ## 1. Role glossary
@@ -118,7 +118,7 @@ One row per document; add rows per review round. A document is "reviewed" only w
 | DEC-5 | Key management requirements (FR-KEY-1..6) and control CTL-30 | As in spec Section 4.23 | Proposed, pending approval | | |
 | DEC-6 | Control owner vocabulary | Glossary roles only (catalogue v0.3) | Proposed, pending approval | | |
 | DEC-7 | Reference environment and workload for performance tests | `docs/testing/performance-test-plan.md` | Proposed, pending approval | | |
-| DEC-8 | Spike schedule before Phase 1 | `docs/roadmap.md` Section 4.1 | Proposed, pending approval | | |
+| DEC-8 | Spike schedule before Phase 1 | `docs/roadmap.md` v0.5 Section 4.1 (windows, owner roles, S4 split) | Proposed, pending approval | | |
 | DEC-9 | Placeholder retention default (13 months hot, 7 years cold) | Replace after legal input (parameter PAR-F-06) | Open, needs legal | | |
 | DEC-10 | Governance of additional high-impact classes and the critical resource tag | Security admin plus a different approver, shadow mode first (FR-AUTHZ-12) | Proposed, pending approval | | |
 
@@ -132,6 +132,7 @@ Residual risks that the design accepts must be accepted by a named risk owner wi
 | D: probabilistic injection detection | *(open)* | | Taint rule, approvals, egress allowlists (CTL-09, CTL-07) | Detector quality below budget |
 | G: replay window when sender-constrained tokens are unavailable | *(open)* | | Short lifetimes, revocation, mTLS (CTL-05, CTL-04) | IdP decision (ADR-2) |
 | J: memory poisoning before Phase 4 | *(open)* | | Partial controls only | Phase 4 start |
+| Licence: psycopg, psycopg-pool and the optional psycopg-binary are LGPL-3.0-only (PAR-O-28) | Project owner accepted the choice 2026-11-23; named risk owner and legal review *(open)* | | Used unmodified as separately installed libraries, never copied into the product source; version pinned and listed in the SBOM; licence scan in CI (G1.6) | Any change to how the library is bundled or distributed, or legal objection |
 
 ## 7. Maintenance
 
@@ -165,7 +166,7 @@ The itemised form of the Phase 0 exit criteria in `docs/roadmap.md` Section 5 an
 | **Spikes and verification** | | | | | | |
 | P0-15 | Spike S5 (scanner baselines) done | Security engineer | Detection overlap table, false positives, data-egress notes (roadmap Section 4.1) | Weeks -6 to -5 | WP-1.7 design | Open |
 | P0-16 | Spike S3 (policy latency) done, including running the illustrative Rego with `opa test` | Backend engineer | Latency numbers against NFR-1, cache design, test output | Weeks -5 to -4 | WP-1.8 design | Partly done 2026-11-22: `opa test` 15 of 15 on OPA 1.22.4 and an indicative benchmark (`docs/authn-authz-design.md` Section 6.1); realistic data sizes, concurrency and the sidecar hop are still missing |
-| P0-17 | Spikes S1, S2, S4 and S6 scheduled with owners and windows (run before Phase 2, not before Phase 1) | Delivery lead | Dates in the roadmap spike table | Week -1 | Start | Open |
+| P0-17 | Spikes S1, S2, S4 and S6 scheduled with owners and windows (they gate Phase 2, not Phase 1) | Delivery lead | Windows and owner roles in the roadmap spike table (Section 4.1), with calendar dates once the Phase 1 start date is fixed | Week -6 | Start | Done 2026-11-22 for windows and owner roles, pending review: roadmap v0.5 Section 4.1 (no owner has two spikes in one week; S4 split into S4a and S4b); no calendar dates and no named people yet; S4b needs a DLP corpus that has no owner |
 | P0-18 | `[VERIFY]` items that Phase 1 depends on checked and logged: MCP SDK support for revision 2026-07-28, OPA, Keycloak, PostgreSQL row-level security with pooling, the Python libraries of plan Section 4.3 | Security architect | Entries in the verification log of `docs/tech-evaluation.md` | Week -2 | Pinning of each dependency | Partly done 2026-11-22: MCP SDK, OPA, Keycloak, PostgreSQL and the Python libraries checked (`docs/tech-evaluation.md` log); versions not chosen, vulnerability status and the Presidio, cosign and similar Phase 2 tools not checked |
 | P0-19 | Data-model SQL for tenancy, row-level security and immutability run on a real PostgreSQL instance (including the interleaved-tenant test of IG-9), and `docs/api/openapi.yaml` validated with a tool | Backend engineer | Test output attached; data model and API documents updated | Week -3 | Schema freeze (WP-1.5) | Done 2026-11-22 for the core tables, pending review: 78 checks passed on PostgreSQL 17.12 (`db/spike/`) and `openapi.yaml` is schema-valid; the other tables are not run |
 | **Parameters** | | | | | | |

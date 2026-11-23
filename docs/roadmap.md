@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.4 (planning draft; estimates are not validated by engineering) |
+| Version | 0.5 (planning draft; estimates are not validated by engineering; v0.5 rewrites the spike schedule in Section 4.1) |
 | Depends on | `docs/prd.md` v0.4 (Section 8 release plan), `Plan/functional-spec.md` v0.8 (phase tags on every requirement), `Plan/architecture.md` v0.6 (ADRs, Section 12), `controls/catalogue.md` v0.6 (control phases), `docs/testing/cases.md` v0.5 (phase of each test case, MVP set), `docs/deployment-architecture.md` v0.4, `docs/ci-cd-pipeline.md` v0.8, `docs/tech-evaluation.md` v0.3 (spikes S1..S6) |
 | Purpose | Turn the five phases into a plan with deliverables, dependencies, effort, acceptance criteria, risks and go/no-go gates, with requirements, controls and tests allocated to phases. |
 | Honesty note | Durations come from the original design plan and assume 2 to 3 engineers. Nothing has been estimated bottom-up and no team exists yet. Treat all numbers as planning ranges to be re-baselined after Phase 0 spikes and again after Phase 1. |
@@ -75,20 +75,27 @@ The spikes S1..S6 total about 8 weeks of effort if run one after another (2+1+1+
 
 ### 4.1 Proposed spike schedule (closes gap F4 once approved)
 
-Weeks are counted backwards from the start of Phase 1 (week 0), so the spikes finish before Phase 2 design depends on them. The plan assumes two engineers; running everything sequentially by one person would take about eight weeks. Owners are roles.
+Weeks are counted backwards from the start of Phase 1 (week 0). Only S5 and S3 gate Phase 1 packages (WP-1.7 and WP-1.8 design); S1, S2, S4 and S6 gate Phase 2 but are scheduled in the same pre-Phase-1 window so that ADR-1 and ADR-2 can be decided with evidence and the Phase 2 estimate can be re-baselined at week -1. Owners are roles; **no calendar dates are set**, because the Phase 1 start date and the people (checklist rows P0-01 and P0-03 in `docs/governance.md`) are not fixed. Person-weeks are the time-boxes of `docs/tech-evaluation.md` Section 6 and are estimates.
 
-| Spike | Window | Owner role | Depends on | Exit evidence | Feeds |
-|---|---|---|---|---|---|
-| S5 scanner baselines | week -6 to -5 | Security engineer | Seed corpus (`tests/fixtures/corpus`), external scanner access | Detection overlap table, false positives, data-egress notes | Scanner design (Phase 1) |
-| S2 identity capabilities | week -6 to -5 | Security engineer (identity) | Candidate IdPs, MCP compatibility matrix | Capability matrix (PKCE S256, `iss`, resource indicators, DPoP or mTLS binding, token exchange) | ADR-2, FR-AUTHN-2/3 mode statement |
-| S3 policy latency | week -5 to -4 | Backend engineer | Draft policy and data sizes (`docs/authn-authz-design.md`) | Decision latency numbers against NFR-1, cache design | ADR-6, gateway design |
-| S1 gateway options | week -5 to -3 | Backend engineer and platform operator | Seven tests in tech evaluation 3.2 | Test results and latency numbers for custom, ContextForge or agentgateway, and Envoy-based setups | ADR-1 |
-| S4 detectors | week -3 to -2 | Security engineer | Corpus growth, Presidio-style recognisers, one classifier | Precision, recall, latency, licence notes | Phase 2 detector plan |
-| S6 supply-chain pipeline | week -2 to -1 | DevSecOps engineer | Remote repository, verified action pins | Working SBOM, scan, signing, admission gate in a sample pipeline | CI/CD stages 2 to 4, FR-SUP-1 |
-| Verification of `[VERIFY]` items | weeks -6 to -1, in parallel | Security architect | Primary sources | Updated verification log | ADR decisions, compliance matrix |
-| Re-baseline checkpoint | week -1 | Delivery lead | All spikes | Updated estimates for Phase 2 and the risks list | Phase 2 start gate |
+**Change from v0.4 of this roadmap.** The earlier windows put S5 and S2 on the security engineer in the same weeks (-6 to -5), and S3 and S1 on the backend engineer in overlapping weeks (-5 to -4). The windows below give each owner role at most one spike in any week; `scripts/check_docs.py` checks that. S4 is split in two because its labelled corpora do not exist yet.
 
-Dependencies outside the team: customer answers CI-5 (IdP), CI-6 (cloud) and CI-8 (existing gateways) in `docs/customer-inputs.md`; a remote repository for S6; legal input for retention (parameter register). If a spike is skipped, the corresponding ADR stays open and Phase 2 start moves.
+| Spike | Window | Owner role | Person-weeks | Depends on | Exit evidence | Feeds |
+|---|---|---|---|---|---|---|
+| S5 scanner baselines | week -6 to -5 | Security engineer | 1 | Seed corpus (`tests/fixtures/corpus`), external scanner access | Detection overlap table, false positives, data-egress notes | Scanner design (Phase 1, WP-1.7) |
+| S3 policy latency | week -5 to -4 | Backend engineer | 1 | The executed policy (`policy/`), draft data sizes (`docs/authn-authz-design.md`) | Decision latency numbers against NFR-1 at realistic data sizes and concurrency, cache design | ADR-6, gateway design (Phase 1, WP-1.8) |
+| S2 identity capabilities | week -4 to -3 | Security engineer (identity) | 1 | Candidate identity providers (customer answer CI-5; Keycloak alone if there is no answer), MCP compatibility matrix | Capability matrix (PKCE S256, `iss`, resource indicators, DPoP or mTLS binding, token exchange) | ADR-2, FR-AUTHN-2/3 mode statement (Phase 2) |
+| S1 gateway options | week -3 to -2 | Backend engineer and platform operator | 2 | Seven tests in tech evaluation 3.2; S3 numbers for the custom option | Test results and latency numbers for custom, ContextForge or agentgateway, and Envoy-based setups | ADR-1 (Phase 2) |
+| S4a detectors, feasibility | week -2 to -1 | Security engineer | 1 | Presidio-style recognisers, one classifier, the seed corpus | Latency, licence and integration notes, data-egress notes; **no precision or recall claim** (the seed corpus is too small to support one) | Phase 2 detector plan |
+| S6 supply-chain pipeline | week -2 to -1 | DevSecOps engineer (part time) | 1 | Remote repository (exists); verified pins for the actions used; a local Kubernetes cluster for the admission gate (none yet) | Working SBOM, scan, signing and admission gate in a sample pipeline; TC-L2 and TC-L3 runnable | CI/CD stages 2 to 4, FR-SUP-1 (Phase 2) |
+| S4b detectors, measurement | the week before Phase 2 starts (Phase 1 exit plus 1) | Security engineer | 1 | Corpora grown to the Phase 1 targets (200 descriptions, 100 responses) and a DLP corpus per entity type, which does not exist and has no owner or estimate yet (proposed owner: test lead) | Precision, recall and latency in shadow mode | Detector budgets (Phase 2) |
+| Verification of `[VERIFY]` items | weeks -6 to -1, in parallel | Security architect | n/a | Primary sources | Updated verification log | ADR decisions, compliance matrix |
+| Re-baseline checkpoint | week -1 | Delivery lead | n/a | All spikes except S4b | Updated estimates for Phase 2 and the risks list | Phase 2 start gate |
+
+Owner load before Phase 1: the security engineer has 3 person-weeks of spikes in weeks -6 to -1 (S5, S2, S4a), leaving room for the review and decision work in `docs/governance.md` Section 8; the backend engineer has 3 in weeks -5 to -2 (S3, S1); the platform operator shares S1; the DevSecOps engineer has 1 spread over weeks -2 to -1. S4b adds one more security-engineer week after Phase 1 and needs the DLP corpus first. The total is 8 person-weeks, as before.
+
+Phase 2 entry needs S1, S2, S4b and S6 done. S4b can only start after Phase 1 exit, so Phase 2 starts at least one week after Phase 1 exit unless the DLP corpus is built during Phase 1 and S4b is moved earlier; that corpus work is not in the Phase 1 plan.
+
+Dependencies outside the team: customer answers CI-5 (IdP), CI-6 (cloud) and CI-8 (existing gateways) in `docs/customer-inputs.md`; legal input for retention (parameter register). If a spike is skipped, the corresponding ADR stays open and Phase 2 start moves.
 
 ## 5. Phase 0: design completion (in progress)
 

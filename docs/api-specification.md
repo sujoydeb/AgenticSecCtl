@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | 0.2 (design draft; v0.2 records the OpenAPI validation; closes gap A3 in `docs/reviewgap.md`) |
+| Version | 0.3 (design draft; v0.3 adds the definitions and override endpoints found necessary while building WP-1.6, and records which endpoints are implemented; v0.2 records the OpenAPI validation; closes gap A3 in `docs/reviewgap.md`) |
 | Depends on | `Plan/functional-spec.md` v0.8 (Section 4.21 conventions, roles in Section 2, FR rows referenced below), `Plan/architecture.md` v0.6 (Section 4.4 and Section 4.8 audit vocabulary), `docs/data-model.md` v0.3, `controls/catalogue.md` v0.6 |
-| Machine-readable outline | `docs/api/openapi.yaml` (OpenAPI 3.1; schema-valid per `openapi-spec-validator` 0.9.0 on 2026-11-22: 20 paths, 32 operations; **not implemented**, so the behaviour is untested) |
+| Machine-readable outline | `docs/api/openapi.yaml` (OpenAPI 3.1; schema-valid per `openapi-spec-validator` 0.9.0 on 2026-11-22: 20 paths, 32 operations; **the Phase 1 registry subset is implemented in `services/api` (WP-1.6) and tested against PostgreSQL; the rest is not implemented**) |
 | Scope | The management API: registry, approvals, findings, incidents, audit, governance. The gateway's agent-facing MCP interface and the internal gateway-to-registry and event interfaces are not covered. |
 
 ## 1. Conventions (from the specification)
@@ -28,9 +28,11 @@ Roles use the names of spec Section 2: Viewer (V), Agent owner (AO), Server owne
 | DELETE `/agents/{id}/suspension` | Resume | SE, AP, IR | Approver differs from the suspender unless emergency policy | FR-AUTO-5 | `approval.granted` |
 | GET, POST `/servers` | List and register servers | V, SO, SE | URL checked by the SSRF guard first | FR-INV-1..4, FR-SSRF-1..5 | `register.denied` on rejection |
 | POST `/servers/{id}/imports` | Hardened import and scan | SO, SE | Importer limits apply | FR-SCAN-1..4, 6 | `scan.completed`, `finding.created`, `import.failed` |
+| POST `/servers/{id}/definitions` | Submit tool definitions as returned by the server (manual path; the scanner posts the same data itself from WP-1.7) | SO, SE | Every new or changed definition creates an approval; a changed one quarantines the tool | FR-INV-3, FR-DRIFT-1/3 | `approval.requested`, `tool.quarantined`, `finding.created` |
 | GET `/tools/{id}`, `/tools/{id}/versions`, `/tools/{id}/diff` | Tool, history and diff | V, SO, SE, AP, AU | Versions immutable | FR-DRIFT-1/4/5, FR-UI-2 | none (read) |
 | PUT `/tools/{id}/quarantine` | Quarantine | SE, IR | Reason required | FR-DRIFT-3, FR-IR-2 | `tool.quarantined` |
 | GET `/approvals`; POST `/approvals/{id}/decision` | Queue and decide | AP, SE | Decider differs from requester; Critical overrides need two distinct approvers | FR-UI-3, FR-SCAN-4, SoD-1/2 | `approval.granted`, `approval.denied`, `override.requested`, `override.approved`, `tool.approved`, `tool.rejected` |
+| POST `/approvals/{id}/overrides`; POST `/overrides/{id}/approvals` | Request, then approve, an override of a Critical finding | SE, AP | Takes effect only with two distinct approvers, neither of whom requested the approval or the override; expires (at most 90 days) | FR-SCAN-4, SoD-2 | `override.requested`, `override.approved` |
 | GET `/findings` | List findings | V, SE, AU | | FR-SCAN-2, FR-UI-1 | none (read) |
 | POST `/grants` | Request JIT grant | AO | TTL mandatory; approver differs | FR-AUTHZ-4 | `grant.created`, `grant.expired` (on expiry) |
 | POST `/incidents`, `/incidents/{id}/containment` | Open incident and contain | IR, SE | Evidence snapshot before changes | FR-IR-1..3 | `incident.opened`, `tool.quarantined` and related |

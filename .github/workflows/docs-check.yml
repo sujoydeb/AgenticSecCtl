@@ -56,3 +56,7 @@ jobs:
           if [ -n "$unformatted" ]; then echo "Files need 'opa fmt':"; echo "$unformatted"; exit 1; fi
       - name: PostgreSQL row-level security spike
         run: db/spike/run.sh
+      - name: Policy bundle build and evaluation (WP-1.8)
+        run: python3 -I -m unittest discover -s tests/unit -p 'test_policy_bundle.py'
+      - name: Product schema (WP-1.5 migrations and tests)
+        run: db/tests/run.sh

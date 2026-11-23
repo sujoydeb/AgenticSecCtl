@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.1 (specification; closes gap G5 and the corpus part of E6 in `docs/reviewgap.md`) |
-| Depends on | `docs/testing/cases.md` v0.5 (Section 1 fixtures), `Plan/functional-spec.md` v0.8 (Section 10 detector budgets, FR-SCAN-10), `docs/deployment-architecture.md` v0.4 (Section 13 Compose topology), `docs/roadmap.md` v0.4 (Phase 1 harness) |
+| Depends on | `docs/testing/cases.md` v0.5 (Section 1 fixtures), `Plan/functional-spec.md` v0.8 (Section 10 detector budgets, FR-SCAN-10), `docs/deployment-architecture.md` v0.4 (Section 13 Compose topology), `docs/roadmap.md` v0.5 (Phase 1 harness) |
 | Status | Specification plus a **seed corpus** in `tests/fixtures/corpus/` (42 tool descriptions, 28 responses). The fixture servers and the harness are not implemented. The seed corpus is too small to measure precision or recall. |
 
 ## 1. Fixture servers

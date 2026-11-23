@@ -32,7 +32,7 @@ Decision gates: **P0** Phase 0 sign-off; **B1** before Phase 1 starts; **P1**, *
 | ID | Parameter | Source | Proposed owner role | Decide by | Notes |
 |---|---|---|---|---|---|
 | PAR-O-01 | Importer limits: timeout, response size, JSON depth, item count | CTL-02, FR-SCAN-6 | Security engineer | B1 | Needed for TC-Z2 |
-| PAR-O-02 | Policy bundle staleness limit | CTL-16, FR-AUTHZ-8 | Security engineer | B1 | Gateways deny beyond it; tested by TC-Z5 |
+| PAR-O-02 | Policy bundle staleness limit | CTL-16, FR-AUTHZ-8 | Security engineer | B1 | Gateways deny beyond it; tested by TC-Z5. Proposal in WP-1.8, not confirmed: default 300 s (`policy/build_bundle.py`), hard bound 3600 s |
 | PAR-O-03 | Exception expiry for SSRF allowlist entries | CTL-08, FR-SSRF-5 | Security engineer | B1 | |
 | PAR-O-04 | Approval timeout | CTL-07, CTL-28 | Product owner | B1 | Timeout means deny |
 | PAR-O-05 | Vulnerability severities that fail a build | CTL-17, `docs/ci-cd-pipeline.md` gates G1.6, G2.3 | Security engineer | B1 | |
@@ -57,8 +57,8 @@ Decision gates: **P0** Phase 0 sign-off; **B1** before Phase 1 starts; **P1**, *
 | PAR-O-24 | Runbook placeholders: commands, metric names, alert names, thresholds | `docs/runbooks/operational-runbook.md` | Platform operator | P1 and P2 | Replace each TBD when built |
 | PAR-O-25 | Reference environment and workload for load tests | `docs/testing/performance-test-plan.md` | Test lead | B1 | Proposal exists in the plan |
 | PAR-O-26 | Test coverage thresholds (high on `common` security primitives and policy tables, lower elsewhere) | `Plan/implementation-plan.md` Section 7 | Test lead | P1 | Set once the first packages have measured coverage; a guard against untested code, not evidence of quality |
-| PAR-O-27 | Database migration tool (plain SQL migrations or a library) | `Plan/implementation-plan.md` Section 4.3, WP-1.5 | Backend engineer | B1 | Needed before WP-1.5 starts; must support tested rollback for development |
-| PAR-O-28 | Database access layer and driver | `Plan/implementation-plan.md` Section 4.3, WP-1.5, WP-1.6 | Backend engineer | B1 | Must allow the tenant to be set per transaction, never per session (IG-9) |
+| PAR-O-27 | Database migration tool (plain SQL migrations or a library) | `Plan/implementation-plan.md` Section 4.3, WP-1.5 | Backend engineer | B1 | **Chosen 2026-11-23: plain SQL files `db/migrations/NNNN_*.up.sql` and `.down.sql` plus a small runner (schema_migrations table, checksums, migration role). Not yet built.** Rollback is tested for development (`db/tests/run.sh`) |
+| PAR-O-28 | Database access layer and driver | `Plan/implementation-plan.md` Section 4.3, WP-1.5, WP-1.6 | Backend engineer | B1 | **Chosen 2026-11-23: psycopg 3 with psycopg-pool, raw SQL.** One helper opens a transaction and sets `app.tenant_id` with `set_config(..., true)` before any query (IG-9). Licence LGPL-3.0-only accepted by the project owner, review by legal pending (governance Section 6) |
 | PAR-O-29 | Phase 1 gateway audit buffer: capacity, share reserved for deny events, flush interval, and the longest time the API may be unreachable before calls are denied | `Plan/implementation-plan.md` Section 4.4, WP-1.9 | Security engineer | P1 | Decide before WP-1.9 starts; the flush interval bounds the events lost on a gateway crash |
 
 ## 3. Rules

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Version | 0.2 (intake form plus clearly labelled working assumptions; advances gap F3 in `docs/reviewgap.md`) |
-| Depends on | `docs/prd.md` v0.4 (Section 12 open questions), `Plan/functional-spec.md` v0.8 (Section 12), `Plan/architecture.md` v0.6 (Section 12), `docs/roadmap.md` v0.4 (gates), `docs/governance.md` v0.6 |
+| Depends on | `docs/prd.md` v0.4 (Section 12 open questions), `Plan/functional-spec.md` v0.8 (Section 12), `Plan/architecture.md` v0.6 (Section 12), `docs/roadmap.md` v0.5 (gates), `docs/governance.md` v0.6 |
 | Status | **Blank intake form.** The gap stays open until a customer representative answers; no answer in the Answer column is real. Section 3 lists engineering working assumptions, which are NOT customer answers. Fill in with date and respondent. |
 
 ## 1. How to use
