@@ -99,6 +99,10 @@ all checks passed
 | G7 | **The Keycloak realm has never been started.** Its shape is tested, not its behaviour | | "The harness logs in as every role" is not shown |
 | G8 | **The CI jobs have not run on GitHub** | | The workflow is untested as a workflow |
 
+## Decision on G1 to G3
+
+The project owner chose, on 2026-11-23, to **leave G1 to G3 for later** (options offered: reuse the approval flow, which the builder recommended; admin-only direct writes; defer). WP-1.9 is built on the registry as it stands and its tests seed server status, allowlist and grants as data. The decision is recorded as a risk acceptance in `docs/governance.md` Section 6 (risk owner still open). Phase 1 therefore has no supported way to grant access other than seeding.
+
 ## What the results do not show
 
 - One developer machine. Not a performance, load or soak test. No penetration test.
