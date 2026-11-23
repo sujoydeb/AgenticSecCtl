@@ -132,7 +132,7 @@ Residual risks that the design accepts must be accepted by a named risk owner wi
 | D: probabilistic injection detection | *(open)* | | Taint rule, approvals, egress allowlists (CTL-09, CTL-07) | Detector quality below budget |
 | G: replay window when sender-constrained tokens are unavailable | *(open)* | | Short lifetimes, revocation, mTLS (CTL-05, CTL-04) | IdP decision (ADR-2) |
 | J: memory poisoning before Phase 4 | *(open)* | | Partial controls only | Phase 4 start |
-| Licence: psycopg, psycopg-pool and the optional psycopg-binary are LGPL-3.0-only (PAR-O-28); certifi (test only) is MPL-2.0 | Project owner accepted the choice 2026-11-23; named risk owner and legal review *(open)* | | Used unmodified as separately installed libraries, never copied into the product source; version pinned and listed in the SBOM; licence scan in CI (G1.6) | Any change to how the library is bundled or distributed, or legal objection |
+| Licence: psycopg, psycopg-pool and the optional psycopg-binary are LGPL-3.0-only (PAR-O-28); certifi (test only) and pathspec (dev and CI tooling only) are MPL-2.0 | Project owner accepted the choice 2026-11-23; named risk owner and legal review *(open)* | | Used unmodified as separately installed libraries, never copied into the product source; version pinned and listed in the SBOM; licence scan in CI (G1.6) | Any change to how the library is bundled or distributed, or legal objection |
 
 ## 7. Maintenance
 

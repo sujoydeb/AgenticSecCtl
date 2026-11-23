@@ -11,7 +11,7 @@ Management API and registry (control plane). Phase 1 subset, built in WP-1.5 and
 | `roles_db.py` | Role bindings and users from the database for the common auth library |
 | `app.py` | FastAPI routes under `/v1`: authenticate, authorize against the role table, require `Idempotency-Key`, then parse the body; refusals are audited; errors are problem details |
 
-Dependencies are pinned with hashes in `requirements.lock` (runtime), `requirements-test.lock` and `requirements-binary.lock`; regenerate with `python3 scripts/make_lock.py`. Install: `pip install --require-hashes -r requirements-test.lock -r requirements-binary.lock`.
+Dependencies are pinned with hashes in `requirements.lock` (runtime), `requirements-test.lock`, `requirements-dev.lock` (ruff and mypy, on top of the test lock) and `requirements-binary.lock`; regenerate with `python3 scripts/make_lock.py`. Install for development: `pip install --require-hashes -r requirements-dev.lock -r requirements-binary.lock`.
 
 Run the tests (Docker needed):
 
