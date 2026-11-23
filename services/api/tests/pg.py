@@ -76,6 +76,6 @@ def ensure_logins() -> None:
     """Login roles for the application and the audit writer; cluster-wide, created once, after a migration made the roles."""
     server()
     with psycopg.connect(admin_dsn("postgres"), autocommit=True) as c:
-        for login, role in (("app_login", "app_role"), ("audit_login", "audit_writer")):
+        for login, role in (("app_login", "app_role"), ("audit_login", "audit_writer"), ("dispatch_login", "scan_dispatcher")):
             if not c.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", [login]).fetchone():
                 c.execute(f"CREATE ROLE {login} LOGIN PASSWORD '{PASSWORD}' IN ROLE {role}")

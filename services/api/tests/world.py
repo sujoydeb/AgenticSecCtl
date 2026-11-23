@@ -25,6 +25,7 @@ class Env:
         self.dbname = new_database()
         self.app = Database(login_dsn(self.dbname, "app_login"), min_size=1, max_size=4)
         self.audit = Database(login_dsn(self.dbname, "audit_login"), min_size=1, max_size=4)
+        self.dispatch = Database(login_dsn(self.dbname, "dispatch_login"), min_size=1, max_size=8)
 
     def admin(self):
         return psycopg.connect(admin_dsn(self.dbname), autocommit=True)
@@ -39,4 +40,4 @@ class Env:
         return Tenant(tid, users)
 
     def close(self):
-        self.app.close(); self.audit.close()
+        self.app.close(); self.audit.close(); self.dispatch.close()

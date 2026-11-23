@@ -37,12 +37,15 @@ RULESET = "registry-checks-1"
 
 @dataclass(frozen=True)
 class Actor:
+    """Who a change is attributed to. ``user_id`` is the person recorded as requester (so separation of duties
+    still applies); ``via`` names a service acting for them, which is what the audit event shows."""
     user_id: str
     tenant: str
+    via: str | None = None
 
     @property
     def label(self) -> str:
-        return f"user:{self.user_id}"
+        return f"service:{self.via}" if self.via else f"user:{self.user_id}"
 
 
 def _j(v: Any) -> Any:

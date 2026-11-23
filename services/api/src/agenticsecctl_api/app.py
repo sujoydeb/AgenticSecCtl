@@ -25,7 +25,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from . import audit, registry
+from . import audit, jobs, registry
 from .db import Database
 from .errors import DomainError, Invalid
 from .events import emit
@@ -33,6 +33,8 @@ from .registry import Actor
 from .roles_db import DbRoleStore
 
 log = logging.getLogger("agenticsecctl.api")
+MAX_BODY = 1_000_000          # user endpoints
+MAX_INTERNAL_BODY = 8_000_000 # scanner results carry whole tool definitions
 IDEMPOTENT = {("POST", "/agents"), ("POST", "/servers"), ("POST", "/servers/{id}/imports"), ("POST", "/servers/{id}/definitions"),
               ("POST", "/approvals/{id}/decision"), ("POST", "/approvals/{id}/overrides"), ("POST", "/overrides/{id}/approvals")}
 
@@ -70,6 +72,27 @@ class QuarantineIn(_In):
     reason: str
 
 
+class ClaimIn(_In):
+    worker_id: str
+    lease_seconds: int = jobs.LEASE_SECONDS
+
+
+class RenewIn(ClaimIn):
+    pass
+
+
+class ResultIn(_In):
+    model_config = ConfigDict(extra="forbid", str_max_length=200_000)
+    worker_id: str
+    result: dict[str, Any]
+
+
+class FailureIn(_In):
+    worker_id: str
+    reason: str
+    retryable: bool
+
+
 class OverrideIn(_In):
     finding_id: str
     justification: str
@@ -77,7 +100,7 @@ class OverrideIn(_In):
 
 
 def create_app(*, db: Database, audit_db: Database | None, validator: TokenValidator, directory: IdentityDirectory,
-               guard: Guard, user_clients: frozenset[str] = frozenset(), drain_inline: bool = True,
+               guard: Guard, dispatch_db: Database | None = None, user_clients: frozenset[str] = frozenset(), drain_inline: bool = True,
                clock: Callable[[], datetime] = lambda: datetime.now(UTC)) -> FastAPI:
     app = FastAPI(title="AgenticSecCtl management API", docs_url=None, redoc_url=None, openapi_url=None)
     store = DbRoleStore(db)
@@ -137,7 +160,10 @@ def create_app(*, db: Database, audit_db: Database | None, validator: TokenValid
             body: Any = None
             if model is not None:
                 try:
-                    body = model.model_validate(json.loads(await request.body() or b"null"))
+                    raw = await request.body()
+                    if len(raw) > MAX_BODY:
+                        return problem("invalid-request", cid)
+                    body = model.model_validate(json.loads(raw or b"null"))
                 except (ValueError, ValidationError):
                     return problem("invalid-request", cid)
             actor = Actor(principal.user_id, principal.tenant)
@@ -279,6 +305,91 @@ def create_app(*, db: Database, audit_db: Database | None, validator: TokenValid
             if principal_tenant:  # chain what is waiting, so the check covers every event so far
                 await run_in_threadpool(drain, principal_tenant)
         return await handle(request, "POST", "/audit/verification", fn, write=True, pass_body=False)
+
+    # ---------------------------------------------------------------- internal: the scanner worker (machine identity only)
+    async def handle_internal(request: Request, method: str, template: str, fn: Callable[[Principal, Any], Any], *,
+                              model: type[BaseModel] | None = None) -> JSONResponse:
+        cid = str(uuid.uuid4())
+        if dispatch_db is None:
+            return problem("not-ready", cid)
+        try:
+            try:
+                principal = authenticate(request)
+            except (AuthError, IdentityError):
+                return problem("unauthenticated", cid)
+            try:
+                authorize(principal, method, template, store, now=clock())
+            except Forbidden:
+                return problem("forbidden", cid)
+            body: Any = None
+            if model is not None:
+                try:
+                    raw = await request.body()
+                    if len(raw) > MAX_INTERNAL_BODY:
+                        return problem("invalid-request", cid)
+                    body = model.model_validate(json.loads(raw or b"null"))
+                except (ValueError, ValidationError):
+                    return problem("invalid-request", cid)
+            result = await run_in_threadpool(fn, principal, body)
+        except DomainError as exc:
+            return problem(exc.code, cid)
+        except Exception:  # noqa: BLE001
+            log.exception("unhandled error")
+            return problem("internal", cid)
+        return JSONResponse(result, headers={"X-Correlation-ID": cid})
+
+    @app.post("/v1/internal/scan-jobs/claim")
+    async def job_claim(request: Request) -> JSONResponse:
+        def fn(p: Principal, b: ClaimIn) -> Any:
+            assert dispatch_db is not None
+            worker = jobs.worker_id(p.client_id, b.worker_id)
+            for e in jobs.exhausted(dispatch_db):  # jobs that ran out of attempts are failed before the next claim
+                with db.transaction(e["tenant_id"]) as c:
+                    jobs.fail_exhausted(c, e["tenant_id"], e["id"])
+            job = jobs.claim(dispatch_db, worker, b.lease_seconds)
+            if job is None:
+                return {"job": None}
+            with db.transaction(job["tenant_id"]) as c:
+                return {"job": jobs.details(c, job["id"])}
+        return await handle_internal(request, "POST", "/internal/scan-jobs/claim", fn, model=ClaimIn)
+
+    def in_job_tenant(job_id: str, work: Callable[[Any], Any]) -> Any:
+        assert dispatch_db is not None
+        with db.transaction(jobs.tenant_of(dispatch_db, job_id)) as c:
+            return work(c)
+
+    @app.post("/v1/internal/scan-jobs/{job_id}/renew")
+    async def job_renew(request: Request, job_id: str) -> JSONResponse:
+        def fn(p: Principal, b: RenewIn) -> Any:
+            w = jobs.worker_id(p.client_id, b.worker_id)
+            return in_job_tenant(job_id, lambda c: jobs.renew(c, job_id, w, b.lease_seconds))
+        return await handle_internal(request, "POST", "/internal/scan-jobs/{id}/renew", fn, model=RenewIn)
+
+    @app.post("/v1/internal/scan-jobs/{job_id}/result")
+    async def job_result(request: Request, job_id: str) -> JSONResponse:
+        def fn(p: Principal, b: ResultIn) -> Any:
+            w = jobs.worker_id(p.client_id, b.worker_id)
+            out = in_job_tenant(job_id, lambda c: jobs.complete(c, job_id, w, b.result))
+            if audit_db is not None and drain_inline:
+                try:
+                    audit.drain(audit_db, jobs.tenant_of(dispatch_db, job_id))  # type: ignore[arg-type]
+                except Exception:  # noqa: BLE001
+                    log.exception("audit drain failed")
+            return out
+        return await handle_internal(request, "POST", "/internal/scan-jobs/{id}/result", fn, model=ResultIn)
+
+    @app.post("/v1/internal/scan-jobs/{job_id}/failure")
+    async def job_failure(request: Request, job_id: str) -> JSONResponse:
+        def fn(p: Principal, b: FailureIn) -> Any:
+            w = jobs.worker_id(p.client_id, b.worker_id)
+            out = in_job_tenant(job_id, lambda c: jobs.fail(c, job_id, w, b.reason, b.retryable))
+            if audit_db is not None and drain_inline:
+                try:
+                    audit.drain(audit_db, jobs.tenant_of(dispatch_db, job_id))  # type: ignore[arg-type]
+                except Exception:  # noqa: BLE001
+                    log.exception("audit drain failed")
+            return out
+        return await handle_internal(request, "POST", "/internal/scan-jobs/{id}/failure", fn, model=FailureIn)
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:  # last resort

@@ -240,6 +240,25 @@ SELECT t.expect_eq((SELECT count(*) FROM audit_events), 2, 'application role can
 SELECT t.expect_eq((SELECT count(*) FROM outbox WHERE state = 'processed'), 1, 'the processed outbox row is visible to the application');
 COMMIT;
 
+-- ================================================================ scan job dispatch (migration 0003)
+RESET ROLE;
+SELECT t.expect_eq((SELECT count(*) FROM pg_roles WHERE rolname = 'scan_dispatcher' AND (rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole OR rolcanlogin)), 0, 'scan_dispatcher: no superuser, BYPASSRLS, CREATEDB, CREATEROLE or login');
+GRANT USAGE ON SCHEMA t TO scan_dispatcher;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA t TO scan_dispatcher;
+SET ROLE scan_dispatcher;
+SELECT t.expect_eq((SELECT count(*) FROM scan_jobs), 2, 'dispatcher sees the queued jobs of every tenant');
+SELECT t.expect_error('SELECT * FROM mcp_servers', 'dispatcher cannot read servers', 'permission denied');
+SELECT t.expect_error('SELECT * FROM agents', 'dispatcher cannot read agents', 'permission denied');
+SELECT t.expect_error('SELECT * FROM audit_events', 'dispatcher cannot read the audit chain', 'permission denied');
+SELECT t.expect_error('SELECT failure_reason FROM scan_jobs', 'dispatcher cannot read columns it was not granted', 'permission denied');
+SELECT t.expect_error('INSERT INTO scan_jobs (tenant_id, server_id, kind) VALUES (''aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'', ''a2000000-0000-0000-0000-000000000001'', ''import'')', 'dispatcher cannot create jobs', 'permission denied');
+SELECT t.expect_error('DELETE FROM scan_jobs', 'dispatcher cannot delete jobs', 'permission denied');
+SELECT t.expect_error('UPDATE scan_jobs SET max_attempts = 99', 'dispatcher cannot change max_attempts', 'permission denied');
+SELECT t.expect_error('UPDATE scan_jobs SET tenant_id = ''bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb''', 'dispatcher cannot move a job to another tenant', 'permission denied');
+SELECT t.expect_rows('UPDATE scan_jobs SET status = ''claimed'', claimed_by = ''w1'', lease_expires_at = now() + interval ''1 minute'', attempts = attempts + 1 WHERE status = ''queued''', 2, 'dispatcher can claim jobs (status, claimant, lease, attempts)');
+RESET ROLE;
+SET ROLE app_role;
+
 -- ================================================================ pooled connection: tenant is per transaction
 BEGIN; SELECT set_config('app.tenant_id', :a, true); SELECT count(*) AS n FROM tools \gset
 COMMIT;
