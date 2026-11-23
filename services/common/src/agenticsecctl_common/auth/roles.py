@@ -102,6 +102,7 @@ INTERNAL_ENDPOINTS: tuple[InternalEndpoint, ...] = (
     InternalEndpoint("POST", "/internal/scan-jobs/claim", "scanner"),
     InternalEndpoint("POST", "/internal/scan-jobs/{id}/renew", "scanner"),
     InternalEndpoint("POST", "/internal/scan-jobs/{id}/result", "scanner"),
+    InternalEndpoint("POST", "/internal/scan-jobs/{id}/failure", "scanner"),
 )
 
 _BY_KEY = {(e.method, e.path): e for e in ENDPOINTS}

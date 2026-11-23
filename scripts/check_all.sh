@@ -8,4 +8,6 @@ for p in common api gateway scanner; do
   [ -d services/$p/tests ] || continue
   PYTHONPATH="services/common/src:services/$p/src" python3 -m unittest discover -s services/$p/tests
 done
+# integration tests: several packages together, PostgreSQL and Docker needed (skipped where Docker is absent)
+[ -d tests/integration ] && PYTHONPATH="services/common/src:services/api/src:services/scanner/src" python3 -m unittest discover -s tests/integration
 echo "all checks passed"
