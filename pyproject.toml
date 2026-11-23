@@ -1,0 +1,26 @@
+# Shared tooling configuration for all Python packages (WP-1.1). Not a package: no [project] table.
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["services/common/src", "services/api/src", "services/gateway/src", "services/scanner/src", "services/common/tests", "tests"]
+extend-exclude = [
+  "tests/fixtures",
+  # document tooling written before the baseline; it has its own checks (check_docs.py)
+  "scripts/build_catalogue_md.py", "scripts/build_spec_html.py", "scripts/catalogue_lib.py",
+  "scripts/check_docs.py", "scripts/sync_versions.py", "scripts/validate_yaml.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "C4"]
+ignore = ["S101"]          # asserts are fine in tests; production code uses explicit errors
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106", "S108", "S310", "S104"]   # dummy secrets, local test servers
+"tests/**" = ["S603", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = ["services/common/src", "services/api/src", "services/gateway/src", "services/scanner/src"]
+explicit_package_bases = true
+namespace_packages = true

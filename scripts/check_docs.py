@@ -44,6 +44,8 @@ DOC_FILES = sorted(
     + [str(pathlib.Path(p).relative_to(ROOT)) for p in glob.glob(str(ROOT / "controls" / "*.md"))]
     + ["CLAUDE.md", "README.md"]
 )
+# saved run records (scripts/run_gate.py) quote tool output; they are evidence, not design documents
+DOC_FILES = [f for f in DOC_FILES if not f.startswith("docs/testing/results/") or f.endswith("README.md")]
 texts = {f: read(f) for f in DOC_FILES}
 spec = texts["Plan/functional-spec.md"]
 
@@ -412,6 +414,8 @@ if html_path.exists():
 # 13. documentation index must list every design document
 index_text = texts.get("docs/index.md", "")
 for f in DOC_FILES:
+    if f.startswith("docs/testing/results/") and f != "docs/testing/results/README.md":
+        continue  # saved run records written by scripts/run_gate.py; the README lists them
     if f.startswith(("Plan/", "docs/", "compliance/", "controls/")) and f != "docs/index.md":
         if f"`{f}`" not in index_text:
             err(f"docs/index.md does not list {f}")
@@ -540,6 +544,20 @@ if _az and _azf.exists():
     _m = re.search(r"```rego\n(.*?)\n```", _az, re.S)
     if not _m or _m.group(1).strip() != _azf.read_text(encoding="utf-8").strip():
         err("docs/authn-authz-design.md: the Rego listing differs from policy/rego/authz.rego")
+
+# 18. spike schedule (docs/roadmap.md Section 4.1): no owner role has two spikes in overlapping weeks
+_rm = texts.get("docs/roadmap.md", "")
+_sec = _rm.split("### 4.1")[-1].split("\n## 5.")[0] if "### 4.1" in _rm else ""
+_spikes = []
+for _m in re.finditer(r"^\| (S\d[a-z]?) [^|]*\| week (-\d+) to (-\d+) \| ([^|]*) \|", _sec, re.M):
+    _owner = re.split(r" and | \(", _m.group(4).strip())[0].lower()
+    _spikes.append((_m.group(1), int(_m.group(2)), int(_m.group(3)), _owner))
+for _i, _a in enumerate(_spikes):
+    for _b in _spikes[_i + 1:]:
+        if _a[3] == _b[3] and max(_a[1], _b[1]) <= min(_a[2], _b[2]):
+            err(f"docs/roadmap.md: {_a[0]} and {_b[0]} are both owned by {_a[3]} and overlap in weeks {max(_a[1], _b[1])} to {min(_a[2], _b[2])}")
+if _rm and len(_spikes) < 6:
+    err(f"docs/roadmap.md: expected at least 6 spikes with numeric windows in Section 4.1, found {len(_spikes)}")
 
 # informational: placeholder inventory (never fails)
 _verify = {f: len(re.findall(r"\[VERIFY", t)) for f, t in texts.items()}
